@@ -1,5 +1,6 @@
 <?php
-require_once 'config.php';
+require_once __DIR__ . '/config.php';
+
 class Database {
     private static $instance = null;
     private $conn;
@@ -31,3 +32,4 @@ class Database {
         return $this->conn;
     }
 }
+?>
