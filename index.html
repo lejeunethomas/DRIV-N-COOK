@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>DRIV'N'COOK - Food Truck & Franchise</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        body {
+      background: url('https://source.unsplash.com/1600x900/?foodtruck') center/cover no-repeat fixed;
+      color: white;
+    }
+
+    .overlay {
+      background-color: rgba(0, 0, 0, 0.6);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 2rem;
+      text-align: center;
+    }
+
+    .overlay h1 {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      color: white;
+    }
+
+    .overlay p {
+      font-size: 1.2rem;
+      margin-bottom: 2rem;
+      max-width: 600px;
+    }
+
+    .btn {
+      background-color: #ff5722;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: bold;
+    }
+
+    .btn:hover {
+      background-color: #e64a19;
+    }
+
+        .hero {
+            background: linear-gradient(120deg, #ff5722 60%, #fff8f0 100%);
+            color: white;
+            padding: 4rem 1rem 2rem 1rem;
+            text-align: center;
+            border-radius: 0 0 40px 40px;
+            margin-bottom: 2rem;
+        }
+        .hero h1 {
+            font-size: 2.8rem;
+            margin-bottom: 1rem;
+            color: #fff;
+        }
+        .hero p {
+            font-size: 1.3rem;
+            margin-bottom: 2rem;
+            color: #fffbe7;
+        }
+        .cta-section {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+        .cta-card {
+            background: #fff;
+            color: #333;
+            border-radius: 16px;
+            box-shadow: 0 4px 16px #0001;
+            padding: 2rem 1.5rem;
+            width: 320px;
+            text-align: center;
+            transition: transform 0.2s;
+        }
+        .cta-card:hover {
+            transform: translateY(-8px) scale(1.03);
+        }
+        .cta-card h2 {
+            color: #ff5722;
+            margin-bottom: 1rem;
+        }
+        .cta-card p {
+            margin-bottom: 1.5rem;
+        }
+        .cta-card .btn {
+            font-size: 1.1rem;
+            padding: 0.7rem 2.2rem;
+        }
+        @media (max-width: 800px) {
+            .cta-section { flex-direction: column; align-items: center; }
+        }
+        .topbar {
+            width: 100%;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            padding: 1rem 2rem 0 0;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 10;
+        }
+        .topbar .btn {
+            background-color: #fff;
+            color: #ff5722;
+            border: none;
+            font-weight: bold;
+            box-shadow: 0 2px 8px #0001;
+            margin-left: 1rem;
+        }
+        .topbar .btn:hover {
+            background-color: #ffe0d3;
+            color: #e64a19;
+        }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <a href="login.html" class="btn">Connexion</a>
+    </div>
+    <div class="hero">
+        <h1>Bienvenue chez DRIV'N'COOK</h1>
+        <p>Le food truck qui réveille vos papilles et vos ambitions !<br>
+        Découvrez nos saveurs ou lancez votre propre aventure.</p>
+    </div>
+    <div class="container">
+        <div class="cta-section">
+            <div class="cta-card">
+                <h2>Je suis gourmand !</h2>
+                <p>Découvrez nos menus, suivez nos camions et commandez près de chez vous.</p>
+                <a href="login.html" class="btn">Commander</a>
+            </div>
+            <div class="cta-card">
+                <h2>Je veux devenir franchisé</h2>
+                <p>Rejoignez l’aventure DRIV'N'COOK et lancez votre propre food truck avec notre accompagnement.</p>
+                <a href="login.html?register=1" class="btn">Devenir franchisé</a>
+            </div>
+        </div>
+    </div>
+    <footer style="text-align:center; color:#888; margin:3rem 0 1rem 0;">
+        &copy; 2025 DRIV'N'COOK. Tous droits réservés.
+    </footer>
+</body>
+</html>

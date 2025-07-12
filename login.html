@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Connexion / Inscription - DRIV'N'COOK</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        body {
+            background: url('https://source.unsplash.com/1600x900/?foodtruck') center/cover no-repeat fixed;
+            color: white;
+        }
+        .overlay {
+            background-color: rgba(0,0,0,0.7);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+        }
+        .tab-group {
+            display: flex;
+            margin-bottom: 2rem;
+        }
+        .tab {
+            background: #222;
+            color: #fff;
+            padding: 1rem 2rem;
+            cursor: pointer;
+            border-radius: 8px 8px 0 0;
+            margin-right: 2px;
+            font-weight: bold;
+        }
+        .tab.active {
+            background: #ff5722;
+            color: #fff;
+        }
+        .form-box {
+            background: #fff;
+            color: #222;
+            border-radius: 0 0 16px 16px;
+            box-shadow: 0 4px 16px #0003;
+            padding: 2rem 2.5rem;
+            min-width: 320px;
+            max-width: 400px;
+        }
+        .form-box label {
+            display: block;
+            margin-top: 1rem;
+            margin-bottom: 0.3rem;
+            font-weight: bold;
+        }
+        .form-box input {
+            width: 100%;
+            padding: 0.7rem;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            margin-bottom: 1rem;
+        }
+        .form-box button {
+            background: #ff5722;
+            color: #fff;
+            border: none;
+            padding: 0.8rem 2rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 1rem;
+        }
+        .form-box button:hover {
+            background: #e64a19;
+        }
+        .switch-link {
+            color: #ff5722;
+            cursor: pointer;
+            text-decoration: underline;
+            margin-left: 0.5rem;
+        }
+        .alert {
+            margin-top: 1rem;
+            padding: 0.7rem 1rem;
+            border-radius: 6px;
+            font-weight: bold;
+        }
+        .alert-success { background: #d4edda; color: #155724; }
+        .alert-error { background: #f8d7da; color: #721c24; }
+        .breadcrumb {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+        }
+        .breadcrumb a {
+            color: #ff5722;
+            text-decoration: none;
+        }
+        .breadcrumb .sep {
+            margin: 0 0.5rem;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <div class="overlay">
+        <nav class="breadcrumb" aria-label="Fil d'ariane">
+            <ol>
+                <li><a href="index.html">Accueil</a></li>
+                <li class="sep">&gt;</li>
+                <li>Connexion / Inscription</li>
+            </ol>
+        </nav>
+        <h1>Bienvenue chez DRIV'N'COOK</h1>
+        <div class="tab-group">
+            <div class="tab active" id="tab-login">Connexion</div>
+            <div class="tab" id="tab-register">Inscription</div>
+        </div>
+        <div class="form-box" id="login-form">
+            <form>
+                <label for="login-email">Email</label>
+                <input type="email" id="login-email" required>
+                <label for="login-password">Mot de passe</label>
+                <input type="password" id="login-password" required>
+                <button type="submit">Se connecter</button>
+            </form>
+            <div class="alert" id="login-alert" style="display:none"></div>
+        </div>
+        <div class="form-box" id="register-form" style="display:none">
+            <form>
+                <label for="register-role">Je veux m'inscrire en tant que :</label>
+                <select id="register-role" required>
+                    <option value="franchise">Franchisé</option>
+                    <option value="client">Client</option>
+                </select>
+                <div id="franchise-fields">
+                    <label for="register-nom">Nom</label>
+                    <input type="text" id="register-nom" required>
+                </div>
+                <div id="client-fields" style="display:none">
+                    <label for="register-nom-client">Nom</label>
+                    <input type="text" id="register-nom-client">
+                </div>
+                <label for="register-email">Email</label>
+                <input type="email" id="register-email" required>
+                <label for="register-password">Mot de passe</label>
+                <input type="password" id="register-password" required>
+                <button type="submit">S'inscrire</button>
+            </form>
+            <div class="alert" id="register-alert" style="display:none"></div>
+        </div>
+    </div>
+    <script src="js/login.js"></script>
+    <script>
+        const tabLogin = document.getElementById('tab-login');
+        const tabRegister = document.getElementById('tab-register');
+        const loginForm = document.getElementById('login-form');
+        const registerForm = document.getElementById('register-form');
+        const registerRole = document.getElementById('register-role');
+        const franchiseFields = document.getElementById('franchise-fields');
+        const clientFields = document.getElementById('client-fields');
+
+        tabLogin.onclick = () => {
+            tabLogin.classList.add('active');
+            tabRegister.classList.remove('active');
+            loginForm.style.display = '';
+            registerForm.style.display = 'none';
+        };
+        tabRegister.onclick = () => {
+            tabRegister.classList.add('active');
+            tabLogin.classList.remove('active');
+            loginForm.style.display = 'none';
+            registerForm.style.display = '';
+        };
+
+        // Affichage dynamique des champs selon le rôle
+        registerRole.onchange = function() {
+            if (registerRole.value === 'franchise') {
+                franchiseFields.style.display = '';
+                clientFields.style.display = 'none';
+                document.getElementById('register-nom').required = true;
+                document.getElementById('register-nom-client').required = false;
+            } else {
+                franchiseFields.style.display = 'none';
+                clientFields.style.display = '';
+                document.getElementById('register-nom').required = false;
+                document.getElementById('register-nom-client').required = true;
+            }
+        };
+
+        // Si on arrive avec ?register=1, ouvrir l'onglet inscription et pré-sélectionner Franchisé
+        if (window.location.search.includes('register=1')) {
+            tabRegister.click();
+            registerRole.value = 'franchise';
+            registerRole.onchange();
+        } else {
+            registerRole.onchange();
+        }
+
+        document.querySelector('#register-form form').onsubmit = async function(e) {
+            e.preventDefault();
+            const role = document.getElementById('register-role').value;
+            let nom = '';
+            if (role === 'franchise') {
+                nom = document.getElementById('register-nom').value;
+            } else {
+                nom = document.getElementById('register-nom-client').value;
+            }
+            const email = document.getElementById('register-email').value;
+            const password = document.getElementById('register-password').value;
+
+            const res = await fetch('api/users/register.php', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ role, nom, email, password })
+            });
+            const data = await res.json();
+            const alert = document.getElementById('register-alert');
+            alert.style.display = 'block';
+            alert.className = 'alert ' + (data.success ? 'alert-success' : 'alert-error');
+            alert.textContent = data.message;
+            if (data.success) {
+                setTimeout(() => window.location.href = 'login.html', 1500);
+            }
+        };
+    </script>
+</body>
+</html>

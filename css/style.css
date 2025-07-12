@@ -1,0 +1,158 @@
+/* ---------- BASE GÉNÉRALE ---------- */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background-color: #f9f9f9;
+  color: #333;
+  line-height: 1.6;
+}
+
+a {
+  color: #ff5722;
+  text-decoration: none;
+  transition: color 0.3s;
+}
+
+a:hover {
+  color: #e64a19;
+}
+
+/* ---------- CONTAINERS ---------- */
+.container {
+  max-width: 1200px;
+  margin: auto;
+  padding: 2rem;
+  background-color: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* ---------- TITRES ---------- */
+h1, h2, h3 {
+  color: #e64a19;
+  margin-bottom: 1rem;
+}
+
+/* ---------- BOUTONS ---------- */
+button, .btn {
+  display: inline-block;
+  background-color: #ff5722;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  font-weight: bold;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+button:hover, .btn:hover {
+  background-color: #e64a19;
+}
+
+/* ---------- FORMULAIRES ---------- */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+select,
+textarea {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: #fff;
+}
+
+label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: bold;
+}
+
+/* ---------- TABLES ---------- */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 2rem;
+}
+
+table th,
+table td {
+  padding: 12px;
+  border: 1px solid #ddd;
+  text-align: left;
+}
+
+table th {
+  background-color: #f2f2f2;
+  color: #333;
+}
+
+/* ---------- ALERTES / MESSAGES ---------- */
+.alert {
+  padding: 15px;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+}
+
+.alert-success {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.alert-error {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+/* ---------- FIL D'ARIANE ---------- */
+.breadcrumb {
+  width: 100%;
+  max-width: 500px;
+  margin: 2rem auto 0 auto;
+  padding-left: 0;
+}
+.breadcrumb ol {
+  list-style: none;
+  display: flex;
+  gap: 8px;
+  font-size: 1rem;
+  color: #fff;
+  opacity: 0.85;
+  padding-left: 0;
+}
+.breadcrumb li {
+  display: flex;
+  align-items: center;
+}
+.breadcrumb a {
+  color: #fff;
+  text-decoration: underline;
+}
+.breadcrumb .sep {
+  color: #ff5722;
+  margin: 0 4px;
+}
+
+/* ---------- RESPONSIVE ---------- */
+@media (max-width: 768px) {
+  .container {
+    padding: 1rem;
+  }
+
+  table th, table td {
+    font-size: 14px;
+  }
+
+  button, .btn {
+    width: 100%;
+    margin-bottom: 1rem;
+  }
+}
