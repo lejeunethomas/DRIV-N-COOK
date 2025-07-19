@@ -18,15 +18,15 @@
 ✅ Semaine 2 (18 – 24 juillet) : Authentification + back-office de base
  X Créer les pages de connexion / inscription
 
- Gérer les sessions PHP (admin vs franchisé)
+ X Gérer les sessions PHP (admin vs franchisé)
 
- Créer une interface back-office (admin) :
+ X Créer une interface back-office (admin) :
 
- Liste des franchisés
+ X Liste des franchisés
 
  Ajout / modification / suppression franchisé
 
- Page d’accueil admin avec tableau de bord
+ X Page d’accueil admin avec tableau de bord
 
 ✅ Semaine 3 (25 – 31 juillet) : Camions et commandes
  X Créer une table de camions
