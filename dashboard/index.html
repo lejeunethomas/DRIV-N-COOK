@@ -8,11 +8,80 @@ require_role('admin');
     <meta charset="UTF-8">
     <title>Tableau de bord Admin - DRIV'N'COOK</title>
     <link rel="stylesheet" href="../css/style.css">
+    <style>
+        .topbar {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            padding: 1rem 2rem 0 0;
+            background: #fff8f0;
+        }
+        .logout-btn {
+            background: #ff5722;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            padding: 0.7rem 1.5rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-left: 1rem;
+        }
+        .logout-btn:hover {
+            background: #e64a19;
+        }
+        .dashboard-cards {
+            display: flex;
+            gap:2rem;
+            flex-wrap:wrap;
+            margin-bottom:2rem;
+            justify-content: center;
+        }
+        .cta-card {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px #0001;
+            padding: 2rem 2.5rem;
+            min-width: 180px;
+            text-align: center;
+        }
+        .cta-card h2 {
+            color: #ff5722;
+            margin-bottom: 0.7rem;
+        }
+        .cta-card p {
+            font-size: 2rem;
+            font-weight: bold;
+            margin: 0;
+        }
+        .dashboard-links {
+            display: flex;
+            gap: 1.5rem;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+        .dashboard-links .btn {
+            background: #ff5722;
+            color: #fff;
+            border-radius: 8px;
+            padding: 0.8rem 2rem;
+            font-weight: bold;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+        .dashboard-links .btn:hover {
+            background: #e64a19;
+        }
+    </style>
 </head>
 <body>
+    <div class="topbar">
+        <form action="../api/users/logout.php" method="post" style="margin:0;">
+            <button type="submit" class="logout-btn">Déconnexion</button>
+        </form>
+    </div>
     <div class="container">
-        <h1>Tableau de bord Administrateur</h1>
-        <div style="display: flex; gap:2rem; flex-wrap:wrap; margin-bottom:2rem;">
+        <h1 style="text-align:center; margin-bottom:2rem;">Tableau de bord Administrateur</h1>
+        <div class="dashboard-cards">
             <div class="cta-card" id="stat-franchise">
                 <h2>Franchisés</h2>
                 <p id="nb-franchise">...</p>
@@ -30,10 +99,12 @@ require_role('admin');
                 <p id="nb-commande">...</p>
             </div>
         </div>
-        <a href="franchisés.html" class="btn">Gérer les franchisés</a>
-        <a href="camions.html" class="btn">Gérer les camions</a>
-        <a href="ventes.html" class="btn">Voir les ventes</a>
-        <a href="commandes.html" class="btn">Voir les commandes</a>
+        <div class="dashboard-links">
+            <a href="franchisés.html" class="btn">Gérer les franchisés</a>
+            <a href="camions.html" class="btn">Gérer les camions</a>
+            <a href="ventes.html" class="btn">Voir les ventes</a>
+            <a href="commandes.html" class="btn">Voir les commandes</a>
+        </div>
     </div>
     <script>
         // Récupère les stats via API
