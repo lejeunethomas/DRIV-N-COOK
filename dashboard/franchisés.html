@@ -1,0 +1,32 @@
+<?php
+require_once '../includes/auth.php';
+require_role('admin');
+?>
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Liste des franchisés</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Franchisés</h1>
+        <table id="franchise-table">
+            <thead>
+                <tr>
+                    <th>Nom</th>
+                    <th>Email</th>
+                    <th>Date inscription</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Rempli par JS -->
+            </tbody>
+        </table>
+        <button id="add-franchise-btn">Ajouter un franchisé</button>
+    </div>
+    <script src="../js/admin/franchisés.js"></script>
+</body>
+</html>
