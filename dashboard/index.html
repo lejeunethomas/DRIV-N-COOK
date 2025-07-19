@@ -1,0 +1,57 @@
+<?php
+require_once '../includes/auth.php';
+require_role('admin');
+?>
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Tableau de bord Admin - DRIV'N'COOK</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Tableau de bord Administrateur</h1>
+        <div style="display: flex; gap:2rem; flex-wrap:wrap; margin-bottom:2rem;">
+            <div class="cta-card" id="stat-franchise">
+                <h2>Franchisés</h2>
+                <p id="nb-franchise">...</p>
+            </div>
+            <div class="cta-card" id="stat-camion">
+                <h2>Camions</h2>
+                <p id="nb-camion">...</p>
+            </div>
+            <div class="cta-card" id="stat-vente">
+                <h2>Ventes</h2>
+                <p id="nb-vente">...</p>
+            </div>
+            <div class="cta-card" id="stat-commande">
+                <h2>Commandes</h2>
+                <p id="nb-commande">...</p>
+            </div>
+        </div>
+        <a href="franchisés.html" class="btn">Gérer les franchisés</a>
+        <a href="camions.html" class="btn">Gérer les camions</a>
+        <a href="ventes.html" class="btn">Voir les ventes</a>
+        <a href="commandes.html" class="btn">Voir les commandes</a>
+    </div>
+    <script>
+        // Récupère les stats via API
+        fetch('../api/users/get_all.php')
+            .then(res => res.json())
+            .then(data => document.getElementById('nb-franchise').textContent = data.length);
+
+        fetch('../api/camions/get_by_user.php?admin=1')
+            .then(res => res.json())
+            .then(data => document.getElementById('nb-camion').textContent = data.length);
+
+        fetch('../api/ventes/add.php?stats=1')
+            .then(res => res.json())
+            .then(data => document.getElementById('nb-vente').textContent = data.total ?? '0');
+
+        fetch('../api/commandes/list_by_user.php?admin=1')
+            .then(res => res.json())
+            .then(data => document.getElementById('nb-commande').textContent = data.length);
+    </script>
+</body>
+</html>
