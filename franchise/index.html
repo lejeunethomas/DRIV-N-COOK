@@ -168,11 +168,33 @@ document.addEventListener('DOMContentLoaded', function() {
                 body: JSON.stringify(data)
             });
             const json = await res.json();
-            document.getElementById('resultat-demande').textContent = json.message || (json.success ? "Demande envoyée !" : "Erreur lors de la demande.");
-            if(json.success) form.reset();
+            if(json.success) {
+                // Masquer le formulaire
+                document.getElementById('form-demande-camion').style.display = 'none';
+                // Afficher le récapitulatif
+                afficherDemandeEnAttente(data);
+            } else {
+                document.getElementById('resultat-demande').textContent = json.message || "Erreur lors de la demande.";
+            }
         };
     }
 });
+
+// Affiche le bloc "demande en attente"
+function afficherDemandeEnAttente(data) {
+    const recap = `
+        <div class="section-card" style="background:#fffbe7;">
+            <h3 style="color:#e64a19;">Demande de camion en attente</h3>
+            <ul>
+                <li><strong>Emplacement :</strong> ${data.emplacement}</li>
+                <li><strong>Menu :</strong> ${data.menu}</li>
+                <li><strong>Jours d'ouverture :</strong> ${data.jours.join(', ')}</li>
+            </ul>
+            <p style="color:#e64a19;">Votre demande est en attente de validation par l'administrateur.</p>
+        </div>
+    `;
+    document.getElementById('camions').insertAdjacentHTML('beforeend', recap);
+}
 </script>
 </body>
 </html>
