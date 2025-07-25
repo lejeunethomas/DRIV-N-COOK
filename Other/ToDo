@@ -31,9 +31,9 @@
 ✅ Semaine 3 (25 – 31 juillet) : Camions et commandes
  X Créer une table de camions
 
- Interface de gestion des camions par franchisé
+ X Interface de gestion des camions par franchisé
 
- Lier camions ↔ franchisés
+ X Lier camions ↔ franchisés
 
  Créer la gestion des commandes de stock
 
@@ -42,15 +42,15 @@
  Création du back-end des ventes
 
 ✅ Semaine 4 (1 – 7 août) : Front-office franchisés
- Créer l’interface de gestion personnelle (front)
+ X Créer l’interface de gestion personnelle (front)
 
- Ajout des informations de compte
+ Ajout des informations de compte (changement form inscription)
 
  Affichage historique des ventes
 
  Page pour faire une commande (simulée)
 
- Petites touches design (CSS)
+ X Petites touches design (CSS)
 
 ✅ Semaine 5 (8 – 14 août) : Génération PDF + serveur local
  Générer des rapports PDF des ventes
