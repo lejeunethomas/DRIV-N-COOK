@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Tableau de bord Franchisé</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        .dashboard-layout {
+            display: flex;
+            min-height: 100vh;
+        }
+        .sidebar {
+            background: #ff5722;
+            color: #fff;
+            width: 220px;
+            padding: 2rem 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            min-height: 100vh;
+        }
+        .sidebar h2 {
+            color: #fff;
+            margin-bottom: 2rem;
+            font-size: 1.3rem;
+            text-align: center;
+        }
+        .sidebar a {
+            color: #fff;
+            text-decoration: none;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            display: block;
+            padding: 0.7rem 1rem;
+            border-radius: 6px;
+            transition: background 0.2s;
+        }
+        .sidebar a.active, .sidebar a:hover {
+            background: #e64a19;
+        }
+        .main-content {
+            flex: 1;
+            padding: 2.5rem 3rem;
+            background: #fff8f0;
+        }
+        .section-card {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px #0001;
+            padding: 2rem 2.5rem;
+            margin-bottom: 2.5rem;
+        }
+        .section-card h2 {
+            color: #ff5722;
+            margin-bottom: 1.2rem;
+        }
+        .topbar {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+        .logout-btn {
+            background: #ff5722;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            padding: 0.7rem 1.5rem;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .logout-btn:hover {
+            background: #e64a19;
+        }
+        @media (max-width: 900px) {
+            .dashboard-layout { flex-direction: column; }
+            .sidebar { flex-direction: row; width: 100%; min-height: unset; padding: 1rem; gap: 1rem;}
+            .main-content { padding: 1rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-layout">
+        <nav class="sidebar">
+            <h2>Mon espace</h2>
+            <a href="index.html" class="active">Tableau de bord</a>
+            <a href="ventes.html">Mes ventes</a>
+            <a href="commandes.html">Commandes de stock</a>
+            <a href="compte.html">Mon compte</a>
+            <form action="../api/users/logout.php" method="post" style="margin-top:auto;">
+                <button type="submit" class="logout-btn" style="width:100%;">Déconnexion</button>
+            </form>
+        </nav>
+        <main class="main-content">
+            <div class="topbar">
+                <h1 style="margin:0; color:#e64a19;">Bienvenue sur votre espace franchisé</h1>
+            </div>
+
+            <div class="section-card">
+                <section id="camions">
+                    <h2>Mon camion</h2>
+                    <button onclick="afficherFormDemandeCamion()">Demander un camion</button>
+                    <div id="form-demande-camion" style="display:none;">
+                        <h3>Demande de camion</h3>
+                        <form id="demandeCamionForm">
+                            <label>Emplacement souhaité :
+                                <input type="text" name="emplacement" required>
+                            </label>
+                            <label>Menu souhaité :
+                                <input type="text" name="menu" required>
+                            </label>
+                            <label>Jours d’ouverture :</label>
+                            <div>
+                                <label><input type="checkbox" name="jours[]" value="Lundi"> Lundi</label>
+                                <label><input type="checkbox" name="jours[]" value="Mardi"> Mardi</label>
+                                <label><input type="checkbox" name="jours[]" value="Mercredi"> Mercredi</label>
+                                <label><input type="checkbox" name="jours[]" value="Jeudi"> Jeudi</label>
+                                <label><input type="checkbox" name="jours[]" value="Vendredi"> Vendredi</label>
+                                <label><input type="checkbox" name="jours[]" value="Samedi"> Samedi</label>
+                                <label><input type="checkbox" name="jours[]" value="Dimanche"> Dimanche</label>
+                            </div>
+                            <button type="submit">Envoyer la demande</button>
+                            <button type="button" onclick="fermerFormDemandeCamion()">Annuler</button>
+                        </form>
+                        <div id="resultat-demande"></div>
+                    </div>
+                </section>
+            </div>
+
+            <div class="section-card">
+                <section id="ventes">
+                    <h2>Mes ventes</h2>
+                    <a href="ventes.html" class="btn">Voir l’historique des ventes</a>
+                </section>
+            </div>
+
+            <div class="section-card">
+                <section id="commandes">
+                    <h2>Commandes de stock</h2>
+                    <a href="commandes.html" class="btn">Gérer mes commandes</a>
+                </section>
+            </div>
+        </main>
+    </div>
+    <script src="../public/js/franchise.js"></script>
+    <script>
+function afficherFormDemandeCamion() {
+    document.getElementById('form-demande-camion').style.display = 'block';
+}
+function fermerFormDemandeCamion() {
+    document.getElementById('form-demande-camion').style.display = 'none';
+}
+
+// Gestion de l'envoi du formulaire
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('demandeCamionForm');
+    if(form) {
+        form.onsubmit = async function(e) {
+            e.preventDefault();
+            const data = {
+                emplacement: form.emplacement.value,
+                menu: form.menu.value,
+                jours: Array.from(form.querySelectorAll('input[name="jours[]"]:checked')).map(cb => cb.value)
+            };
+            const res = await fetch('../api/camions/demande.php', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            });
+            const json = await res.json();
+            document.getElementById('resultat-demande').textContent = json.message || (json.success ? "Demande envoyée !" : "Erreur lors de la demande.");
+            if(json.success) form.reset();
+        };
+    }
+});
+</script>
+</body>
+</html>
