@@ -57,6 +57,26 @@
             border: 1px solid #ccc;
             margin-bottom: 1rem;
         }
+        input[type="text"],
+        input[type="email"],
+        input[type="password"],
+        input[type="tel"],
+        input[type="number"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 1rem;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            background: #fff;
+            font-family: inherit;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
         .form-box button {
             background: #ff5722;
             color: #fff;
@@ -133,16 +153,31 @@
                     <option value="client">Client</option>
                 </select>
                 <div id="franchise-fields">
-                    <label for="register-nom">Nom</label>
+                    <label for="register-nom">Nom *</label>
                     <input type="text" id="register-nom" required>
+                    
+                    <label for="register-prenom">Prénom *</label>
+                    <input type="text" id="register-prenom" required>
+                    
+                    <label for="register-telephone">Numéro de téléphone *</label>
+                    <input type="tel" id="register-telephone" required placeholder="Ex: 06 12 34 56 78">
+                    
+                    <label for="register-lieu">Lieu d'installation souhaité *</label>
+                    <input type="text" id="register-lieu" required placeholder="Ex: Paris, Lyon, Marseille...">
+                    
+                    <label for="register-motivation">Motivation (pourquoi devenir franchisé ?) *</label>
+                    <textarea id="register-motivation" required rows="3" placeholder="Décrivez en quelques lignes votre motivation pour rejoindre le réseau DRIV'N'COOK..."></textarea>
                 </div>
                 <div id="client-fields" style="display:none">
-                    <label for="register-nom-client">Nom</label>
+                    <label for="register-nom-client">Nom *</label>
                     <input type="text" id="register-nom-client">
+                    
+                    <label for="register-prenom-client">Prénom *</label>
+                    <input type="text" id="register-prenom-client">
                 </div>
-                <label for="register-email">Email</label>
+                <label for="register-email">Email *</label>
                 <input type="email" id="register-email" required>
-                <label for="register-password">Mot de passe</label>
+                <label for="register-password">Mot de passe *</label>
                 <input type="password" id="register-password" required>
                 <button type="submit">S'inscrire</button>
             </form>
@@ -177,13 +212,27 @@
             if (registerRole.value === 'franchise') {
                 franchiseFields.style.display = '';
                 clientFields.style.display = 'none';
+                // Champs franchisé requis
                 document.getElementById('register-nom').required = true;
+                document.getElementById('register-prenom').required = true;
+                document.getElementById('register-telephone').required = true;
+                document.getElementById('register-lieu').required = true;
+                document.getElementById('register-motivation').required = true;
+                // Champs client non requis
                 document.getElementById('register-nom-client').required = false;
+                document.getElementById('register-prenom-client').required = false;
             } else {
                 franchiseFields.style.display = 'none';
                 clientFields.style.display = '';
+                // Champs franchisé non requis
                 document.getElementById('register-nom').required = false;
+                document.getElementById('register-prenom').required = false;
+                document.getElementById('register-telephone').required = false;
+                document.getElementById('register-lieu').required = false;
+                document.getElementById('register-motivation').required = false;
+                // Champs client requis
                 document.getElementById('register-nom-client').required = true;
+                document.getElementById('register-prenom-client').required = true;
             }
         };
 
@@ -199,14 +248,21 @@
         document.querySelector('#register-form form').onsubmit = async function(e) {
             e.preventDefault();
             const role = document.getElementById('register-role').value;
-            let nom = '';
+            let formData = { role };
+            
             if (role === 'franchise') {
-                nom = document.getElementById('register-nom').value;
+                formData.nom = document.getElementById('register-nom').value;
+                formData.prenom = document.getElementById('register-prenom').value;
+                formData.telephone = document.getElementById('register-telephone').value;
+                formData.lieu = document.getElementById('register-lieu').value;
+                formData.motivation = document.getElementById('register-motivation').value;
             } else {
-                nom = document.getElementById('register-nom-client').value;
+                formData.nom = document.getElementById('register-nom-client').value;
+                formData.prenom = document.getElementById('register-prenom-client').value;
             }
-            const email = document.getElementById('register-email').value;
-            const password = document.getElementById('register-password').value;
+            
+            formData.email = document.getElementById('register-email').value;
+            formData.password = document.getElementById('register-password').value;
 
             const alert = document.getElementById('register-alert');
             alert.style.display = 'none';
@@ -215,14 +271,13 @@
                 const res = await fetch('api/users/register.php', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ role, nom, email, password })
+                    body: JSON.stringify(formData)
                 });
                 const data = await res.json();
                 alert.style.display = 'block';
                 alert.className = 'alert ' + (data.success ? 'alert-success' : 'alert-error');
                 alert.textContent = data.message;
                 if (data.success) {
-                    // Efface le formulaire et laisse le message affiché
                     document.querySelector('#register-form form').reset();
                     setTimeout(() => window.location.href = 'login.html', 3000);
                 }

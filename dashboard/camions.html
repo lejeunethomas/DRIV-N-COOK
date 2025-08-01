@@ -122,6 +122,8 @@
                     <thead>
                         <tr>
                             <th>Franchisé</th>
+                            <th>Nom du camion</th>
+                            <th>N° Permis</th>
                             <th>Emplacement</th>
                             <th>Menu</th>
                             <th>Jours d'ouverture</th>
@@ -156,7 +158,9 @@
         demandes.forEach(demande => {
             tbodyDem.innerHTML += `
                 <tr>
-                    <td>${demande.franchise_nom}</td>
+                    <td>${demande.franchise_nom} ${demande.franchise_prenom}</td>
+                    <td><strong>${demande.nom_camion}</strong></td>
+                    <td>${demande.numero_permis}</td>
                     <td>${demande.emplacement}</td>
                     <td>${demande.menu}</td>
                     <td>${demande.jours}</td>
@@ -168,7 +172,7 @@
                 </tr>
             `;
         });
-
+        
         // 2. Charger les camions
         const camionsRes = await fetch('../api/camions/list.php');
         let camions = await camionsRes.json();

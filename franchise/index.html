@@ -103,13 +103,21 @@
                     <div id="form-demande-camion" style="display:none;">
                         <h3>Demande de camion</h3>
                         <form id="demandeCamionForm">
+                            <label>Nom du camion :
+                                <input type="text" name="nom_camion" required placeholder="Ex: Le Gourmand, Food Express...">
+                            </label>
+                            
+                            <label>Numéro de permis de conduire :
+                                <input type="text" name="numero_permis" required placeholder="Ex: 123456789012">
+                            </label>
+                            
                             <label>Emplacement souhaité :
                                 <input type="text" name="emplacement" required>
                             </label>
                             <label>Menu souhaité :
                                 <input type="text" name="menu" required>
                             </label>
-                            <label>Jours d’ouverture :</label>
+                            <label>Jours d'ouverture :</label>
                             <div>
                                 <label><input type="checkbox" name="jours[]" value="Lundi"> Lundi</label>
                                 <label><input type="checkbox" name="jours[]" value="Mardi"> Mardi</label>
@@ -151,13 +159,29 @@ function fermerFormDemandeCamion() {
     document.getElementById('form-demande-camion').style.display = 'none';
 }
 
-// Gestion de l'envoi du formulaire
-document.addEventListener('DOMContentLoaded', function() {
+// Charger les données utilisateur pour pré-remplir le formulaire
+document.addEventListener('DOMContentLoaded', async function() {
+    try {
+        const res = await fetch('../api/users/profile.php');
+        const user = await res.json();
+        if (user.numero_permis) {
+            const permiInput = document.querySelector('input[name="numero_permis"]');
+            if (permiInput) {
+                permiInput.value = user.numero_permis;
+            }
+        }
+    } catch (err) {
+        console.log('Impossible de charger le profil utilisateur');
+    }
+    
+    // Gestion de l'envoi du formulaire
     const form = document.getElementById('demandeCamionForm');
     if(form) {
         form.onsubmit = async function(e) {
             e.preventDefault();
             const data = {
+                nom_camion: form.nom_camion.value,
+                numero_permis: form.numero_permis.value,
                 emplacement: form.emplacement.value,
                 menu: form.menu.value,
                 jours: Array.from(form.querySelectorAll('input[name="jours[]"]:checked')).map(cb => cb.value)
@@ -186,6 +210,8 @@ function afficherDemandeEnAttente(data) {
         <div class="section-card" style="background:#fffbe7;">
             <h3 style="color:#e64a19;">Demande de camion en attente</h3>
             <ul>
+                <li><strong>Nom du camion :</strong> ${data.nom_camion}</li>
+                <li><strong>Numéro de permis :</strong> ${data.numero_permis}</li>
                 <li><strong>Emplacement :</strong> ${data.emplacement}</li>
                 <li><strong>Menu :</strong> ${data.menu}</li>
                 <li><strong>Jours d'ouverture :</strong> ${data.jours.join(', ')}</li>
