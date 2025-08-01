@@ -1,3 +1,7 @@
+<?php
+require_once '../includes/auth.php';
+require_role('admin');
+?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -78,33 +82,12 @@
     <div class="dashboard-layout">
         <nav class="sidebar">
             <h2>Admin</h2>
-            <a href="index.html">Tableau de bord</a>
-            <a href="franchisés.html">Gérer les franchisés</a>
-            <a href="camions.html">Gérer les camions</a>
-            <a href="ventes.html" class ="active">Voir les ventes</a>
-            <a href="commandes.html">Voir les commandes</a>
+            <a href="index.php">Tableau de bord</a>
+            <a href="franchisés.php">Gérer les franchisés</a>
+            <a href="camions.php">Gérer les camions</a>
+            <a href="ventes.php">Voir les ventes</a>
+            <a href="commandes.php" class="active">Voir les commandes</a>
             <form action="../api/users/logout.php" method="post" style="margin-top:auto;">
                 <button type="submit" class="logout-btn" style="width:100%;">Déconnexion</button>
             </form>
         </nav>
-        <main class="main-content">
-            <h1>Gestion des camions</h1>
-            <div class="tabs">
-                <button class="tab-btn active" data-tab="disponibles">Camions disponibles</button>
-                <button class="tab-btn" data-tab="maintenance">Camions en maintenance</button>
-                <button class="tab-btn" data-tab="urgence">Camions d'urgence</button>
-            </div>
-            <table id="camion-table">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Modèle</th>
-                        <th>Statut</th>
-                        <th>Date de livraison</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="camion-list">
-                    <!-- Camion rows will be dynamically inserted here -->
-                </tbody>
-            </table>

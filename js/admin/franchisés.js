@@ -17,3 +17,13 @@ fetch('../api/users/get_all.php')
             `;
         });
     });
+
+// Ajouter la fonction pour le bouton "Ajouter un franchisé"
+document.addEventListener('DOMContentLoaded', function() {
+    const addBtn = document.getElementById('add-franchise-btn');
+    if (addBtn) {
+        addBtn.onclick = function() {
+            window.location.href = '../login.html?register=1';
+        };
+    }
+});

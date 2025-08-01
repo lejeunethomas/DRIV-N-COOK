@@ -12,17 +12,31 @@ document.querySelector('#login-form form').onsubmit = async function(e) {
             body: JSON.stringify({ email, password })
         });
         const data = await res.json();
-        alert.style.display = 'block';
-        alert.className = 'alert ' + (data.success ? 'alert-success' : 'alert-error');
-        alert.textContent = data.message;
+        console.log('Réponse API:', data); // DEBUG
+
         if (data.success) {
+            // Connexion réussie - redirection selon le rôle et le statut
+            alert.style.display = 'block';
+            alert.className = 'alert alert-success';
+            alert.textContent = data.message;
+            
             if (data.role === 'admin') {
-                setTimeout(() => window.location.href = 'dashboard/index.html', 1000);
+                setTimeout(() => window.location.href = 'dashboard/index.php', 1000);
             } else if (data.role === 'franchise') {
-                setTimeout(() => window.location.href = 'franchise/compte.html', 1000);
+                // VOICI LE PROBLÈME : vous vérifiez le statut mais dans success au lieu d'échec
+                if (data.statut === 'en_attente') {
+                    setTimeout(() => window.location.href = 'franchise/attente.html', 1500);
+                } else {
+                    setTimeout(() => window.location.href = 'franchise/index.php', 1000);
+                }
             } else if (data.role === 'client') {
                 setTimeout(() => window.location.href = 'index.html', 1000);
             }
+        } else {
+            // Pour les autres erreurs (mot de passe incorrect, etc.)
+            alert.style.display = 'block';
+            alert.className = 'alert alert-error';
+            alert.textContent = data.message;
         }
     } catch (err) {
         alert.style.display = 'block';

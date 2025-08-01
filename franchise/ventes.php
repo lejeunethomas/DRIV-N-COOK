@@ -1,3 +1,7 @@
+<?php
+require_once '../includes/auth.php';
+require_franchise_validated(); 
+?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -83,10 +87,10 @@
     <div class="dashboard-layout">
         <nav class="sidebar">
             <h2>Mon espace</h2>
-            <a href="index.html">Tableau de bord</a>
-            <a href="ventes.html" class="active">Mes ventes</a>
-            <a href="commandes.html">Commandes de stock</a>
-            <a href="compte.html">Mon compte</a>
+            <a href="index.php">Tableau de bord</a>
+            <a href="ventes.php" class="active">Mes ventes</a>
+            <a href="commandes.php">Commandes de stock</a>
+            <a href="compte.php">Mon compte</a>
             <form action="../api/users/logout.php" method="post" style="margin-top:auto;">
                 <button type="submit" class="logout-btn" style="width:100%;">Déconnexion</button>
             </form>
@@ -99,8 +103,8 @@
                 <p>Gérez vos ventes et commandes de stock facilement.</p>
             </div>
             <div class="dashboard-links">
-                <a href="ventes.html" class="btn">Voir mes ventes</a>
-                <a href="commandes.html" class="btn">Faire une commande de stock</a>
+                <a href="ventes.php" class="btn">Voir mes ventes</a>
+                <a href="commandes.php" class="btn">Faire une commande de stock</a>
             </div>
             <div class="cta-card">
                 <h2>Statistiques</h2>

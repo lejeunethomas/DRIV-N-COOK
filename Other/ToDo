@@ -1,14 +1,14 @@
-📆 PLAN D'ACTION – Projet Driv'n Cook (Mission 1 & 2)
+📆 PLAN D ACTION – Projet Driv n Cook (Mission 1 & 2)
 📅 Deadline finale : 31 août 2025
 
 ✅ Semaine 1 (11 – 17 juillet) : Préparation et conception
  ✅ Installer XAMPP / WAMP / phpMyAdmin
- ✅ Définir l'arborescence du projet
+ ✅ Définir l arborescence du projet
  ✅ Créer le schéma de la base de données
  ✅ Implémenter les tables dans phpMyAdmin
  ✅ Créer le fichier de connexion db.php
  ✅ Tester une première requête PHP → MySQL
- ✅ Créer la page d'accueil du projet
+ ✅ Créer la page d accueil du projet
 
 ✅ Semaine 2 (18 – 24 juillet) : Authentification + back-office de base
  ✅ Créer les pages de connexion / inscription
@@ -16,7 +16,7 @@
  ✅ Créer une interface back-office (admin) :
  ✅ Liste des franchisés
  ✅ Ajout / modification / suppression franchisé
- ✅ Page d'accueil admin avec tableau de bord
+ ✅ Page d accueil admin avec tableau de bord
 
 ✅ Semaine 3 (25 – 31 juillet) : Camions et commandes
  ✅ Créer une table de camions
@@ -27,10 +27,10 @@
  ⏳ Création du back-end des ventes
 
 ✅ Semaine 4 (1 – 7 août) : Front-office franchisés
- ✅ Créer l'interface de gestion personnelle (front)
+ ✅ Créer l interface de gestion personnelle (front)
  ✅ Ajout des informations de compte (changement form inscription)
-     ✅ Formulaire d'inscription franchisé complet (nom, prénom, téléphone, lieu, motivation)
-     ✅ Numéro de permis optionnel à l'inscription, obligatoire pour demande camion
+     ✅ Formulaire d inscription franchisé complet (nom, prénom, téléphone, lieu, motivation)
+     ✅ Numéro de permis optionnel à l inscription, obligatoire pour demande camion
      ✅ Page compte franchisé avec consultation/modification des informations
      ✅ API de gestion du profil utilisateur (GET/PUT)
      ✅ Système de demande de camion avec validation admin
@@ -44,15 +44,15 @@
  ⏳ Intégrer FPDF ou TCPDF
  ⏳ Créer un rapport PDF mensuel pour les franchisés
  ⏳ Installer le projet sur un serveur local Linux (VM)
- ⏳ Configuration d'Apache, PHP, MySQL
- ⏳ Activer réécriture d'URL + pages d'erreur personnalisées
+ ⏳ Configuration d Apache, PHP, MySQL
+ ⏳ Activer réécriture d URL + pages d erreur personnalisées
 
 ✅ Semaine 6 (15 – 21 août) : Mission 2 – Clients
  ⏳ Créer la gestion des menus et plats
- ⏳ Création d'un espace client basique
+ ⏳ Création d un espace client basique
  ⏳ Développer la gestion des cartes de fidélité en Java
  ⏳ Implémenter une simulation de commande client
- ⏳ Commencer la page d'événements
+ ⏳ Commencer la page d événements
 
 ✅ Semaine 7 (22 – 31 août) : Finalisation et rapport
  ⏳ Finaliser la partie événements
@@ -64,15 +64,15 @@
 
 🎯 PROCHAINES ÉTAPES PRIORITAIRES :
  📋 Finaliser la gestion des commandes de stock
- 📊 Créer l'affichage des ventes dans l'interface franchisé
+ 📊 Créer l affichage des ventes dans l interface franchisé
  🛒 Implémenter la page de commande de produits
  📈 Ajouter les statistiques dans la page compte franchisé
 
 💡 AMÉLIORATIONS RÉCENTES COMPLETÉES :
- ✅ Système d'inscription franchisé réaliste et complet
+ ✅ Système d inscription franchisé réaliste et complet
  ✅ Gestion du numéro de permis avec contraintes de base de données
  ✅ Interface de compte franchisé moderne avec mode édition
  ✅ API robuste pour la gestion des profils utilisateur
- ✅ Validation des demandes de camion par l'admin
+ ✅ Validation des demandes de camion par l admin
  ✅ Relations foreign key optimisées dans la base de données
 

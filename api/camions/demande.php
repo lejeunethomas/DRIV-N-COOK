@@ -38,13 +38,15 @@ try {
     $stmt = $conn->prepare("UPDATE users SET numero_permis = ? WHERE id = ?");
     $stmt->execute([$data['numero_permis'], $_SESSION['user_id']]);
     
-    // Insérer la nouvelle demande avec la foreign key
-    $stmt = $conn->prepare("INSERT INTO demandes_camion (user_id, nom_camion, numero_permis, emplacement, menu, jours, etat) VALUES (?, ?, ?, ?, ?, ?, 'en attente')");
+    // Insérer la nouvelle demande avec latitude/longitude
+    $stmt = $conn->prepare("INSERT INTO demandes_camion (user_id, nom_camion, numero_permis, emplacement, latitude, longitude, menu, jours, etat) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'en attente')");
     $stmt->execute([
         $_SESSION['user_id'],
         $data['nom_camion'],
         $data['numero_permis'],
         $data['emplacement'],
+        isset($data['latitude']) ? $data['latitude'] : null,
+        isset($data['longitude']) ? $data['longitude'] : null,
         $data['menu'],
         implode(',', $data['jours'])
     ]);

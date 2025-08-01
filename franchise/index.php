@@ -1,3 +1,7 @@
+<?php
+require_once '../includes/auth.php';
+require_franchise_validated(); 
+?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -83,10 +87,10 @@
     <div class="dashboard-layout">
         <nav class="sidebar">
             <h2>Mon espace</h2>
-            <a href="index.html" class="active">Tableau de bord</a>
-            <a href="ventes.html">Mes ventes</a>
-            <a href="commandes.html">Commandes de stock</a>
-            <a href="compte.html">Mon compte</a>
+            <a href="index.php" class="active">Tableau de bord</a>
+            <a href="ventes.php">Mes ventes</a>
+            <a href="commandes.php">Commandes de stock</a>
+            <a href="compte.php">Mon compte</a>
             <form action="../api/users/logout.php" method="post" style="margin-top:auto;">
                 <button type="submit" class="logout-btn" style="width:100%;">Déconnexion</button>
             </form>
@@ -138,14 +142,14 @@
             <div class="section-card">
                 <section id="ventes">
                     <h2>Mes ventes</h2>
-                    <a href="ventes.html" class="btn">Voir l’historique des ventes</a>
+                    <a href="ventes.php" class="btn">Voir l’historique des ventes</a>
                 </section>
             </div>
 
             <div class="section-card">
                 <section id="commandes">
                     <h2>Commandes de stock</h2>
-                    <a href="commandes.html" class="btn">Gérer mes commandes</a>
+                    <a href="commandes.php" class="btn">Gérer mes commandes</a>
                 </section>
             </div>
         </main>
@@ -179,13 +183,20 @@ document.addEventListener('DOMContentLoaded', async function() {
     if(form) {
         form.onsubmit = async function(e) {
             e.preventDefault();
+            
+            // Géocode l'emplacement
+            const geoResult = await geocodeAddress(form.emplacement.value);
+            
             const data = {
                 nom_camion: form.nom_camion.value,
                 numero_permis: form.numero_permis.value,
                 emplacement: form.emplacement.value,
+                latitude: geoResult.success ? geoResult.latitude : null,
+                longitude: geoResult.success ? geoResult.longitude : null,
                 menu: form.menu.value,
                 jours: Array.from(form.querySelectorAll('input[name="jours[]"]:checked')).map(cb => cb.value)
             };
+            
             const res = await fetch('../api/camions/demande.php', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
@@ -203,6 +214,26 @@ document.addEventListener('DOMContentLoaded', async function() {
         };
     }
 });
+
+// Fonction pour convertir une adresse en coordonnées
+async function geocodeAddress(address) {
+    try {
+        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`);
+        const data = await response.json();
+        
+        if (data.length > 0) {
+            return {
+                latitude: parseFloat(data[0].lat),
+                longitude: parseFloat(data[0].lon),
+                success: true
+            };
+        } else {
+            return { success: false, error: 'Adresse non trouvée' };
+        }
+    } catch (error) {
+        return { success: false, error: 'Erreur de géocodage' };
+    }
+}
 
 // Affiche le bloc "demande en attente"
 function afficherDemandeEnAttente(data) {

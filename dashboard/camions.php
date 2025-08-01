@@ -1,3 +1,7 @@
+<?php
+require_once '../includes/auth.php';
+require_role('admin');
+?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -78,11 +82,11 @@
     <div class="dashboard-layout">
         <nav class="sidebar">
             <h2>Admin</h2>
-            <a href="index.html">Tableau de bord</a>
-            <a href="franchisés.html">Gérer les franchisés</a>
-            <a href="camions.html" class="active">Gérer les camions</a>
-            <a href="ventes.html">Voir les ventes</a>
-            <a href="commandes.html">Voir les commandes</a>
+            <a href="index.php">Tableau de bord</a>
+            <a href="franchisés.php">Gérer les franchisés</a>
+            <a href="camions.php" class="active">Gérer les camions</a>
+            <a href="ventes.php">Voir les ventes</a>
+            <a href="commandes.php">Voir les commandes</a>
             <form action="../api/users/logout.php" method="post" style="margin-top:auto;">
                 <button type="submit" class="logout-btn" style="width:100%;">Déconnexion</button>
             </form>

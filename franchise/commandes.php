@@ -1,3 +1,7 @@
+<?php
+require_once '../includes/auth.php';
+require_franchise_validated(); 
+?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -83,10 +87,10 @@
     <div class="dashboard-layout">
         <nav class="sidebar">
             <h2>Mon espace</h2>
-            <a href="index.html">Tableau de bord</a>
-            <a href="ventes.html">Mes ventes</a>
-            <a href="commandes.html" class="active">Commandes de stock</a>
-            <a href="compte.html">Mon compte</a>
+            <a href="index.php">Tableau de bord</a>
+            <a href="ventes.php">Mes ventes</a>
+            <a href="commandes.php" class="active">Commandes de stock</a>
+            <a href="compte.php">Mon compte</a>
             <form action="../api/users/logout.php" method="post" style="margin-top:auto;">
                 <button type="submit" class="logout-btn" style="width:100%;">Déconnexion</button>
             </form>
@@ -101,4 +105,4 @@
         </main>
     </div>
 </body>
-                             
+</html>

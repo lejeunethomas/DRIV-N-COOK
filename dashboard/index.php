@@ -1,4 +1,7 @@
-
+<?php
+require_once '../includes/auth.php';
+require_role('admin');
+?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -126,11 +129,11 @@
     <div class="dashboard-layout">
         <nav class="sidebar">
             <h2>Admin</h2>
-            <a href="index.html" class="active">Tableau de bord</a>
-            <a href="franchisés.html">Gérer les franchisés</a>
-            <a href="camions.html">Gérer les camions</a>
-            <a href="ventes.html">Voir les ventes</a>
-            <a href="commandes.html">Voir les commandes</a>
+            <a href="index.php" class="active">Tableau de bord</a>
+            <a href="franchisés.php">Gérer les franchisés</a>
+            <a href="camions.php">Gérer les camions</a>
+            <a href="ventes.php">Voir les ventes</a>
+            <a href="commandes.php">Voir les commandes</a>
             <form action="../api/users/logout.php" method="post" style="margin-top:auto;">
                 <button type="submit" class="logout-btn" style="width:100%;">Déconnexion</button>
             </form>
@@ -157,10 +160,10 @@
                 </div>
             </div>
             <div class="dashboard-links">
-                <a href="franchisés.html" class="btn">Gérer les franchisés</a>
-                <a href="camions.html" class="btn">Gérer les camions</a>
-                <a href="ventes.html" class="btn">Voir les ventes</a>
-                <a href="commandes.html" class="btn">Voir les commandes</a>
+                <a href="franchisés.php" class="btn">Gérer les franchisés</a>
+                <a href="camions.php" class="btn">Gérer les camions</a>
+                <a href="ventes.php" class="btn">Voir les ventes</a>
+                <a href="commandes.php" class="btn">Voir les commandes</a>
             </div>
         </main>
     </div>
