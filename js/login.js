@@ -12,24 +12,29 @@ document.querySelector('#login-form form').onsubmit = async function(e) {
             body: JSON.stringify({ email, password })
         });
         const data = await res.json();
-        console.log('Réponse API:', data); // DEBUG
+        console.log('Réponse API complète:', data); // DEBUG
 
         if (data.success) {
-            // Connexion réussie - redirection selon le rôle et le statut
+            console.log('Role détecté:', data.role);
+            console.log('Statut détecté:', data.statut);
+            
             alert.style.display = 'block';
             alert.className = 'alert alert-success';
             alert.textContent = data.message;
             
             if (data.role === 'admin') {
+                console.log('Redirection admin vers dashboard/index.php');
                 setTimeout(() => window.location.href = 'dashboard/index.php', 1000);
             } else if (data.role === 'franchise') {
-                // VOICI LE PROBLÈME : vous vérifiez le statut mais dans success au lieu d'échec
                 if (data.statut === 'en_attente') {
+                    console.log('Redirection franchisé en attente vers attente.html');
                     setTimeout(() => window.location.href = 'franchise/attente.html', 1500);
                 } else {
+                    console.log('Redirection franchisé validé vers index.php');
                     setTimeout(() => window.location.href = 'franchise/index.php', 1000);
                 }
             } else if (data.role === 'client') {
+                console.log('Redirection client vers index.html');
                 setTimeout(() => window.location.href = 'index.html', 1000);
             }
         } else {
