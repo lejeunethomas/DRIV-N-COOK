@@ -1,5 +1,4 @@
 <?php
-// filepath: /workspaces/DRIV-N-COOK/api/camions/demande.php
 require_once '../../includes/db.php';
 session_start();
 header('Content-Type: application/json');
@@ -18,7 +17,6 @@ if (!$data || empty($data['nom_camion']) || empty($data['numero_permis']) || emp
 try {
     $conn = Database::getInstance()->getConnection();
     
-    // Vérifier si l'utilisateur n'a pas déjà une demande en attente
     $stmt = $conn->prepare("SELECT id FROM demandes_camion WHERE user_id = ? AND etat = 'en attente'");
     $stmt->execute([$_SESSION['user_id']]);
     if ($stmt->fetch()) {
@@ -26,7 +24,6 @@ try {
         exit;
     }
     
-    // Vérifier si le numéro de permis est déjà utilisé par un autre utilisateur
     $stmt = $conn->prepare("SELECT id FROM users WHERE numero_permis = ? AND id != ?");
     $stmt->execute([$data['numero_permis'], $_SESSION['user_id']]);
     if ($stmt->fetch()) {
@@ -34,11 +31,9 @@ try {
         exit;
     }
     
-    // Mettre à jour le numéro de permis dans le profil utilisateur
     $stmt = $conn->prepare("UPDATE users SET numero_permis = ? WHERE id = ?");
     $stmt->execute([$data['numero_permis'], $_SESSION['user_id']]);
     
-    // Insérer la nouvelle demande avec latitude/longitude
     $stmt = $conn->prepare("INSERT INTO demandes_camion (user_id, nom_camion, numero_permis, emplacement, latitude, longitude, menu, jours, etat) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'en attente')");
     $stmt->execute([
         $_SESSION['user_id'],

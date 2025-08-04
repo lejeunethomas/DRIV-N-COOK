@@ -1,15 +1,12 @@
 <?php
-// Gestion des erreurs pour PHP 8.3
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-// Headers CORS pour éviter les problèmes
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST, GET, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');
 header('Content-Type: application/json');
 
-// Gérer les requêtes OPTIONS pour CORS
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit(0);
 }
@@ -38,14 +35,12 @@ try {
         exit;
     }
     
-    // Démarrer la session
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
     }
     
     $conn = Database::getInstance()->getConnection();
     
-    // Vérifier d'abord dans clients (admin + clients)
     $stmt = $conn->prepare("SELECT id, nom, mot_de_passe, role FROM clients WHERE email = ?");
     $stmt->execute([$email]);
     $client = $stmt->fetch();
@@ -58,7 +53,6 @@ try {
         exit;
     }
     
-    // Vérifier ensuite dans users (franchisés)
     $stmt = $conn->prepare("SELECT id, nom, mot_de_passe, role, statut FROM users WHERE email = ?");
     $stmt->execute([$email]);
     $user = $stmt->fetch();

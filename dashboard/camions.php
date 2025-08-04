@@ -85,6 +85,7 @@ require_role('admin');
             <a href="index.php">Tableau de bord</a>
             <a href="franchisés.php">Gérer les franchisés</a>
             <a href="camions.php" class="active">Gérer les camions</a>
+            <a href="produits.php">Gérer les produits</a>
             <a href="ventes.php">Voir les ventes</a>
             <a href="commandes.php">Voir les commandes</a>
             <form action="../api/users/logout.php" method="post" style="margin-top:auto;">
@@ -116,7 +117,6 @@ require_role('admin');
                         </tr>
                     </thead>
                     <tbody id="liste-camions">
-                        <!-- Rempli dynamiquement via JS -->
                     </tbody>
                 </table>
             </div>
@@ -136,14 +136,12 @@ require_role('admin');
                         </tr>
                     </thead>
                     <tbody id="liste-demandes-camion">
-                        <!-- Rempli dynamiquement via JS -->
                     </tbody>
                 </table>
             </div>
         </main>
     </div>
     <script>
-    // Gestion des onglets
     function switchTab(tab) {
         document.getElementById('tab-camions').style.display = tab === 'camions' ? '' : 'none';
         document.getElementById('tab-demandes').style.display = tab === 'demandes' ? '' : 'none';
@@ -151,9 +149,7 @@ require_role('admin');
         document.getElementById('tab-demandes-btn').classList.toggle('active', tab === 'demandes');
     }
 
-    // Remplissage dynamique
     document.addEventListener('DOMContentLoaded', async function() {
-        // 1. Charger les demandes de camions
         const demandesRes = await fetch('../api/camions/demandes.php');
         const demandes = await demandesRes.json();
         document.getElementById('badge-demandes').textContent = demandes.length;
@@ -177,16 +173,12 @@ require_role('admin');
             `;
         });
         
-        // 2. Charger les camions
         const camionsRes = await fetch('../api/camions/list.php');
         let camions = await camionsRes.json();
 
-        // Tri : urgences/maintenance/demande en haut, puis alphabétique
         camions.sort((a, b) => {
-            // Priorité à ceux avec demande maintenance ou urgence
             if ((b.demande_maintenance ? 1 : 0) - (a.demande_maintenance ? 1 : 0) !== 0)
                 return (b.demande_maintenance ? 1 : 0) - (a.demande_maintenance ? 1 : 0);
-            // Sinon tri alphabétique sur le nom du franchisé
             return a.franchise_nom.localeCompare(b.franchise_nom);
         });
 
@@ -225,7 +217,6 @@ require_role('admin');
         });
     });
 
-    // Accordion/dépliage
     function toggleDetails(row) {
         const next = row.nextElementSibling;
         if (next && next.classList.contains('accordion-details')) {
@@ -233,13 +224,10 @@ require_role('admin');
         }
     }
 
-    // Fonctions à implémenter pour traiter les demandes
     function validerDemande(id) {
-        // Appel API pour valider la demande, puis reload la page/tableau
         alert("Valider la demande #" + id);
     }
     function refuserDemande(id) {
-        // Appel API pour refuser la demande, puis reload la page/tableau
         alert("Refuser la demande #" + id);
     }
     </script>

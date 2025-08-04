@@ -202,7 +202,6 @@ require_franchise_validated();
             <div class="section-card">
                 <h2>Informations personnelles</h2>
                 
-                <!-- Mode consultation -->
                 <div id="view-mode">
                     <div class="profile-section">
                         <div class="profile-field">
@@ -240,7 +239,6 @@ require_franchise_validated();
                     </div>
                 </div>
 
-                <!-- Mode édition -->
                 <div id="edit-mode" class="edit-mode">
                     <form id="profile-form">
                         <div class="profile-section">
@@ -300,7 +298,6 @@ require_franchise_validated();
     <script>
         let userProfile = null;
 
-        // Charger le profil utilisateur
         async function loadProfile() {
             try {
                 const response = await fetch('../api/users/profile.php');
@@ -319,7 +316,6 @@ require_franchise_validated();
             }
         }
 
-        // Afficher les données du profil
         function displayProfile(profile) {
             document.getElementById('view-nom').textContent = profile.nom || '-';
             document.getElementById('view-prenom').textContent = profile.prenom || '-';
@@ -331,13 +327,11 @@ require_franchise_validated();
             document.getElementById('view-date').textContent = profile.date_inscription ? new Date(profile.date_inscription).toLocaleDateString('fr-FR') : '-';
         }
 
-        // Activer le mode édition
         function toggleEditMode() {
             document.getElementById('view-mode').style.display = 'none';
             document.getElementById('edit-mode').style.display = 'block';
             document.getElementById('edit-btn').style.display = 'none';
             
-            // Pré-remplir les champs
             if (userProfile) {
                 document.getElementById('edit-nom').value = userProfile.nom || '';
                 document.getElementById('edit-prenom').value = userProfile.prenom || '';
@@ -348,14 +342,12 @@ require_franchise_validated();
             }
         }
 
-        // Annuler l'édition
         function cancelEdit() {
             document.getElementById('view-mode').style.display = 'block';
             document.getElementById('edit-mode').style.display = 'none';
             document.getElementById('edit-btn').style.display = 'block';
         }
 
-        // Sauvegarder les modifications
         async function saveProfile(formData) {
             try {
                 const response = await fetch('../api/users/profile.php', {
@@ -382,7 +374,6 @@ require_franchise_validated();
             }
         }
 
-        // Afficher une alerte
         function showAlert(message, type) {
             const alertContainer = document.getElementById('alert-container');
             const alertClass = type === 'success' ? 'alert-success' : 'alert-error';
@@ -393,25 +384,18 @@ require_franchise_validated();
                 </div>
             `;
             
-            // Masquer l'alerte après 5 secondes
             setTimeout(() => {
                 alertContainer.innerHTML = '';
             }, 5000);
         }
 
-        // Charger les statistiques
         async function loadStats() {
             try {
-                // Ici vous pouvez implémenter les appels API pour récupérer les statistiques
-                // document.getElementById('stat-camions').textContent = '1';
-                // document.getElementById('stat-ventes').textContent = '1250€';
-                // document.getElementById('stat-commandes').textContent = '3';
             } catch (error) {
                 console.error('Erreur lors du chargement des statistiques:', error);
             }
         }
 
-        // Gestion du formulaire
         document.getElementById('profile-form').addEventListener('submit', async function(e) {
             e.preventDefault();
             
@@ -427,7 +411,6 @@ require_franchise_validated();
             await saveProfile(formData);
         });
 
-        // Initialisation
         document.addEventListener('DOMContentLoaded', function() {
             loadProfile();
             loadStats();

@@ -34,7 +34,6 @@ if ($role === 'franchise') {
     try {
         $conn = Database::getInstance()->getConnection();
 
-        // Vérifier si l'email existe déjà dans users
         $stmt = $conn->prepare("SELECT id FROM users WHERE email = ?");
         $stmt->execute([$email]);
         if ($stmt->fetch()) {
@@ -42,7 +41,6 @@ if ($role === 'franchise') {
             exit;
         }
         
-        // Insérer dans users 
         $stmt = $conn->prepare("INSERT INTO users (nom, prenom, email, mot_de_passe, telephone, lieu_installation, motivation, role) VALUES (?, ?, ?, ?, ?, ?, ?, 'franchise')");
         $stmt->execute([$nom, $prenom, $email, password_hash($password, PASSWORD_DEFAULT), $telephone, $lieu, $motivation]);
         echo json_encode(['success' => true, 'message' => 'Inscription franchisé réussie']);
@@ -59,7 +57,6 @@ if ($role === 'franchise') {
     try {
         $conn = Database::getInstance()->getConnection();
 
-        // Vérifier si l'email existe déjà dans clients
         $stmt = $conn->prepare("SELECT id FROM clients WHERE email = ?");
         $stmt->execute([$email]);
         if ($stmt->fetch()) {
@@ -67,7 +64,6 @@ if ($role === 'franchise') {
             exit;
         }
         
-        // Insérer dans clients
         $stmt = $conn->prepare("INSERT INTO clients (nom, prenom, email, mot_de_passe) VALUES (?, ?, ?, ?)");
         $stmt->execute([$nom, $prenom, $email, password_hash($password, PASSWORD_DEFAULT)]);
         echo json_encode(['success' => true, 'message' => 'Inscription client réussie']);

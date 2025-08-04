@@ -109,6 +109,7 @@ require_role('admin');
             <a href="index.php">Tableau de bord</a>
             <a href="franchisés.php" class="active">Gérer les franchisés</a>
             <a href="camions.php">Gérer les camions</a>
+            <a href="produits.php">Gérer les produits</a>
             <a href="ventes.php">Voir les ventes</a>
             <a href="commandes.php">Voir les commandes</a>
             <form action="../api/users/logout.php" method="post" style="margin-top:auto;">
@@ -143,7 +144,6 @@ require_role('admin');
                         </tr>
                     </thead>
                     <tbody>
-                        <!-- Rempli par JS -->
                     </tbody>
                 </table>
             </div>
@@ -163,7 +163,6 @@ require_role('admin');
                         </tr>
                     </thead>
                     <tbody id="liste-validation">
-                        <!-- Rempli par JS -->
                     </tbody>
                 </table>
             </div>
@@ -172,7 +171,6 @@ require_role('admin');
 
     <script src="../js/admin/franchisés.js"></script>
     <script>
-        // Fonction pour changer d'onglet
         function switchTab(tab) {
             document.getElementById('tab-franchise').style.display = tab === 'franchise' ? '' : 'none';
             document.getElementById('tab-validation').style.display = tab === 'validation' ? '' : 'none';
@@ -186,7 +184,6 @@ require_role('admin');
             }
         }
 
-        // Charger tous les franchisés
         async function loadFranchises() {
             try {
                 const res = await fetch('../api/users/get_all.php');
@@ -223,7 +220,6 @@ require_role('admin');
             }
         }
 
-        // Charger les comptes en attente
         async function loadValidation() {
             try {
                 const res = await fetch('../api/users/validation.php');
@@ -267,7 +263,7 @@ require_role('admin');
                 if (res.ok) {
                     loadValidation();
                     if (action === 'valider') {
-                        loadFranchises(); // Recharger aussi l'onglet principal
+                        loadFranchises(); 
                     }
                     alert(`Compte ${action === 'valider' ? 'validé' : 'refusé'} avec succès!`);
                 }
@@ -277,7 +273,6 @@ require_role('admin');
             }
         }
 
-        // Modal pour ajouter un franchisé
         function showAddFranchiseModal() {
             const modal = document.createElement('div');
             modal.className = 'modal';
@@ -326,13 +321,12 @@ require_role('admin');
             
             document.body.appendChild(modal);
             
-            // Gérer la soumission du formulaire
             document.getElementById('add-franchise-form').onsubmit = async function(e) {
                 e.preventDefault();
                 const formData = new FormData(e.target);
                 const data = Object.fromEntries(formData);
                 data.role = 'franchise';
-                data.password = 'temp123'; // Mot de passe temporaire
+                data.password = 'temp123';
                 
                 try {
                     const res = await fetch('../api/users/register.php', {
@@ -371,17 +365,14 @@ require_role('admin');
             }
         }
 
-        // Event listeners
         document.getElementById('add-franchise-btn').onclick = showAddFranchiseModal;
 
-        // Fermer le modal en cliquant à l'extérieur
         document.addEventListener('click', function(e) {
             if (e.target.classList.contains('modal')) {
                 closeModal();
             }
         });
 
-        // Charger les données au démarrage
         document.addEventListener('DOMContentLoaded', function() {
             loadFranchises();
             loadValidation();

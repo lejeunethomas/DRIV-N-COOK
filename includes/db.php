@@ -6,9 +6,8 @@ class Database {
     private $connection;
     
     private function __construct() {
-        // Configuration MAMP standard
         $host = 'localhost';
-        $port = '8889'; // Port MySQL de MAMP
+        $port = '8889';
         $dbname = 'drivncook';
         $username = 'root';
         $password = 'root';

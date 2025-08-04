@@ -100,7 +100,6 @@ require_franchise_validated();
             <div class="section-card">
                 <h2>Commandes de stock</h2>
                 <p>Gérez vos commandes de stock ici.</p>
-                <!-- Add your content for stock orders here -->
             </div>
         </main>
     </div>

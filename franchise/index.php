@@ -163,7 +163,6 @@ function fermerFormDemandeCamion() {
     document.getElementById('form-demande-camion').style.display = 'none';
 }
 
-// Charger les données utilisateur pour pré-remplir le formulaire
 document.addEventListener('DOMContentLoaded', async function() {
     try {
         const res = await fetch('../api/users/profile.php');
@@ -178,13 +177,11 @@ document.addEventListener('DOMContentLoaded', async function() {
         console.log('Impossible de charger le profil utilisateur');
     }
     
-    // Gestion de l'envoi du formulaire
     const form = document.getElementById('demandeCamionForm');
     if(form) {
         form.onsubmit = async function(e) {
             e.preventDefault();
             
-            // Géocode l'emplacement
             const geoResult = await geocodeAddress(form.emplacement.value);
             
             const data = {
@@ -204,9 +201,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             });
             const json = await res.json();
             if(json.success) {
-                // Masquer le formulaire
                 document.getElementById('form-demande-camion').style.display = 'none';
-                // Afficher le récapitulatif
                 afficherDemandeEnAttente(data);
             } else {
                 document.getElementById('resultat-demande').textContent = json.message || "Erreur lors de la demande.";
@@ -215,7 +210,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 });
 
-// Fonction pour convertir une adresse en coordonnées
 async function geocodeAddress(address) {
     try {
         const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`);
@@ -235,7 +229,6 @@ async function geocodeAddress(address) {
     }
 }
 
-// Affiche le bloc "demande en attente"
 function afficherDemandeEnAttente(data) {
     const recap = `
         <div class="section-card" style="background:#fffbe7;">

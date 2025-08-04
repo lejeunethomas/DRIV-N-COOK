@@ -15,7 +15,6 @@ $stmt = $conn->query("SELECT id, nom_camion, latitude, longitude FROM camions WH
 $camions = $stmt->fetchAll();
 
 foreach ($camions as &$camion) {
-    // Formule de Haversine
     $theta = $lng - $camion['longitude'];
     $dist = sin(deg2rad($lat)) * sin(deg2rad($camion['latitude'])) +  cos(deg2rad($lat)) * cos(deg2rad($camion['latitude'])) * cos(deg2rad($theta));
     $dist = acos($dist);

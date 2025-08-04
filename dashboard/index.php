@@ -132,6 +132,7 @@ require_role('admin');
             <a href="index.php" class="active">Tableau de bord</a>
             <a href="franchisés.php">Gérer les franchisés</a>
             <a href="camions.php">Gérer les camions</a>
+            <a href="produits.php">Gérer les produits</a>
             <a href="ventes.php">Voir les ventes</a>
             <a href="commandes.php">Voir les commandes</a>
             <form action="../api/users/logout.php" method="post" style="margin-top:auto;">
@@ -162,13 +163,13 @@ require_role('admin');
             <div class="dashboard-links">
                 <a href="franchisés.php" class="btn">Gérer les franchisés</a>
                 <a href="camions.php" class="btn">Gérer les camions</a>
+                <a href="produits.php" class="btn">Gérer les produits</a>
                 <a href="ventes.php" class="btn">Voir les ventes</a>
                 <a href="commandes.php" class="btn">Voir les commandes</a>
             </div>
         </main>
     </div>
     <script>
-        // Récupère les stats via API
         fetch('../api/users/get_all.php')
             .then(res => res.json())
             .then(data => document.getElementById('nb-franchise').textContent = data.length);

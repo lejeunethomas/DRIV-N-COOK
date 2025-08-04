@@ -207,36 +207,34 @@
             registerForm.style.display = '';
         };
 
-        // Affichage dynamique des champs selon le rôle
         registerRole.onchange = function() {
             if (registerRole.value === 'franchise') {
                 franchiseFields.style.display = '';
                 clientFields.style.display = 'none';
-                // Champs franchisé requis
+
                 document.getElementById('register-nom').required = true;
                 document.getElementById('register-prenom').required = true;
                 document.getElementById('register-telephone').required = true;
                 document.getElementById('register-lieu').required = true;
                 document.getElementById('register-motivation').required = true;
-                // Champs client non requis
+                
                 document.getElementById('register-nom-client').required = false;
                 document.getElementById('register-prenom-client').required = false;
             } else {
                 franchiseFields.style.display = 'none';
                 clientFields.style.display = '';
-                // Champs franchisé non requis
+                
                 document.getElementById('register-nom').required = false;
                 document.getElementById('register-prenom').required = false;
                 document.getElementById('register-telephone').required = false;
                 document.getElementById('register-lieu').required = false;
                 document.getElementById('register-motivation').required = false;
-                // Champs client requis
+                
                 document.getElementById('register-nom-client').required = true;
                 document.getElementById('register-prenom-client').required = true;
             }
         };
 
-        // Si on arrive avec ?register=1, ouvrir l'onglet inscription et pré-sélectionner Franchisé
         if (window.location.search.includes('register=1')) {
             tabRegister.click();
             registerRole.value = 'franchise';

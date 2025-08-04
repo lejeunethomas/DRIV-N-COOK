@@ -85,6 +85,7 @@ require_role('admin');
             <a href="index.php">Tableau de bord</a>
             <a href="franchisés.php">Gérer les franchisés</a>
             <a href="camions.php">Gérer les camions</a>
+            <a href="produits.php">Gérer les produits</a>
             <a href="ventes.php">Voir les ventes</a>
             <a href="commandes.php" class="active">Voir les commandes</a>
             <form action="../api/users/logout.php" method="post" style="margin-top:auto;">

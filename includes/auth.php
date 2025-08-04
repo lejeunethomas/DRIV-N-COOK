@@ -1,5 +1,4 @@
 <?php
-// Démarrer la session si elle n'est pas déjà démarrée
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -47,11 +46,9 @@ function require_franchise_validated() {
         exit;
     }
     
-    // Vérifier le statut seulement si défini
     if (isset($_SESSION['statut'])) {
         switch($_SESSION['statut']) {
             case 'en_attente':
-                // Éviter la redirection si on est déjà sur la page d'attente
                 if (!strpos($_SERVER['REQUEST_URI'], 'attente.html')) {
                     header('Location: attente.html');
                     exit;
@@ -61,7 +58,6 @@ function require_franchise_validated() {
                 header('Location: ../login.html?error=compte_refuse');
                 exit;
                 break;
-            // Si 'valide' ou autre, continuer normalement
         }
     }
 }

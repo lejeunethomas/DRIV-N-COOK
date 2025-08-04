@@ -12,7 +12,6 @@ try {
     $conn = Database::getInstance()->getConnection();
     
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-        // Récupérer les informations du profil
         $stmt = $conn->prepare("SELECT nom, prenom, email, telephone, lieu_installation, motivation, numero_permis, date_inscription FROM users WHERE id = ?");
         $stmt->execute([$_SESSION['user_id']]);
         $user = $stmt->fetch();
@@ -23,7 +22,6 @@ try {
             echo json_encode(['success' => false, 'message' => 'Utilisateur non trouvé']);
         }
     } elseif ($_SERVER['REQUEST_METHOD'] === 'PUT') {
-        // Mettre à jour le profil
         $data = json_decode(file_get_contents('php://input'), true);
         
         if (!$data) {
@@ -43,7 +41,6 @@ try {
             exit;
         }
         
-        // Vérifier si le numéro de permis n'est pas déjà utilisé par un autre utilisateur
         if ($numero_permis) {
             $stmt = $conn->prepare("SELECT id FROM users WHERE numero_permis = ? AND id != ?");
             $stmt->execute([$numero_permis, $_SESSION['user_id']]);
@@ -53,7 +50,6 @@ try {
             }
         }
         
-        // Mettre à jour les informations
         $stmt = $conn->prepare("UPDATE users SET nom = ?, prenom = ?, telephone = ?, lieu_installation = ?, motivation = ?, numero_permis = ? WHERE id = ?");
         $stmt->execute([$nom, $prenom, $telephone, $lieu_installation, $motivation, $numero_permis, $_SESSION['user_id']]);
         

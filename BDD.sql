@@ -94,3 +94,18 @@ CREATE TABLE clients (
     points_fidelite INT DEFAULT 0,
     date_inscription DATETIME DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Données exemple pour les produits
+INSERT INTO produits (nom, type, prix_unitaire, obligatoire, entrepot_id) VALUES
+('Pain artisanal', 'aliment', 1.50, 1, 1),
+('Steak haché bio', 'aliment', 3.80, 1, 1),
+('Fromage cheddar', 'aliment', 2.20, 1, 1),
+('Salade iceberg', 'aliment', 1.00, 1, 1),
+('Tomates cerises', 'aliment', 2.50, 1, 1),
+('Coca-Cola 33cl', 'boisson', 2.00, 1, 1),
+('Eau minérale 50cl', 'boisson', 1.00, 1, 1),
+('Jus d\'orange 25cl', 'boisson', 2.50, 1, 1),
+('Burger complet', 'préparé', 8.90, 0, null),
+('Hot-dog artisanal', 'préparé', 6.50, 0, null),
+('Salade César', 'préparé', 7.80, 0, null),
+('Frites maison', 'préparé', 3.50, 0, null);

@@ -12,8 +12,7 @@ document.querySelector('#login-form form').onsubmit = async function(e) {
             body: JSON.stringify({ email, password })
         });
         const data = await res.json();
-        console.log('Réponse API complète:', data); // DEBUG
-
+        console.log('Réponse API complète:', data); 
         if (data.success) {
             console.log('Role détecté:', data.role);
             console.log('Statut détecté:', data.statut);
@@ -38,7 +37,6 @@ document.querySelector('#login-form form').onsubmit = async function(e) {
                 setTimeout(() => window.location.href = 'index.html', 1000);
             }
         } else {
-            // Pour les autres erreurs (mot de passe incorrect, etc.)
             alert.style.display = 'block';
             alert.className = 'alert alert-error';
             alert.textContent = data.message;
