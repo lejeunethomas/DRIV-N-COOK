@@ -11,18 +11,18 @@ require_role('client');
 </head>
 <body>
     <div class="dashboard-layout">
-        <nav class="sidebar.client">
+        <nav class="sidebar client">
             <h2>Mon Tableau de bord</h2>
             <a href="index.php">Accueil</a>
             <a href="mes_commandes.php">Mes commandes</a>
             <a href="compte.php">Mon profil</a>
             <a href="newsletter.php">Newsletter</a>
-            <form action="../api/users/logout.php" method="post">
-                <button type="submit" class="logout-btn">Déconnexion</button>
+            <form action="../api/users/logout.php" method="post" style="margin-top:auto;">
+                <button type="submit" class="logout-btn" style="width:100%;">Déconnexion</button>
             </form>
         </nav>
 
-        <main class="main-content.client">
+        <main class="main-content client">
             <h1>Commander</h1>
 
             <div class="section-card client">

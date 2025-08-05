@@ -5,84 +5,268 @@
     <title>DRIV'N'COOK - Food Truck & Franchise</title>
     <link rel="stylesheet" href="css/style.css">
     <style>
-        /* Styles spécifiques à la page d'accueil */
+        /* Styles spécifiques uniquement pour la page d'accueil */
         body {
-            background: url('https://source.unsplash.com/1600x900/?foodtruck') center/cover no-repeat fixed;
-            color: white;
+            background: white;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
         }
+
         .overlay {
-            background-color: rgba(0, 0, 0, 0.6);
-            height: 100vh;
+            background-color: white;
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             padding: 2rem;
             text-align: center;
+            position: relative;
         }
-        .overlay h1 {
-            font-size: 3rem;
-            margin-bottom: 1rem;
+
+        /* Topbar en haut à droite */
+        .topbar {
+            position: absolute;
+            top: 0;
+            right: 0;
+            padding: 1.5rem 2rem;
+            z-index: 100;
+        }
+
+        .topbar .btn {
+            background-color: #ff5722;
             color: white;
+            border: 2px solid #ff5722;
+            font-weight: bold;
+            box-shadow: 0 4px 12px rgba(255, 87, 34, 0.3);
+            padding: 0.8rem 1.5rem;
+            border-radius: 25px;
+            transition: all 0.3s ease;
         }
+
+        .topbar .btn:hover {
+            background-color: #e64a19;
+            border-color: #e64a19;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 87, 34, 0.4);
+        }
+
+        .overlay h1 {
+            font-size: 3.5rem;
+            margin-bottom: 1rem;
+            color: #333;
+            text-shadow: none;
+            font-weight: 700;
+            letter-spacing: -1px;
+        }
+
         .overlay p {
-            font-size: 1.2rem;
-            margin-bottom: 2rem;
-            max-width: 600px;
+            font-size: 1.3rem;
+            margin-bottom: 3rem;
+            max-width: 700px;
+            text-shadow: none;
+            line-height: 1.6;
+            color: #666;
         }
+
+        /* ✅ ENCADRÉ ROUGE - RAPPEL DE MARQUE */
+        .brand-highlight {
+            background: linear-gradient(135deg, #ff5722, #e64a19);
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 20px rgba(255, 87, 34, 0.3);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            text-transform: lowercase;
+            letter-spacing: 0.5px;
+        }
+
+        .brand-highlight::before {
+            margin-right: 0.5rem;
+            font-size: 1.2rem;
+        }
+
+        /* Utilise les classes du style.css */
         .hero {
             text-align: center;
-            margin: 3rem 0;
+            margin-bottom: 3rem;
+            z-index: 10;
         }
+
         .cta-section {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 2rem;
-            margin: 3rem 0;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 2.5rem;
+            margin-bottom: 3rem;
+            z-index: 10;
         }
+
         .cta-card {
             background: white;
-            padding: 2rem;
-            border-radius: 12px;
+            color: #333;
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            padding: 2.5rem 2rem;
+            width: 340px;
             text-align: center;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            border: 1px solid #e0e0e0; 
         }
+
+        .cta-card:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 16px 40px rgba(0,0,0,0.15);
+            background: white;
+        }
+
         .cta-card h2 {
             color: #ff5722;
-            margin-bottom: 1rem;
+            margin-bottom: 1.2rem;
+            font-size: 1.6rem;
+            font-weight: 600;
+            text-shadow: none;
         }
+
         .cta-card p {
+            margin-bottom: 2rem;
+            line-height: 1.6;
+            color: #555;
+            font-size: 1rem;
+            text-shadow: none;
+        }
+
+        /* Override pour les boutons */
+        .overlay .btn {
+            background-color: #ff5722;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-size: 1rem;
+            font-weight: bold;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+            border: none;
+            box-shadow: 0 4px 15px rgba(255, 87, 34, 0.3);
+        }
+
+        .overlay .btn:hover {
+            background-color: #e64a19;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 87, 34, 0.5);
+        }
+
+        .cta-card .btn {
+            font-size: 1.1rem;
+            padding: 1rem 2.5rem;
+            font-weight: 600;
+        }
+
+        /* Ajout d'émojis stylisés */
+        .cta-card h2::before {
+            font-size: 2rem;
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Footer subtil */
+        .footer {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            text-align: center;
+            padding: 1rem;
+            background: #f5f5f5;
             color: #666;
-            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        /* Responsive - utilise les breakpoints du CSS */
+        @media (max-width: 768px) {
+            .overlay h1 {
+                font-size: 2.5rem;
+            }
+            
+            .overlay p {
+                font-size: 1.1rem;
+                margin-bottom: 2rem;
+            }
+
+            .brand-highlight {
+                font-size: 1rem;
+                padding: 0.8rem 1.5rem;
+                margin-bottom: 1.5rem;
+            }
+            
+            .cta-section { 
+                flex-direction: column; 
+                align-items: center;
+                gap: 1.5rem;
+            }
+            
+            .cta-card {
+                width: 100%;
+                max-width: 320px;
+                padding: 2rem 1.5rem;
+            }
+
+            .topbar {
+                padding: 1rem;
+            }
+
+            .topbar .btn {
+                padding: 0.7rem 1.2rem;
+                font-size: 0.9rem;
+            }
         }
     </style>
 </head>
 <body>
-    <!-- Le reste utilise les classes centralisées -->
-    <div class="topbar">
-        <a href="login.html" class="btn">Connexion</a>
-    </div>
-    <div class="hero">
-        <h1>Bienvenue chez DRIV'N'COOK</h1>
-        <p>Le food truck qui réveille vos papilles et vos ambitions !<br>
-        Découvrez nos saveurs ou lancez votre propre aventure.</p>
-    </div>
-    <div class="container">
+    <div class="overlay">
+        <!-- Bouton connexion en haut à droite -->
+        <div class="topbar">
+            <a href="login.html" class="btn">Connexion</a>
+        </div>
+        
+        <!-- Hero section -->
+        <div class="hero">
+            <h1>Bienvenue chez DRIV'N'COOK</h1>
+
+            <div class="brand-highlight">
+                la franchise food truck qui fait rouler les saveurs
+            </div>
+            
+            <p>Le food truck qui réveille vos papilles et vos ambitions !<br>
+            Découvrez nos saveurs uniques ou lancez votre propre aventure entrepreneuriale.</p>
+        </div>
+        
+        <!-- Cartes d'appel à l'action -->
         <div class="cta-section">
             <div class="cta-card">
                 <h2>Je suis gourmand !</h2>
-                <p>Découvrez nos menus, suivez nos camions et commandez près de chez vous.</p>
-                <a href="login.html" class="btn">Commander</a>
+                <p>Découvrez nos menus délicieux, suivez nos camions en temps réel et commandez vos plats préférés près de chez vous.</p>
+                <a href="login.html" class="btn">Commander maintenant</a>
             </div>
             <div class="cta-card">
                 <h2>Je veux devenir franchisé</h2>
-                <p>Rejoignez l'aventure DRIV'N'COOK et lancez votre propre food truck avec notre accompagnement.</p>
+                <p>Rejoignez l'aventure DRIV'N'COOK et lancez votre propre food truck avec notre accompagnement complet et personnalisé.</p>
                 <a href="login.html?register=1" class="btn">Devenir franchisé</a>
             </div>
         </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            &copy; 2025 DRIV'N'COOK - Tous droits réservés
+        </div>
     </div>
-    <footer style="text-align:center; color:#888; margin:3rem 0 1rem 0;">
-        &copy; 2025 DRIV'N'COOK. Tous droits réservés.
-    </footer>
 </body>
 </html>

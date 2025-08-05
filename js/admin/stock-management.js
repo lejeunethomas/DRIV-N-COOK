@@ -1,4 +1,3 @@
-
 // VARIABLES GLOBALES PARTAGÉES
 
 let globalStockData = {
@@ -35,12 +34,56 @@ async function loadProducts() {
  */
 async function loadEntrepots() {
     try {
-        const response = await fetch('../api/entrepots/list.php');
-        globalStockData.entrepots = await response.json();
-        return globalStockData.entrepots;
+        // Essayer d'obtenir la position de l'utilisateur
+        let userPosition = null;
+        try {
+            userPosition = await getCurrentPosition();
+            showAlert('Position détectée, tri par proximité activé', 'success');
+        } catch (error) {
+            console.log('Géolocalisation non disponible:', error.message);
+            showAlert('Géolocalisation non disponible, affichage par ordre alphabétique', 'info');
+        }
+        
+        // Charger les entrepôts avec ou sans géolocalisation
+        const url = userPosition ? 
+            `../api/entrepots/plus_proches.php?lat=${userPosition.latitude}&lng=${userPosition.longitude}` :
+            '../api/entrepots/list.php';
+            
+        console.log('URL appelée:', url); // Debug
+        const response = await fetch(url);
+        
+        if (!response.ok) {
+            throw new Error(`Erreur HTTP: ${response.status}`);
+        }
+        
+        entrepots = await response.json();
+        console.log('Entrepôts chargés:', entrepots); // Debug
+        
+        displayEntrepots(userPosition !== null);
+        
+        // Remplir le select
+        const select = document.getElementById('entrepot-select');
+        select.innerHTML = '<option value="">Sélectionner un entrepôt</option>';
+        
+        if (Array.isArray(entrepots) && entrepots.length > 0) {
+            entrepots.forEach((entrepot, index) => {
+                const distanceText = entrepot.distance_km ? 
+                    ` (${formatDistance(entrepot.distance_km)})` : '';
+                const recommendationBadge = index === 0 && entrepot.distance_km ? ' 🌟' : '';
+                
+                select.innerHTML += `
+                    <option value="${entrepot.id}">
+                        ${entrepot.nom} - ${entrepot.ville}${distanceText}${recommendationBadge}
+                    </option>
+                `;
+            });
+        } else {
+            showAlert('Aucun entrepôt disponible', 'warning');
+        }
+        
     } catch (error) {
-        console.error('Erreur lors du chargement des entrepôts:', error);
-        return [];
+        console.error('Erreur complète:', error);
+        showAlert('Erreur lors du chargement des entrepôts: ' + error.message, 'error');
     }
 }
 
@@ -185,17 +228,17 @@ function formatQuantity(quantity, unit) {
  */
 function showGlobalStockMatrix() {
     const modal = document.createElement('div');
-    modal.className = 'modal modal-large';
+    modal.className = 'modal modal-extra-large'; // ✅ Changé de 'modal-large' à 'modal-extra-large'
     modal.innerHTML = `
-        <div class="modal-content">
+        <div class="modal-content" style="max-width: 95vw; width: 95vw; max-height: 90vh; overflow-y: auto;">
             <h3>Matrice globale des stocks</h3>
-            <div style="overflow-x: auto;">
-                <table style="min-width: 800px;">
+            <div style="overflow-x: auto; max-height: 70vh;">
+                <table style="min-width: 1200px; font-size: 0.9rem;">
                     <thead>
-                        <tr>
-                            <th style="position: sticky; left: 0; background: #f8f9fa; z-index: 10;">Produit</th>
-                            ${globalStockData.entrepots.map(e => `<th>${e.nom}</th>`).join('')}
-                            <th>Total entrepôts</th>
+                        <tr style="position: sticky; top: 0; background: #f8f9fa; z-index: 10;">
+                            <th style="position: sticky; left: 0; background: #f8f9fa; z-index: 20; min-width: 200px;">Produit</th>
+                            ${globalStockData.entrepots.map(e => `<th style="min-width: 120px; text-align: center;">${e.nom}<br><small style="color: #666;">${e.ville}</small></th>`).join('')}
+                            <th style="text-align: center; min-width: 100px;">Total entrepôts</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -203,25 +246,32 @@ function showGlobalStockMatrix() {
                             const productStocks = globalStockData.stocks.filter(s => s.produit_id == product.id);
                             return `
                                 <tr>
-                                    <td style="position: sticky; left: 0; background: white; font-weight: bold; z-index: 5;">
+                                    <td style="position: sticky; left: 0; background: white; font-weight: bold; z-index: 5; min-width: 200px; border-right: 2px solid #dee2e6;">
                                         ${product.nom}
-                                        ${product.obligatoire ? '<span class="badge badge-obligatoire" style="margin-left: 0.5rem;">Obligatoire</span>' : ''}
+                                        ${product.obligatoire ? '<br><span class="badge badge-obligatoire" style="margin-top: 0.2rem;">Obligatoire</span>' : ''}
+                                        ${product.quantite_minimale > 0 ? `<br><small style="color: #666;">Min: ${product.quantite_minimale}</small>` : ''}
                                     </td>
                                     ${globalStockData.entrepots.map(entrepot => {
                                         const stock = productStocks.find(s => s.entrepot_id == entrepot.id);
                                         if (!stock) {
-                                            return '<td style="text-align: center; color: #ccc;">-</td>';
+                                            return '<td style="text-align: center; color: #ccc; background: #f9f9f9;">-</td>';
                                         }
                                         const badgeClass = stock.quantite == 0 ? 'badge-danger' : 
                                                          stock.alerte == 1 ? 'badge-warning' : 'badge-success';
-                                        return `<td style="text-align: center;">
-                                            <span class="${badgeClass}" style="padding: 0.2rem 0.4rem; border-radius: 8px; font-size: 0.75rem;">
-                                                ${stock.quantite} ${stock.unite}
-                                            </span>
+                                        return `<td style="text-align: center; padding: 0.5rem;">
+                                            <div style="display: flex; flex-direction: column; align-items: center; gap: 0.2rem;">
+                                                <span class="${badgeClass}" style="padding: 0.2rem 0.4rem; border-radius: 6px; font-size: 0.75rem; font-weight: bold; min-width: 60px;">
+                                                    ${stock.quantite} ${stock.unite}
+                                                </span>
+                                                ${stock.quantite <= stock.seuil_alerte ? '<small style="color: #f44336;">⚠️ Seuil</small>' : ''}
+                                            </div>
                                         </td>`;
                                     }).join('')}
-                                    <td style="font-weight: bold; text-align: center;">
-                                        ${productStocks.length}/${globalStockData.entrepots.length}
+                                    <td style="font-weight: bold; text-align: center; background: #f0f8ff;">
+                                        <div style="display: flex; flex-direction: column; align-items: center;">
+                                            <span>${productStocks.length}/${globalStockData.entrepots.length}</span>
+                                            <small style="color: #666;">${Math.round((productStocks.length / globalStockData.entrepots.length) * 100)}%</small>
+                                        </div>
                                     </td>
                                 </tr>
                             `;
@@ -229,9 +279,31 @@ function showGlobalStockMatrix() {
                     </tbody>
                 </table>
             </div>
+            
+            <!-- Légende -->
+            <div style="margin-top: 1rem; padding: 1rem; background: #f8f9fa; border-radius: 6px; display: flex; justify-content: space-around; flex-wrap: wrap; gap: 1rem;">
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <span class="badge-success" style="padding: 0.2rem 0.4rem; border-radius: 6px; font-size: 0.75rem;">Stock OK</span>
+                    <span>Stock normal</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <span class="badge-warning" style="padding: 0.2rem 0.4rem; border-radius: 6px; font-size: 0.75rem;">Alerte</span>
+                    <span>Stock faible</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <span class="badge-danger" style="padding: 0.2rem 0.4rem; border-radius: 6px; font-size: 0.75rem;">Rupture</span>
+                    <span>Stock épuisé</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <span style="color: #ccc;">-</span>
+                    <span>Produit non stocké</span>
+                </div>
+            </div>
+            
             <div class="modal-actions">
                 <button type="button" class="btn-secondary" onclick="closeModal()">Fermer</button>
                 <button type="button" class="btn-primary" onclick="closeModal(); window.location.href='entrepots.php'">Gérer les stocks</button>
+                <button type="button" class="btn-primary" onclick="showStockAlerts()">Voir les alertes</button>
             </div>
         </div>
     `;
@@ -556,9 +628,9 @@ function updateUniteOptions() {
  * Activer/désactiver le champ quantité minimale selon le statut obligatoire
  */
 function toggleQuantiteMinimale() {
-    const obligatoire = document.getElementById('obligatoire');
+    const obligatoire = document.querySelector('#edit-obligatoire, #add-obligatoire');
     const container = document.getElementById('quantite-minimale-container');
-    const input = document.getElementById('quantite_minimale');
+    const input = document.querySelector('#edit-quantite-minimale, #add-quantite-minimale');
     
     if (!obligatoire || !container || !input) return;
     
@@ -568,7 +640,7 @@ function toggleQuantiteMinimale() {
     } else {
         container.style.display = 'none';
         input.required = false;
-        input.value = 0;
+        input.value = '0';
     }
 }
 

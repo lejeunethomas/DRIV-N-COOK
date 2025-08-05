@@ -27,11 +27,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $data['user_id'],
             $data['nom_camion'],
             $immatriculation,
-            $data['etat'] ?? 'en_preparation',
-            $data['emplacement'] ?? '',
-            $data['menu'] ?? '',
-            $data['jours'] ?? '',
-            $data['date_livraison'] ?? date('Y-m-d', strtotime('+14 days'))
+            isset($data['etat']) ? $data['etat'] : 'en_preparation',
+            isset($data['emplacement']) ? $data['emplacement'] : '',
+            isset($data['menu']) ? $data['menu'] : '',
+            isset($data['jours']) ? $data['jours'] : '',
+            isset($data['date_livraison']) ? $data['date_livraison'] : date('Y-m-d', strtotime('+14 days'))
         ]);
         
         echo json_encode([

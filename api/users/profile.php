@@ -1,9 +1,10 @@
 <?php
 require_once '../../includes/db.php';
-session_start();
+require_once '../../includes/auth.php';
+
 header('Content-Type: application/json');
 
-if (!isset($_SESSION['user_id'])) {
+if (!isset($_SESSION['user_id']) || !isset($_SESSION['role'])) {
     echo json_encode(['success' => false, 'message' => 'Non authentifié']);
     exit;
 }
@@ -11,50 +12,32 @@ if (!isset($_SESSION['user_id'])) {
 try {
     $conn = Database::getInstance()->getConnection();
     
-    if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-        $stmt = $conn->prepare("SELECT nom, prenom, email, telephone, lieu_installation, motivation, numero_permis, date_inscription FROM users WHERE id = ?");
-        $stmt->execute([$_SESSION['user_id']]);
-        $user = $stmt->fetch();
-        
-        if ($user) {
-            echo json_encode($user);
-        } else {
-            echo json_encode(['success' => false, 'message' => 'Utilisateur non trouvé']);
-        }
-    } elseif ($_SERVER['REQUEST_METHOD'] === 'PUT') {
-        $data = json_decode(file_get_contents('php://input'), true);
-        
-        if (!$data) {
-            echo json_encode(['success' => false, 'message' => 'Données manquantes']);
-            exit;
-        }
-        
-        $nom = isset($data['nom']) ? trim($data['nom']) : '';
-        $prenom = isset($data['prenom']) ? trim($data['prenom']) : '';
-        $telephone = isset($data['telephone']) ? trim($data['telephone']) : '';
-        $lieu_installation = isset($data['lieu_installation']) ? trim($data['lieu_installation']) : '';
-        $motivation = isset($data['motivation']) ? trim($data['motivation']) : '';
-        $numero_permis = isset($data['numero_permis']) ? trim($data['numero_permis']) : '';
-        
-        if (!$nom || !$prenom || !$telephone || !$lieu_installation || !$motivation) {
-            echo json_encode(['success' => false, 'message' => 'Tous les champs obligatoires doivent être remplis']);
-            exit;
-        }
-        
-        if ($numero_permis) {
-            $stmt = $conn->prepare("SELECT id FROM users WHERE numero_permis = ? AND id != ?");
-            $stmt->execute([$numero_permis, $_SESSION['user_id']]);
-            if ($stmt->fetch()) {
-                echo json_encode(['success' => false, 'message' => 'Ce numéro de permis est déjà utilisé par un autre utilisateur']);
-                exit;
-            }
-        }
-        
-        $stmt = $conn->prepare("UPDATE users SET nom = ?, prenom = ?, telephone = ?, lieu_installation = ?, motivation = ?, numero_permis = ? WHERE id = ?");
-        $stmt->execute([$nom, $prenom, $telephone, $lieu_installation, $motivation, $numero_permis, $_SESSION['user_id']]);
-        
-        echo json_encode(['success' => true, 'message' => 'Profil mis à jour avec succès']);
+    // Déterminer la table selon le rôle
+    if ($_SESSION['role'] === 'client') {
+        $stmt = $conn->prepare("
+            SELECT id, nom, prenom, email, telephone, 
+                   created_at as date_inscription 
+            FROM clients 
+            WHERE id = ?
+        ");
+    } else {
+        $stmt = $conn->prepare("
+            SELECT id, nom, prenom, email, telephone, lieu_installation, 
+                   motivation, statut, date_inscription 
+            FROM users 
+            WHERE id = ?
+        ");
     }
+    
+    $stmt->execute([$_SESSION['user_id']]);
+    $profile = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    if ($profile) {
+        echo json_encode(['success' => true, 'profile' => $profile]);
+    } else {
+        echo json_encode(['success' => false, 'message' => 'Profil non trouvé']);
+    }
+    
 } catch (Exception $e) {
     echo json_encode(['success' => false, 'message' => 'Erreur serveur : ' . $e->getMessage()]);
 }

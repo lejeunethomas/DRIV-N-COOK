@@ -589,18 +589,238 @@ require_admin(); //
             }
         }
 
-        // Fonctions de gestion des stocks individuels (à implémenter selon besoins)
+        // Fonctions de gestion des stocks individuels
         function showAddStockModal() {
-            showAlert('Ajout de stock en cours de développement...', 'info');
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <h3>Ajouter/Modifier un stock</h3>
+                    <form id="stock-form">
+                        <div class="form-group">
+                            <label for="stock-entrepot">Entrepôt *</label>
+                            <select id="stock-entrepot" name="entrepot_id" required>
+                                <option value="">Sélectionner un entrepôt</option>
+                                ${entrepots.map(e => `<option value="${e.id}">${e.nom}</option>`).join('')}
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="stock-produit">Produit *</label>
+                            <select id="stock-produit" name="produit_id" required>
+                                <option value="">Sélectionner un produit</option>
+                                ${produits.map(p => `<option value="${p.id}" data-type="${p.type}">${p.nom} (${p.type})</option>`).join('')}
+                            </select>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="stock-quantite">Quantité *</label>
+                                <input type="number" id="stock-quantite" name="quantite" step="0.001" min="0" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="stock-unite">Unité *</label>
+                                <select id="stock-unite" name="unite" required>
+                                    <option value="kg">Kilogrammes</option>
+                                    <option value="litres">Litres</option>
+                                    <option value="unites">Unités</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="stock-seuil">Seuil d'alerte</label>
+                            <input type="number" id="stock-seuil" name="seuil_alerte" step="0.001" min="0" value="10">
+                            <small style="color: #666;">Quantité en dessous de laquelle une alerte sera déclenchée</small>
+                        </div>
+                        
+                        <div class="modal-actions">
+                            <button type="button" class="btn-secondary" onclick="closeModal()">Annuler</button>
+                            <button type="submit" class="btn-primary">Enregistrer</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Mise à jour automatique de l'unité selon le type de produit
+            document.getElementById('stock-produit').addEventListener('change', function() {
+                const selectedOption = this.selectedOptions[0];
+                const type = selectedOption?.dataset.type;
+                const uniteSelect = document.getElementById('stock-unite');
+                
+                if (type) {
+                    switch(type) {
+                        case 'aliment':
+                            uniteSelect.value = 'kg';
+                            break;
+                        case 'boisson':
+                            uniteSelect.value = 'litres';
+                            break;
+                        case 'préparé':
+                            uniteSelect.value = 'unites';
+                            break;
+                    }
+                }
+            });
+            
+            // Soumission du formulaire
+            document.getElementById('stock-form').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                await submitStock();
+            });
+        }
+
+        async function submitStock() {
+            const formData = new FormData(document.getElementById('stock-form'));
+            const data = Object.fromEntries(formData);
+            
+            try {
+                const response = await fetch('../api/stocks/add.php', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showAlert('Stock enregistré avec succès !', 'success');
+                    closeModal();
+                    await loadAllData();
+                    displayStocks();
+                } else {
+                    showAlert('Erreur: ' + result.message, 'error');
+                }
+                
+            } catch (error) {
+                console.error('Erreur lors de l\'enregistrement:', error);
+                showAlert('Erreur réseau lors de l\'enregistrement', 'error');
+            }
         }
 
         function editStock(entrepotId, produitId) {
-            showAlert('Modification de stock en cours de développement...', 'info');
+            const stock = stocks.find(s => s.entrepot_id == entrepotId && s.produit_id == produitId);
+            if (!stock) {
+                showAlert('Stock non trouvé', 'error');
+                return;
+            }
+            
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <h3>Modifier le stock</h3>
+                    <form id="edit-stock-form">
+                        <div class="form-group">
+                            <label>Entrepôt</label>
+                            <input type="text" value="${getEntrepotName(entrepotId)}" disabled>
+                            <input type="hidden" name="entrepot_id" value="${entrepotId}">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Produit</label>
+                            <input type="text" value="${getProduitName(produitId)}" disabled>
+                            <input type="hidden" name="produit_id" value="${produitId}">
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="edit-quantite">Quantité *</label>
+                                <input type="number" id="edit-quantite" name="quantite" step="0.001" min="0" 
+                                       value="${stock.quantite}" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="edit-unite">Unité *</label>
+                                <select id="edit-unite" name="unite" required>
+                                    <option value="kg" ${stock.unite === 'kg' ? 'selected' : ''}>Kilogrammes</option>
+                                    <option value="litres" ${stock.unite === 'litres' ? 'selected' : ''}>Litres</option>
+                                    <option value="unites" ${stock.unite === 'unites' ? 'selected' : ''}>Unités</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="edit-seuil">Seuil d'alerte</label>
+                            <input type="number" id="edit-seuil" name="seuil_alerte" step="0.001" min="0" 
+                                   value="${stock.seuil_alerte}">
+                        </div>
+                        
+                        <div class="modal-actions">
+                            <button type="button" class="btn-secondary" onclick="closeModal()">Annuler</button>
+                            <button type="submit" class="btn-primary">Modifier</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Soumission du formulaire
+            document.getElementById('edit-stock-form').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                await updateStock();
+            });
         }
 
-        function deleteStock(entrepotId, produitId) {
-            if (!confirm('Supprimer ce stock ?')) return;
-            showAlert('Suppression de stock en cours de développement...', 'info');
+        async function updateStock() {
+            const formData = new FormData(document.getElementById('edit-stock-form'));
+            const data = Object.fromEntries(formData);
+            
+            try {
+                const response = await fetch('../api/stocks/update.php', {
+                    method: 'PUT',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showAlert('Stock modifié avec succès !', 'success');
+                    closeModal();
+                    await loadAllData();
+                    displayStocks();
+                } else {
+                    showAlert('Erreur: ' + result.message, 'error');
+                }
+                
+            } catch (error) {
+                console.error('Erreur lors de la modification:', error);
+                showAlert('Erreur réseau lors de la modification', 'error');
+            }
+        }
+
+        async function deleteStock(entrepotId, produitId) {
+            if (!confirm('Êtes-vous sûr de vouloir supprimer ce stock ?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch('../api/stocks/delete.php', {
+                    method: 'DELETE',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        entrepot_id: entrepotId,
+                        produit_id: produitId
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showAlert('Stock supprimé avec succès !', 'success');
+                    await loadAllData();
+                    displayStocks();
+                } else {
+                    showAlert('Erreur: ' + result.message, 'error');
+                }
+                
+            } catch (error) {
+                console.error('Erreur lors de la suppression:', error);
+                showAlert('Erreur réseau lors de la suppression', 'error');
+            }
         }
     </script>
 </body>

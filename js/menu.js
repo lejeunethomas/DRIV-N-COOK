@@ -232,7 +232,7 @@ function showPlatModal(plat = null) {
  */
 async function loadProduitsForIngredients() {
     try {
-        const response = await fetch('../api/produits/list.php');
+        const response = await fetch('../api/produits/available.php');
         const produits = await response.json();
         
         const selects = document.querySelectorAll('.produit-ingredient');
@@ -262,6 +262,10 @@ async function loadProduitsForIngredients() {
         
     } catch (error) {
         console.error('Erreur lors du chargement des produits:', error);
+        const selects = document.querySelectorAll('.produit-ingredient');
+        selects.forEach(select => {
+            select.innerHTML = '<option value="">Erreur de chargement des produits</option>';
+        });
     }
 }
 
@@ -382,7 +386,7 @@ async function loadPlatIngredients(menuId) {
         
         if (Array.isArray(ingredients) && ingredients.length > 0) {
             const container = document.getElementById('ingredients-techniques');
-            container.innerHTML = ''; // Vider le container
+            container.innerHTML = '';
             
             ingredients.forEach(ingredient => {
                 ajouterIngredient();
@@ -405,8 +409,8 @@ async function loadPlatIngredients(menuId) {
  * Ajouter un nouveau plat
  */
 async function addPlat(data) {
-    try {
-        const response = await fetch('../api/menu/add.php', {
+        try {
+        const response = await fetch('../api/plat/add.php', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(data)
@@ -433,7 +437,7 @@ async function addPlat(data) {
  */
 async function updatePlat(data) {
     try {
-        const response = await fetch('../api/menu/update.php', {
+        const response = await fetch('../api/plat/update.php', {
             method: 'PUT',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(data)
@@ -477,7 +481,7 @@ async function deletePlat(id) {
     }
     
     try {
-        const response = await fetch('../api/menu/delete.php', {
+        const response = await fetch('../api/plat/delete.php', {
             method: 'DELETE',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({id: id})

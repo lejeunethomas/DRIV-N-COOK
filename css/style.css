@@ -59,7 +59,7 @@ a:hover {
 }
 
 .sidebar.client {
-  background: #f1ee04;
+  background: linear-gradient(135deg, #2196f3, #1976d2);
 }
 
 .sidebar h2 {
@@ -67,6 +67,10 @@ a:hover {
   margin-bottom: 2rem;
   font-size: 1.3rem;
   text-align: center;
+}
+
+.sidebar.client h2 {
+  color: white;
 }
 
 .sidebar a {
@@ -80,6 +84,10 @@ a:hover {
   transition: background 0.2s;
 }
 
+.sidebar.client a {
+  color: rgba(255, 255, 255, 0.9);
+}
+
 .sidebar.admin a.active, 
 .sidebar.admin a:hover {
   background: #1565c0;
@@ -88,6 +96,12 @@ a:hover {
 .sidebar.franchise a.active, 
 .sidebar.franchise a:hover {
   background: #e64a19;
+}
+
+.sidebar.client a:hover,
+.sidebar.client a.active {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
 }
 
 .main-content {
@@ -104,7 +118,7 @@ a:hover {
 }
 
 .main-content.client {
-  background: #fff;
+  background: #f5f5f5;
 }
 
 /* =============================================================================
@@ -118,6 +132,13 @@ h1, h2, h3 {
 
 h1.admin, h2.admin, h3.admin {
   color: #1976d2;
+}
+
+h1.client {
+  color: #1976d2;
+  border-bottom: 3px solid #2196f3;
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
 }
 
 /* =============================================================================
@@ -270,6 +291,16 @@ button:hover, .btn:hover {
 
 .logout-btn.franchise:hover {
   background: #e64a19;
+}
+
+.logout-btn.client {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.logout-btn.client:hover {
+  background: rgba(255, 255, 255, 0.3);
 }
 
 .add-btn {
@@ -435,7 +466,45 @@ label {
 }
 
 .modal-content.extra-large {
-  max-width: 90%;
+  max-width: 95vw !important;
+  width: 95vw !important;
+  max-height: 90vh !important;
+  margin: 2.5vh auto !important;
+}
+
+.modal-content table {
+  font-size: 0.85rem;
+}
+
+.modal-content th,
+.modal-content td {
+  padding: 0.4rem 0.6rem;
+}
+
+/* Amélioration du scroll horizontal */
+.modal-content > div:first-of-type {
+  overflow-x: auto;
+  overflow-y: auto;
+  max-height: 70vh;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+}
+
+/* Sticky headers améliorés */
+table thead th {
+  position: sticky;
+  top: 0;
+  background: #f8f9fa !important;
+  z-index: 10;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+table tbody td:first-child {
+  position: sticky;
+  left: 0;
+  background: white !important;
+  z-index: 5;
+  box-shadow: 2px 0 4px rgba(0,0,0,0.1);
 }
 
 .modal h3 {
@@ -707,7 +776,11 @@ table tr:hover {
 }
 
 .section-card.client h2 {
-  color: #f1ee04;
+  color: #1976d2;
+}
+
+.section-card.client {
+  border-left: 4px solid #2196f3;
 }
 
 /* Topbar pour les pages */
@@ -1191,4 +1264,103 @@ hr {
   .stats-grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* =============================================================================
+   BREADCRUMB / FIL D'ARIANE
+============================================================================= */
+
+.breadcrumb {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+    backdrop-filter: blur(10px);
+}
+
+.breadcrumb ol {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    align-items: center;
+}
+
+.breadcrumb li {
+    display: flex;
+    align-items: center;
+}
+
+.breadcrumb a {
+    color: #ff5722;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s;
+}
+
+.breadcrumb a:hover {
+    color: #fff;
+    text-decoration: underline;
+}
+
+.breadcrumb .sep {
+    margin: 0 0.5rem;
+    color: #fff;
+    font-weight: bold;
+}
+
+.breadcrumb li:last-child {
+    color: #fff;
+    font-weight: 500;
+}
+
+/* =============================================================================
+   STYLES SPÉCIFIQUES CLIENT
+============================================================================= */
+
+.sidebar.client {
+    background: linear-gradient(135deg, #2196f3, #1976d2);
+}
+
+.sidebar.client h2 {
+    color: white;
+}
+
+.sidebar.client a {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.sidebar.client a:hover,
+.sidebar.client a.active {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+}
+
+.main-content.client {
+    background: #f5f5f5;
+}
+
+.main-content.client h1.client {
+    color: #1976d2;
+    border-bottom: 3px solid #2196f3;
+    padding-bottom: 1rem;
+    margin-bottom: 2rem;
+}
+
+.section-card.client {
+    border-left: 4px solid #2196f3;
+}
+
+.section-card.client h2 {
+    color: #1976d2;
+}
+
+.logout-btn.client {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.logout-btn.client:hover {
+    background: rgba(255, 255, 255, 0.3);
 }

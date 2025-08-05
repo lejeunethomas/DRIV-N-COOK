@@ -8,6 +8,52 @@ require_franchise_validated();
     <meta charset="UTF-8">
     <title>Commandes de stock - Franchisé</title>
     <link rel="stylesheet" href="../css/style.css">
+    <style>
+        /* Masquer les alertes en position absolue */
+        .stock-alert-overlay,
+        .stock-warning-absolute,
+        .floating-stock-alert {
+            display: none !important;
+        }
+        
+        /* S'assurer que TOUS les badges restent inline */
+        .badge,
+        .badge-stock-faible,
+        .badge-stock-ok,
+        .badge-rupture,
+        .badge-obligatoire,
+        .badge-optionnel {
+            position: static !important;
+            display: inline-block !important;
+            margin: 0 0.25rem 0 0 !important;
+            vertical-align: middle !important;
+        }
+        
+        /* Réinitialiser les positions absolues indésirables */
+        [style*="position: absolute"]:not(.modal):not(.dropdown) {
+            position: static !important;
+        }
+        
+        /* Style spécifique pour les encarts produits */
+        .produit-item {
+            position: relative !important;
+            overflow: visible !important;
+        }
+        
+        .produit-info {
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 0.5rem !important;
+        }
+        
+        .badges-container {
+            display: flex !important;
+            flex-wrap: wrap !important;
+            gap: 0.5rem !important;
+            align-items: center !important;
+            margin-bottom: 0.5rem !important;
+        }
+    </style>
 </head>
 <body>
     <div class="dashboard-layout">
@@ -122,7 +168,7 @@ require_franchise_validated();
                 
                 // Charger les entrepôts avec ou sans géolocalisation
                 const url = userPosition ? 
-                    `../api/entrepots/plus_proche.php?lat=${userPosition.latitude}&lng=${userPosition.longitude}` :
+                    `../api/entrepots/plus_proches.php?lat=${userPosition.latitude}&lng=${userPosition.longitude}` :
                     '../api/entrepots/list.php';
                     
                 const response = await fetch(url);
@@ -245,7 +291,7 @@ require_franchise_validated();
             }
         }
 
-        // Afficher les produits
+        // Afficher les produits - VERSION SIMPLIFIÉE
         function displayProduits() {
             const container = document.getElementById('produits-list');
             container.innerHTML = '';
@@ -253,50 +299,64 @@ require_franchise_validated();
             produits.forEach(produit => {
                 const disponible = produit.quantite > 0;
                 
+                // Badges simples sans styles complexes
                 const stockBadge = produit.quantite == 0 ? 
-                    '<span class="badge badge-rupture">Rupture</span>' :
+                    '<span class="badge" style="background: #f44336; color: white; padding: 0.2rem 0.5rem; border-radius: 12px; font-size: 0.8rem; margin-right: 0.5rem;">Rupture</span>' :
                     produit.quantite <= produit.seuil_alerte ?
-                    '<span class="badge badge-stock-faible">Stock faible</span>' :
-                    '<span class="badge badge-stock-ok">En stock</span>';
+                    '<span class="badge" style="background: #ff9800; color: white; padding: 0.2rem 0.5rem; border-radius: 12px; font-size: 0.8rem; margin-right: 0.5rem;">Stock faible</span>' :
+                    '<span class="badge" style="background: #4caf50; color: white; padding: 0.2rem 0.5rem; border-radius: 12px; font-size: 0.8rem; margin-right: 0.5rem;">En stock</span>';
 
                 const obligatoireBadge = produit.obligatoire ? 
-                    '<span class="badge badge-obligatoire">Obligatoire</span>' :
-                    '<span class="badge badge-optionnel">Optionnel</span>';
+                    '<span class="badge" style="background: #e64a19; color: white; padding: 0.2rem 0.5rem; border-radius: 12px; font-size: 0.8rem; margin-right: 0.5rem;">Obligatoire</span>' :
+                    '<span class="badge" style="background: #666; color: white; padding: 0.2rem 0.5rem; border-radius: 12px; font-size: 0.8rem; margin-right: 0.5rem;">Optionnel</span>';
                     
                 const quantiteMinimaleInfo = produit.obligatoire && produit.quantite_minimale > 0 ?
                     `<small style="color: #ff5722; font-weight: bold;">Quantité minimale: ${produit.quantite_minimale}</small>` : '';
 
                 container.innerHTML += `
-                    <div class="produit-item ${!disponible ? 'indisponible' : ''}" data-produit-id="${produit.id}">
-                        <div class="produit-header">
-                            <span class="produit-nom">${produit.nom}</span>
-                            <span class="produit-prix">${parseFloat(produit.prix_unitaire).toFixed(2)}€</span>
-                        </div>
-                        <div class="produit-info">
-                            <div>
-                                ${obligatoireBadge}
-                                ${stockBadge}
-                                <span style="margin-left: 0.5rem;">${produit.type}</span>
-                                ${produit.quantite ? ` - Stock: ${produit.quantite} ${produit.unite}` : ''}
-                                ${quantiteMinimaleInfo ? `<br>${quantiteMinimaleInfo}` : ''}
-                            </div>
-                            <div>
-                                ${disponible ? `
-                                    <label>Quantité: 
-                                        <input type="number" class="quantite-input" 
-                                               min="${produit.obligatoire && produit.quantite_minimale > 0 ? produit.quantite_minimale : 0}" 
-                                               max="${produit.quantite || 999}" 
-                                               step="1" value="0" 
-                                               data-quantite-minimale="${produit.quantite_minimale || 0}"
-                                               onchange="updateQuantite(${produit.id}, this.value)">
-                                    </label>
-                                ` : '<em>Indisponible</em>'}
-                            </div>
-                        </div>
+                    <div class="produit-item ${!disponible ? 'indisponible' : ''}" data-produit-id="${produit.id}" 
+                         style="border: 1px solid #ddd; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; background: white;">
+                
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                    <span style="font-weight: bold; font-size: 1.1rem; color: #333;">${produit.nom}</span>
+                    <span style="font-weight: bold; color: #e64a19; font-size: 1.1rem;">${parseFloat(produit.prix_unitaire).toFixed(2)}€</span>
+                </div>
+                
+                <div style="margin-bottom: 1rem;">
+                    <div style="margin-bottom: 0.5rem;">
+                        ${obligatoireBadge}
+                        ${stockBadge}
+                        <span style="color: #666; font-size: 0.9rem;">${produit.type}</span>
                     </div>
-                `;
-            });
-        }
+                    
+                    ${produit.quantite ? `
+                        <div style="color: #666; font-size: 0.9rem; margin-bottom: 0.25rem;">
+                            Stock disponible: <strong>${produit.quantite} ${produit.unite}</strong>
+                        </div>
+                    ` : ''}
+                    
+                    ${quantiteMinimaleInfo}
+                </div>
+                
+                <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 0.75rem; border-top: 1px solid #eee;">
+                    <span style="font-weight: 500; color: #555;">Quantité à commander :</span>
+                    ${disponible ? `
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <input type="number" class="quantite-input" 
+                                   style="width: 80px; padding: 0.4rem; border: 1px solid #ddd; border-radius: 4px; text-align: center;"
+                                   min="${produit.obligatoire && produit.quantite_minimale > 0 ? produit.quantite_minimale : 0}" 
+                                   max="${produit.quantite || 999}" 
+                                   step="1" value="0" 
+                                   data-quantite-minimale="${produit.quantite_minimale || 0}"
+                                   onchange="updateQuantite(${produit.id}, this.value)">
+                            <span style="color: #666; font-size: 0.9rem;">${produit.unite || 'unités'}</span>
+                        </div>
+                    ` : '<em style="color: #999; font-style: italic;">Indisponible</em>'}
+                </div>
+            </div>
+        `;
+    });
+}
 
         // Mettre à jour la quantité d'un produit
         function updateQuantite(produitId, quantite) {
@@ -513,6 +573,45 @@ require_franchise_validated();
                 alertContainer.innerHTML = '';
             }, 5000);
         }
+
+        // Fonction pour supprimer les alertes flottantes indésirables
+        function removeFloatingAlerts() {
+            // Supprimer tous les éléments avec position absolute qui ne sont pas des modals
+            const floatingElements = document.querySelectorAll('[style*="position: absolute"], [style*="position:absolute"]');
+            
+            floatingElements.forEach(element => {
+                // Garder les modals et dropdowns légitimes
+                if (!element.classList.contains('modal') && 
+                    !element.classList.contains('dropdown') && 
+                    !element.closest('.modal') && 
+                    !element.closest('.dropdown')) {
+                    
+                    // Vérifier si c'est une alerte de stock
+                    if (element.textContent.includes('stock') || 
+                        element.textContent.includes('Stock') ||
+                        element.classList.contains('stock-alert') ||
+                        element.classList.contains('alert-overlay')) {
+                        element.remove();
+                    }
+                }
+            });
+        }
+
+        // Exécuter la suppression au chargement et après chaque mise à jour
+        document.addEventListener('DOMContentLoaded', function() {
+            loadEntrepots();
+            loadHistorique();
+            
+            // Supprimer les alertes flottantes après un délai
+            setTimeout(removeFloatingAlerts, 500);
+        });
+
+        // Aussi après chaque affichage de produits
+        const originalDisplayProduits = displayProduits;
+        displayProduits = function() {
+            originalDisplayProduits();
+            setTimeout(removeFloatingAlerts, 100);
+        };
 
         // Events
         document.getElementById('entrepot-select').addEventListener('change', function() {

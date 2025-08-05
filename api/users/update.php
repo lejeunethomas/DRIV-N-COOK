@@ -25,9 +25,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
             $data['nom'],
             $data['prenom'], 
             $data['email'],
-            $data['telephone'] ?? null,
-            $data['lieu_installation'] ?? null,
-            $data['statut'] ?? 'en_attente',
+            isset($data['telephone']) ? $data['telephone'] : null,
+            isset($data['lieu_installation']) ? $data['lieu_installation'] : null,
+            isset($data['statut']) ? $data['statut'] : 'en_attente',
             $data['id']
         ]);
         

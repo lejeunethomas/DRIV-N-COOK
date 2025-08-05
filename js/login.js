@@ -14,9 +14,6 @@ document.querySelector('#login-form form').onsubmit = async function(e) {
         const data = await res.json();
         console.log('Réponse API complète:', data); 
         if (data.success) {
-            console.log('Role détecté:', data.role);
-            console.log('Statut détecté:', data.statut);
-            
             alert.style.display = 'block';
             alert.className = 'alert alert-success';
             alert.textContent = data.message;
@@ -33,8 +30,8 @@ document.querySelector('#login-form form').onsubmit = async function(e) {
                     setTimeout(() => window.location.href = 'franchise/index.php', 1000);
                 }
             } else if (data.role === 'client') {
-                console.log('Redirection client vers index.html');
-                setTimeout(() => window.location.href = 'index.html', 1000);
+                console.log('Redirection client vers user/index.php');
+                setTimeout(() => window.location.href = 'user/index.php', 1000);
             }
         } else {
             alert.style.display = 'block';

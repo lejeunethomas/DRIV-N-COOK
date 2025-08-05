@@ -32,13 +32,10 @@ require_admin();
             <!-- Navigation par onglets -->
             <div class="tabs">
                 <button class="tab-button active" data-tab="ventes" onclick="showTab('ventes')">
-                    📊 Toutes les ventes
-                </button>
-                <button class="tab-button" data-tab="stats" onclick="showTab('stats')">
-                    📈 Statistiques
+                    Toutes les ventes
                 </button>
                 <button class="tab-button" data-tab="produits" onclick="showTab('produits')">
-                    🛒 Produits vendus
+                    Produits vendus
                 </button>
             </div>
 
@@ -99,15 +96,6 @@ require_admin();
                     </thead>
                     <tbody></tbody>
                 </table>
-            </div>
-
-            <!-- Onglet Statistiques -->
-            <div id="tab-stats" class="tab-content">
-                <h3>Analyse des ventes</h3>
-                <div id="charts-container">
-                    <!-- Graphiques à implémenter plus tard -->
-                    <p>Graphiques en cours de développement...</p>
-                </div>
             </div>
 
             <!-- Onglet Produits -->

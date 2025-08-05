@@ -38,9 +38,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ");
         $stmt->execute([
             $_SESSION['user_id'],
-            $data['camion_id'] ?? null,
+            isset($data['camion_id']) ? $data['camion_id'] : null,
             $data['montant'],
-            $data['type_paiement'] ?? 'especes'
+            isset($data['type_paiement']) ? $data['type_paiement'] : 'especes'
         ]);
         
         $venteId = $conn->lastInsertId();

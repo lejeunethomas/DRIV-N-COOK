@@ -9,6 +9,37 @@ require_admin();
     <title>Gestion des produits - Admin</title>
     <link rel="stylesheet" href="../css/style.css">
     <script src="../js/admin/stock-management.js"></script>
+    
+    <!-- AJOUTEZ CE CSS -->
+    <style>
+        /* Forcer les badges à rester dans leur cellule */
+        td .badge {
+            position: static !important;
+            display: inline-block !important;
+            margin: 0 !important;
+        }
+        
+        /* Style spécifique pour les badges cliquables */
+        .badge.badge-warning {
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .badge.badge-warning:hover {
+            background-color: #f57c00 !important;
+        }
+        
+        /* Assurer que les cellules du tableau contiennent leurs éléments */
+        td {
+            position: relative;
+            overflow: visible;
+        }
+        
+        /* Style pour les cellules de réduction */
+        td[style*="text-align: center"] {
+            vertical-align: middle;
+        }
+    </style>
 </head>
 <body>
     <div class="dashboard-layout">
@@ -231,7 +262,7 @@ require_admin();
                     </div>
                     ${reduction > 0 ? `
                         <div style="margin-top: 0.5rem; text-align: center; color: #4caf50; font-weight: 500;">
-                            ✅ Les clients fidèles économiseront ${economie.toFixed(2)}€ sur ce produit
+                            Les clients fidèles économiseront ${economie.toFixed(2)}€ sur ce produit
                         </div>
                     ` : `
                         <div style="margin-top: 0.5rem; text-align: center; color: #666;">
@@ -267,9 +298,9 @@ require_admin();
                 const result = await response.json();
                 
                 if (result.success) {
-                    showAlert(`✅ ${result.message}`, 'success');
+                    showAlert(`${result.message}`, 'success');
                     closeModal();
-                    await loadAllData(); // Recharger les données
+                    await loadAllData();
                 } else {
                     showAlert('Erreur : ' + result.message, 'error');
                 }
@@ -338,6 +369,238 @@ require_admin();
             } catch (error) {
                 console.error('Erreur lors du chargement de l\'historique:', error);
                 showAlert('Erreur lors du chargement de l\'historique', 'error');
+            }
+        }
+
+        // Fonction pour éditer un produit
+        async function editProduct(productId) {
+            const product = products.find(p => p.id == productId);
+            if (!product) return;
+            
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <h3>Modifier le produit</h3>
+                    
+                    <form id="edit-product-form">
+                        <div class="form-group">
+                            <label for="edit-nom">Nom du produit *</label>
+                            <input type="text" id="edit-nom" name="nom" required 
+                                   value="${product.nom}" placeholder="Ex: Burger Classic">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="edit-type">Type *</label>
+                            <select id="edit-type" name="type" required onchange="updateUniteOptions()">
+                                <option value="aliment" ${product.type === 'aliment' ? 'selected' : ''}>Aliment</option>
+                                <option value="boisson" ${product.type === 'boisson' ? 'selected' : ''}>Boisson</option>
+                                <option value="accompagnement" ${product.type === 'accompagnement' ? 'selected' : ''}>Accompagnement</option>
+                                <option value="dessert" ${product.type === 'dessert' ? 'selected' : ''}>Dessert</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="edit-prix">Prix unitaire (€) *</label>
+                            <input type="number" id="edit-prix" name="prix_unitaire" step="0.01" min="0" required
+                                   value="${product.prix_unitaire}" placeholder="Ex: 8.50">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" id="edit-obligatoire" name="obligatoire" 
+                                       ${product.obligatoire ? 'checked' : ''} onchange="toggleQuantiteMinimale()">
+                                Produit obligatoire (partenaire)
+                            </label>
+                            <small style="color: #666;">Les produits obligatoires doivent être disponibles dans tous les camions</small>
+                        </div>
+                        
+                        <div class="form-group" id="quantite-minimale-container" ${!product.obligatoire ? 'style="display: none;"' : ''}>
+                            <label for="edit-quantite-minimale">Quantité minimale imposée</label>
+                            <input type="number" id="edit-quantite-minimale" name="quantite_minimale" 
+                                   min="0" step="1" value="${product.quantite_minimale || 0}"
+                                   placeholder="Ex: 10">
+                            <small style="color: #666;">Quantité minimale que chaque camion doit avoir en stock</small>
+                        </div>
+                        
+                        <div class="modal-actions">
+                            <button type="button" class="btn-secondary" onclick="closeModal()">Annuler</button>
+                            <button type="submit" class="btn-primary">Modifier le produit</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Gérer la soumission
+            document.getElementById('edit-product-form').onsubmit = async function(e) {
+                e.preventDefault();
+                const formData = new FormData(e.target);
+                const data = Object.fromEntries(formData);
+                data.id = productId;
+                data.obligatoire = document.getElementById('edit-obligatoire').checked ? 1 : 0;
+                
+                await updateProduct(data);
+            };
+        }
+
+        // Fonction pour mettre à jour un produit
+        async function updateProduct(data) {
+            try {
+                // Si le produit n'est plus obligatoire, forcer quantite_minimale à 0
+                if (data.obligatoire == 0) {
+                    data.quantite_minimale = 0;
+                }
+                
+                const response = await fetch('../api/produits/update.php', {
+                    method: 'PUT',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showAlert('Produit modifié avec succès', 'success');
+                    closeModal();
+                    await loadAllData();
+                } else {
+                    showAlert('Erreur : ' + result.message, 'error');
+                }
+                
+            } catch (error) {
+                console.error('Erreur lors de la modification:', error);
+                showAlert('Erreur réseau lors de la modification', 'error');
+            }
+        }
+
+        // Fonction pour supprimer un produit
+        async function deleteProduct(productId) {
+            const product = products.find(p => p.id == productId);
+            if (!product) return;
+            
+            if (!confirm(`Êtes-vous sûr de vouloir supprimer le produit "${product.nom}" ?\n\nCette action est irréversible et supprimera aussi tous les stocks associés.`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch('../api/produits/delete.php', {
+                    method: 'DELETE',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ id: productId })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showAlert('Produit supprimé avec succès', 'success');
+                    await loadAllData();
+                } else {
+                    showAlert('Erreur : ' + result.message, 'error');
+                }
+                
+            } catch (error) {
+                console.error('Erreur lors de la suppression:', error);
+                showAlert('Erreur réseau lors de la suppression', 'error');
+            }
+        }
+
+        // Fonction pour ajouter un nouveau produit
+        function showAddProductModal() {
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <h3>Ajouter un nouveau produit</h3>
+                    
+                    <form id="add-product-form">
+                        <div class="form-group">
+                            <label for="add-nom">Nom du produit *</label>
+                            <input type="text" id="add-nom" name="nom" required 
+                                   placeholder="Ex: Burger Classic">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="add-type">Type *</label>
+                            <select id="add-type" name="type" required onchange="updateUniteOptions()">
+                                <option value="">Sélectionner un type</option>
+                                <option value="aliment">Aliment</option>
+                                <option value="boisson">Boisson</option>
+                                <option value="accompagnement">Accompagnement</option>
+                                <option value="dessert">Dessert</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="add-prix">Prix unitaire (€) *</label>
+                            <input type="number" id="add-prix" name="prix_unitaire" step="0.01" min="0" required
+                                   placeholder="Ex: 8.50">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" id="add-obligatoire" name="obligatoire" onchange="toggleQuantiteMinimale()">
+                                Produit obligatoire (partenaire)
+                            </label>
+                            <small style="color: #666;">Les produits obligatoires doivent être disponibles dans tous les camions</small>
+                        </div>
+                        
+                        <div class="form-group" id="quantite-minimale-container" style="display: none;">
+                            <label for="add-quantite-minimale">Quantité minimale imposée</label>
+                            <input type="number" id="add-quantite-minimale" name="quantite_minimale" 
+                                   min="0" step="1" value="0" placeholder="Ex: 10">
+                            <small style="color: #666;">Quantité minimale que chaque camion doit avoir en stock</small>
+                        </div>
+                        
+                        <div class="modal-actions">
+                            <button type="button" class="btn-secondary" onclick="closeModal()">Annuler</button>
+                            <button type="submit" class="btn-primary">Ajouter le produit</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Gérer la soumission
+            document.getElementById('add-product-form').onsubmit = async function(e) {
+                e.preventDefault();
+                const formData = new FormData(e.target);
+                const data = Object.fromEntries(formData);
+                data.obligatoire = document.getElementById('add-obligatoire').checked ? 1 : 0;
+                
+                await addProduct(data);
+            };
+        }
+
+        // Fonction pour ajouter un produit
+        async function addProduct(data) {
+            try {
+                // Si le produit n'est pas obligatoire, forcer quantite_minimale à 0
+                if (data.obligatoire == 0) {
+                    data.quantite_minimale = 0;
+                }
+                
+                const response = await fetch('../api/produits/add.php', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showAlert('Produit ajouté avec succès', 'success');
+                    closeModal();
+                    await loadAllData();
+                } else {
+                    showAlert('Erreur : ' + result.message, 'error');
+                }
+                
+            } catch (error) {
+                console.error('Erreur lors de l\'ajout:', error);
+                showAlert('Erreur réseau lors de l\'ajout', 'error');
             }
         }
     </script>

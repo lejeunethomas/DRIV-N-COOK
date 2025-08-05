@@ -56,7 +56,7 @@ require_franchise_validated();
                         <p style="color: #666; margin: 0;">Gérez vos plats, boissons et accompagnements</p>
                     </div>
                     <button class="add-btn franchise" id="add-plat-btn">
-                        ➕ Ajouter un plat
+                         + Ajouter un plat
                     </button>
                 </div>
 
