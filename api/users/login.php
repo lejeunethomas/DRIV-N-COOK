@@ -41,6 +41,7 @@ try {
     
     $conn = Database::getInstance()->getConnection();
     
+    // D'abord vérifier dans la table clients (admin)
     $stmt = $conn->prepare("SELECT id, nom, mot_de_passe, role FROM clients WHERE email = ?");
     $stmt->execute([$email]);
     $client = $stmt->fetch();
@@ -49,10 +50,16 @@ try {
         $_SESSION['user_id'] = $client['id'];
         $_SESSION['role'] = $client['role'];
         $_SESSION['nom'] = $client['nom'];
-        echo json_encode(['success' => true, 'role' => $client['role'], 'message' => 'Connexion réussie']);
+        $_SESSION['table'] = 'clients';
+        echo json_encode([
+            'success' => true, 
+            'role' => $client['role'], 
+            'message' => 'Connexion réussie'
+        ]);
         exit;
     }
     
+    // Ensuite vérifier dans la table users (franchisés)
     $stmt = $conn->prepare("SELECT id, nom, mot_de_passe, role, statut FROM users WHERE email = ?");
     $stmt->execute([$email]);
     $user = $stmt->fetch();
@@ -61,7 +68,8 @@ try {
         $_SESSION['user_id'] = $user['id'];
         $_SESSION['role'] = $user['role'];
         $_SESSION['nom'] = $user['nom'];
-        $_SESSION['statut'] = $user['statut']; 
+        $_SESSION['statut'] = $user['statut'];
+        $_SESSION['table'] = 'users'; // Important pour distinguer
     
         $message = 'Connexion réussie';
         if ($user['statut'] === 'en_attente') {

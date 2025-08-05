@@ -6,112 +6,85 @@ require_franchise_validated();
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Tableau de bord Franchisé</title>
+    <title>Mes ventes - Franchisé</title>
     <link rel="stylesheet" href="../css/style.css">
-    <style>
-        .dashboard-layout {
-            display: flex;
-            min-height: 100vh;
-        }
-        .sidebar {
-            background: #ff5722;
-            color: #fff;
-            width: 220px;
-            padding: 2rem 1rem;
-            display: flex;
-            flex-direction: column;
-            gap: 2rem;
-            min-height: 100vh;
-        }
-        .sidebar h2 {
-            color: #fff;
-            margin-bottom: 2rem;
-            font-size: 1.3rem;
-            text-align: center;
-        }
-        .sidebar a {
-            color: #fff;
-            text-decoration: none;
-            font-weight: bold;
-            margin-bottom: 1rem;
-            display: block;
-            padding: 0.7rem 1rem;
-            border-radius: 6px;
-            transition: background 0.2s;
-        }
-        .sidebar a.active, .sidebar a:hover {
-            background: #e64a19;
-        }
-        .main-content {
-            flex: 1;
-            padding: 2.5rem 3rem;
-            background: #fff8f0;
-        }
-        .section-card {
-            background: #fff;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px #0001;
-            padding: 2rem 2.5rem;
-            margin-bottom: 2.5rem;
-        }
-        .section-card h2 {
-            color: #ff5722;
-            margin-bottom: 1.2rem;
-        }
-        .topbar {
-            display: flex;
-            justify-content: flex-end;
-            align-items: center;
-            margin-bottom: 2rem;
-        }
-        .logout-btn {
-            background: #ff5722;
-            color: #fff;
-            border: none;
-            border-radius: 6px;
-            padding: 0.7rem 1.5rem;
-            font-weight: bold;
-            cursor: pointer;
-        }
-        .logout-btn:hover {
-            background: #e64a19;
-        }
-        @media (max-width: 900px) {
-            .dashboard-layout { flex-direction: column; }
-            .sidebar { flex-direction: row; width: 100%; min-height: unset; padding: 1rem; gap: 1rem;}
-            .main-content { padding: 1rem; }
-        }
-    </style>
+    <script src="../js/vente.js"></script>
 </head>
 <body>
     <div class="dashboard-layout">
-        <nav class="sidebar">
+        <nav class="sidebar franchise">
             <h2>Mon espace</h2>
             <a href="index.php">Tableau de bord</a>
             <a href="ventes.php" class="active">Mes ventes</a>
+            <a href="menu.php">Mon menu</a>
             <a href="commandes.php">Commandes de stock</a>
             <a href="compte.php">Mon compte</a>
             <form action="../api/users/logout.php" method="post" style="margin-top:auto;">
-                <button type="submit" class="logout-btn" style="width:100%;">Déconnexion</button>
+                <button type="submit" class="logout-btn franchise" style="width:100%;">Déconnexion</button>
             </form>
         </nav>
+        
+        <main class="main-content franchise">
+            <div class="section-card franchise">
+                <h2>💰 Mes ventes du jour</h2>
+                <p>Enregistrez vos ventes rapidement et suivez vos performances</p>
+            </div>
 
-        <main class="main-content">
-            <div class="topbar"></div>
-            <div class="section-card">
-                <h2>Bienvenue dans votre espace franchisé</h2>
-                <p>Gérez vos ventes et commandes de stock facilement.</p>
+            <!-- Statistiques personnelles -->
+            <div class="stats-grid" style="margin-bottom: 2rem;">
+                <div class="stat-item success">
+                    <div class="stat-number" id="total-ventes" style="color: #4caf50;">0€</div>
+                    <div class="stat-label">Total général</div>
+                </div>
+                <div class="stat-item info">
+                    <div class="stat-number" id="Ventes-jour" style="color: #2196f3;">0€</div>
+                    <div class="stat-label">Aujourd'hui</div>
+                </div>
+                <div class="stat-item warning">
+                    <div class="stat-number" id="Ventes-semaine" style="color: #ff9800;">0€</div>
+                    <div class="stat-label">Cette semaine</div>
+                </div>
+                <div class="stat-item primary">
+                    <div class="stat-number" id="Ventes-mois" style="color: #e64a19;">0€</div>
+                    <div class="stat-label">Ce mois</div>
+                </div>
             </div>
-            <div class="dashboard-links">
-                <a href="ventes.php" class="btn">Voir mes ventes</a>
-                <a href="commandes.php" class="btn">Faire une commande de stock</a>
-            </div>
-            <div class="cta-card">
-                <h2>Statistiques</h2>
-                <p>Ventes totales : 1500€</p>
-                <p>Commandes en cours : 3</p>
+
+            <!-- Interface de saisie -->
+            <div class="ventes-section">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h3>🛒 Saisie rapide de vente</h3>
+                    <button class="add-btn franchise" id="add-ventes-btn">
+                        + Nouvelle vente
+                    </button>
+                </div>
+
+                <!-- Tableau des ventes du jour -->
+                <table id="ventes-table">
+                    <thead>
+                        <tr>
+                            <th>Produits vendus</th>
+                            <th>Quantité totale</th>
+                            <th>Montant</th>
+                            <th>Heure</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
             </div>
         </main>
     </div>
+
+    <script>
+        // Configuration spécifique Franchisé
+        document.addEventListener('DOMContentLoaded', function() {
+            // Chargement automatique des données
+            loadVentesStats();
+            loadVentesAujourdhui();
+            loadProduits();
+        });
+    </script>
 </body>
 </html>
+

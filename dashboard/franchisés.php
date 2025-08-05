@@ -1,6 +1,6 @@
 <?php
 require_once '../includes/auth.php';
-require_role('admin');
+require_admin();
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -8,108 +8,16 @@ require_role('admin');
     <meta charset="UTF-8">
     <title>Gestion des franchisés - Admin</title>
     <link rel="stylesheet" href="../css/style.css">
-    <style>
-        .tabs { display: flex; gap: 2rem; margin-bottom: 2rem; }
-        .tab-btn {
-            background: #1976d2; color: #fff; border: none; border-radius: 8px 8px 0 0;
-            padding: 1rem 2rem; font-weight: bold; cursor: pointer; font-size: 1.1rem;
-            position: relative;
-        }
-        .tab-btn.active { background: #1565c0; }
-        .badge {
-            background: #e64a19; color: #fff; border-radius: 12px; padding: 0.2em 0.7em;
-            font-size: 0.9em; position: absolute; top: 0.5em; right: -1.2em;
-        }
-        .btn-action { 
-            background: #1976d2; color: #fff; border: none; border-radius: 6px; 
-            padding: 0.5rem 1.2rem; margin: 0 0.3rem; cursor: pointer; 
-        }
-        .btn-action:hover { background: #1565c0; }
-        .btn-action.danger { background: #f44336; }
-        .btn-action.danger:hover { background: #d32f2f; }
-        table { width: 100%; border-collapse: collapse; margin-bottom: 2rem; }
-        th, td { padding: 0.7rem 1rem; border-bottom: 1px solid #eee; text-align: left; }
-        th { background: #f3f8fd; font-weight: bold; }
-        tr:hover { background: #f9f9f9; }
-        .status-badge {
-            padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.85rem; font-weight: bold;
-        }
-        .status-valide { background: #e8f5e8; color: #2e7d32; }
-        .status-en_attente { background: #fff3e0; color: #f57c00; }
-        .status-refuse { background: #ffebee; color: #d32f2f; }
-        
-        /* Modal styles */
-        .modal {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: rgba(0,0,0,0.6); display: flex; justify-content: center; 
-            align-items: center; z-index: 1000;
-        }
-        .modal-content {
-            background: white; padding: 2.5rem; border-radius: 12px; 
-            max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-        }
-        .modal h3 { margin-top: 0; color: #1976d2; }
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-        .form-group label {
-            display: block; margin-bottom: 0.5rem; font-weight: bold; color: #333;
-        }
-        .form-group input, .form-group textarea, .form-group select {
-            width: 100%; padding: 0.8rem; border: 2px solid #ddd; border-radius: 6px;
-            font-size: 1rem; transition: border-color 0.2s;
-        }
-        .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
-            border-color: #1976d2; outline: none;
-        }
-        .form-group textarea { resize: vertical; min-height: 100px; }
-        .modal-actions {
-            display: flex; gap: 1rem; justify-content: flex-end; margin-top: 2rem;
-        }
-        .btn-primary {
-            background: #1976d2; color: white; border: none; padding: 0.8rem 1.5rem;
-            border-radius: 6px; cursor: pointer; font-weight: bold;
-        }
-        .btn-primary:hover { background: #1565c0; }
-        .btn-secondary {
-            background: #666; color: white; border: none; padding: 0.8rem 1.5rem;
-            border-radius: 6px; cursor: pointer;
-        }
-        .btn-secondary:hover { background: #555; }
-        .add-btn {
-            background: #4caf50; color: white; border: none; padding: 1rem 2rem;
-            border-radius: 8px; cursor: pointer; font-weight: bold; margin-bottom: 2rem;
-        }
-        .add-btn:hover { background: #45a049; }
-        
-        .sidebar {
-            background: #1976d2; color: #fff; width: 220px; padding: 2rem 1rem;
-            display: flex; flex-direction: column; gap: 2rem; min-height: 100vh;
-        }
-        .sidebar h2 { color: #fff; margin-bottom: 2rem; font-size: 1.3rem; text-align: center; }
-        .sidebar a {
-            color: #fff; text-decoration: none; font-weight: bold; margin-bottom: 1rem;
-            display: block; padding: 0.7rem 1rem; border-radius: 6px; transition: background 0.2s;
-        }
-        .sidebar a.active, .sidebar a:hover { background: #1565c0; }
-        .main-content { flex: 1; padding: 2.5rem 3rem; background: #f3f8fd; }
-        .dashboard-layout { display: flex; min-height: 100vh; }
-        .logout-btn {
-            background: #f44336; color: white; border: none; padding: 0.8rem 1.5rem;
-            border-radius: 6px; cursor: pointer; font-weight: bold;
-        }
-        .logout-btn:hover { background: #d32f2f; }
-    </style>
 </head>
 <body>
     <div class="dashboard-layout">
-        <nav class="sidebar">
+        <nav class="sidebar admin">
             <h2>Admin</h2>
             <a href="index.php">Tableau de bord</a>
             <a href="franchisés.php" class="active">Gérer les franchisés</a>
             <a href="camions.php">Gérer les camions</a>
             <a href="produits.php">Gérer les produits</a>
+            <a href="entrepots.php">Gérer les entrepôts</a>
             <a href="ventes.php">Voir les ventes</a>
             <a href="commandes.php">Voir les commandes</a>
             <form action="../api/users/logout.php" method="post" style="margin-top:auto;">
@@ -117,8 +25,8 @@ require_role('admin');
             </form>
         </nav>
 
-        <div class="main-content">
-            <h1>Gestion des franchisés</h1>
+        <main class="main-content admin">
+            <h1 class="admin">Gestion des franchisés</h1>
             
             <div class="tabs">
                 <button class="tab-btn active" id="tab-franchise-btn" onclick="switchTab('franchise')">
@@ -166,7 +74,7 @@ require_role('admin');
                     </tbody>
                 </table>
             </div>
-        </div>
+        </main>
     </div>
 
     <script src="../js/admin/franchisés.js"></script>
@@ -356,12 +264,160 @@ require_role('admin');
         }
 
         function editFranchise(id) {
-            alert('Fonction de modification en cours de développement...');
+            showEditFranchiseModal(id);
         }
 
-        function deleteFranchise(id) {
-            if (confirm('Êtes-vous sûr de vouloir supprimer ce franchisé ?')) {
-                alert('Fonction de suppression en cours de développement...');
+        async function showEditFranchiseModal(id) {
+            try {
+                // Récupérer les données du franchisé
+                const res = await fetch(`../api/users/get_one.php?id=${id}`);
+                const user = await res.json();
+                
+                if (!user || user.success === false) {
+                    alert('Erreur lors de la récupération des données du franchisé');
+                    return;
+                }
+                
+                const modal = document.createElement('div');
+                modal.className = 'modal';
+                modal.innerHTML = `
+                    <div class="modal-content">
+                        <h3>Modifier le franchisé</h3>
+                        <form id="edit-franchise-form">
+                            <input type="hidden" name="id" value="${user.id}">
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="edit-nom">Nom *</label>
+                                    <input type="text" id="edit-nom" name="nom" value="${user.nom || ''}" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="edit-prenom">Prénom *</label>
+                                    <input type="text" id="edit-prenom" name="prenom" value="${user.prenom || ''}" required>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="edit-email">Email *</label>
+                                <input type="email" id="edit-email" name="email" value="${user.email || ''}" required>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="edit-telephone">Téléphone</label>
+                                    <input type="tel" id="edit-telephone" name="telephone" value="${user.telephone || ''}" 
+                                           placeholder="01 23 45 67 89">
+                                </div>
+                                <div class="form-group">
+                                    <label for="edit-statut">Statut</label>
+                                    <select id="edit-statut" name="statut">
+                                        <option value="en_attente" ${user.statut === 'en_attente' ? 'selected' : ''}>En attente</option>
+                                        <option value="valide" ${user.statut === 'valide' ? 'selected' : ''}>Validé</option>
+                                        <option value="refuse" ${user.statut === 'refuse' ? 'selected' : ''}>Refusé</option>
+                                        <option value="desactive" ${user.statut === 'desactive' ? 'selected' : ''}>Désactivé</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="edit-lieu">Lieu d'installation</label>
+                                <input type="text" id="edit-lieu" name="lieu_installation" 
+                                       value="${user.lieu_installation || ''}" 
+                                       placeholder="Ville, région...">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="edit-motivation">Motivation</label>
+                                <textarea id="edit-motivation" name="motivation" rows="3" 
+                                          placeholder="Motivation pour devenir franchisé...">${user.motivation || ''}</textarea>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="edit-permis">Numéro de permis</label>
+                                <input type="text" id="edit-permis" name="numero_permis" 
+                                       value="${user.numero_permis || ''}" 
+                                       placeholder="Optionnel - Format: AB123456789">
+                                <small style="color: #666;">Obligatoire pour faire une demande de camion</small>
+                            </div>
+                            
+                            <!-- Informations système (lecture seule) -->
+                            <div class="form-row" style="background: #f8f9fa; padding: 1rem; border-radius: 6px; margin: 1rem 0;">
+                                <div class="form-group">
+                                    <label>Date d'inscription</label>
+                                    <input type="text" value="${new Date(user.date_inscription).toLocaleDateString('fr-FR')}" readonly>
+                                </div>
+                                <div class="form-group">
+                                    <label>Dernière connexion</label>
+                                    <input type="text" value="${user.derniere_connexion ? new Date(user.derniere_connexion).toLocaleDateString('fr-FR') : 'Jamais'}" readonly>
+                                </div>
+                            </div>
+                            
+                            <div class="modal-actions">
+                                <button type="button" class="btn-secondary" onclick="closeModal()">Annuler</button>
+                                <button type="submit" class="btn-primary">Mettre à jour</button>
+                            </div>
+                        </form>
+                    </div>
+                `;
+                
+                document.body.appendChild(modal);
+                
+                // Gérer la soumission du formulaire
+                document.getElementById('edit-franchise-form').onsubmit = async function(e) {
+                    e.preventDefault();
+                    const formData = new FormData(e.target);
+                    const data = Object.fromEntries(formData);
+                    
+                    try {
+                        const res = await fetch('../api/users/update.php', {
+                            method: 'PUT',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify(data)
+                        });
+                        const result = await res.json();
+                        
+                        if (result.success) {
+                            alert('Franchisé mis à jour avec succès !');
+                            closeModal();
+                            loadFranchises();
+                            loadValidation();
+                        } else {
+                            alert('Erreur: ' + result.message);
+                        }
+                    } catch (err) {
+                        console.error('Erreur:', err);
+                        alert('Erreur réseau lors de la mise à jour');
+                    }
+                };
+                
+            } catch (error) {
+                console.error('Erreur lors de la récupération des données:', error);
+                alert('Erreur lors de la récupération des données du franchisé');
+            }
+        }
+
+        async function deleteFranchise(id) {
+            if (confirm('Êtes-vous sûr de vouloir supprimer ce franchisé ?\n\nCette action peut le désactiver au lieu de le supprimer s\'il a des camions ou commandes associés.')) {
+                try {
+                    const res = await fetch('../api/users/delete.php', {
+                        method: 'DELETE',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({id: id})
+                    });
+                    
+                    const result = await res.json();
+                    
+                    if (result.success) {
+                        alert(result.message);
+                        loadFranchises();
+                        loadValidation();
+                    } else {
+                        alert('Erreur: ' + result.message);
+                    }
+                } catch (error) {
+                    console.error('Erreur:', error);
+                    alert('Erreur réseau lors de la suppression');
+                }
             }
         }
 

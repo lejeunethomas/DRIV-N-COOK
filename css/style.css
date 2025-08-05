@@ -21,6 +21,10 @@ a:hover {
   color: #e64a19;
 }
 
+/* =============================================================================
+   LAYOUT COMPONENTS
+============================================================================= */
+
 .container {
   max-width: 1200px;
   margin: auto;
@@ -30,10 +34,95 @@ a:hover {
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
+/* Dashboard Layout */
+.dashboard-layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+.sidebar {
+  width: 220px;
+  padding: 2rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  min-height: 100vh;
+  color: #fff;
+}
+
+.sidebar.admin {
+  background: #1976d2;
+}
+
+.sidebar.franchise {
+  background: #ff5722;
+}
+
+.sidebar.client {
+  background: #f1ee04;
+}
+
+.sidebar h2 {
+  color: #fff;
+  margin-bottom: 2rem;
+  font-size: 1.3rem;
+  text-align: center;
+}
+
+.sidebar a {
+  color: #fff;
+  text-decoration: none;
+  font-weight: bold;
+  margin-bottom: 1rem;
+  display: block;
+  padding: 0.7rem 1rem;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+.sidebar.admin a.active, 
+.sidebar.admin a:hover {
+  background: #1565c0;
+}
+
+.sidebar.franchise a.active, 
+.sidebar.franchise a:hover {
+  background: #e64a19;
+}
+
+.main-content {
+  flex: 1;
+  padding: 2.5rem 3rem;
+}
+
+.main-content.admin {
+  background: #f3f8fd;
+}
+
+.main-content.franchise {
+  background: #fff8f0;
+}
+
+.main-content.client {
+  background: #fff;
+}
+
+/* =============================================================================
+   TYPOGRAPHY
+============================================================================= */
+
 h1, h2, h3 {
   color: #e64a19;
   margin-bottom: 1rem;
 }
+
+h1.admin, h2.admin, h3.admin {
+  color: #1976d2;
+}
+
+/* =============================================================================
+   BUTTONS
+============================================================================= */
 
 button, .btn {
   display: inline-block;
@@ -45,16 +134,200 @@ button, .btn {
   border-radius: 8px;
   cursor: pointer;
   transition: background 0.3s ease;
+  text-decoration: none;
 }
 
 button:hover, .btn:hover {
   background-color: #e64a19;
 }
 
+.btn-primary {
+  background: #1976d2;
+  color: white;
+  border: none;
+  padding: 0.8rem 1.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.btn-primary:hover {
+  background: #1565c0;
+}
+
+.btn-secondary {
+  background: #666;
+  color: white;
+  border: none;
+  padding: 0.8rem 1.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.btn-secondary:hover {
+  background: #555;
+}
+
+.btn-danger {
+  background: #f44336;
+  color: white;
+  border: none;
+  padding: 0.8rem 1.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.btn-danger:hover {
+  background: #d32f2f;
+}
+
+.btn-success {
+  background: #4caf50;
+  color: white;
+  border: none;
+  padding: 0.8rem 1.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.btn-success:hover {
+  background: #45a049;
+}
+
+.btn-warning {
+  background: #ff9800;
+  color: white;
+  border: none;
+  padding: 0.8rem 1.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.btn-warning:hover {
+  background: #f57c00;
+}
+
+.btn-action {
+  background: #1976d2;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.5rem 1.2rem;
+  margin: 0 0.3rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background 0.2s;
+}
+
+.btn-action:hover {
+  background: #1565c0;
+}
+
+.btn-action.success {
+  background: #4caf50;
+}
+
+.btn-action.success:hover {
+  background: #45a049;
+}
+
+.btn-action.danger {
+  background: #f44336;
+}
+
+.btn-action.danger:hover {
+  background: #d32f2f;
+}
+
+.btn-action.warning {
+  background: #ff9800;
+}
+
+.btn-action.warning:hover {
+  background: #f57c00;
+}
+
+.logout-btn {
+  background: #f44336;
+  color: white;
+  border: none;
+  padding: 0.8rem 1.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.logout-btn:hover {
+  background: #d32f2f;
+}
+
+.logout-btn.franchise {
+  background: #ff5722;
+}
+
+.logout-btn.franchise:hover {
+  background: #e64a19;
+}
+
+.add-btn {
+  background: #4caf50;
+  color: white;
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  margin-bottom: 2rem;
+}
+
+.add-btn:hover {
+  background: #45a049;
+}
+
+/* Navigation rapide */
+.quick-nav {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.btn-nav {
+  background: #1976d2;
+  color: white;
+  border: none;
+  padding: 0.8rem 1.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: background 0.2s;
+}
+
+.btn-nav:hover {
+  background: #1565c0;
+}
+
+.btn-nav.current {
+  background: #4caf50;
+}
+
+/* =============================================================================
+   FORMS
+============================================================================= */
+
 input[type="text"],
 input[type="email"],
 input[type="password"],
 input[type="number"],
+input[type="date"],
+input[type="tel"],
 select,
 textarea {
   width: 100%;
@@ -63,6 +336,14 @@ textarea {
   border: 1px solid #ccc;
   border-radius: 6px;
   background: #fff;
+  font-size: 1rem;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: #1976d2;
+  outline: none;
 }
 
 label {
@@ -71,66 +352,873 @@ label {
   font-weight: bold;
 }
 
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: bold;
+  color: #333;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 0.8rem;
+  border: 2px solid #ddd;
+  border-radius: 6px;
+  font-size: 1rem;
+  transition: border-color 0.2s;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  border-color: #1976d2;
+  outline: none;
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.checkbox-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.checkbox-group input[type="checkbox"] {
+  width: auto;
+}
+
+/* =============================================================================
+   MODALS
+============================================================================= */
+
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  padding: 2.5rem;
+  border-radius: 12px;
+  max-width: 600px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+}
+
+.modal-content.large {
+  max-width: 800px;
+}
+
+.modal-content.extra-large {
+  max-width: 90%;
+}
+
+.modal h3 {
+  margin-top: 0;
+  color: #1976d2;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  margin-top: 2rem;
+}
+
+.demande-details {
+  margin-bottom: 1.5rem;
+}
+
+/* =============================================================================
+   TABLES
+============================================================================= */
+
 table {
   width: 100%;
   border-collapse: collapse;
   margin-bottom: 2rem;
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 table th,
 table td {
-  padding: 12px;
-  border: 1px solid #ddd;
+  padding: 1rem;
+  border-bottom: 1px solid #eee;
   text-align: left;
 }
 
 table th {
-  background-color: #f2f2f2;
+  background: #f8f9fa;
+  font-weight: bold;
   color: #333;
 }
 
+table tr:hover {
+  background: #f9f9f9;
+}
+
+/* Accordion pour les tables */
+.accordion-row {
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.accordion-row:hover {
+  background: #f3f8fd;
+}
+
+.accordion-details {
+  display: none;
+  background: #f9f9f9;
+}
+
+.accordion-details.open {
+  display: table-row;
+}
+
+/* =============================================================================
+   TABS
+============================================================================= */
+
+.tabs {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.tab-btn {
+  background: #1976d2;
+  color: #fff;
+  border: none;
+  border-radius: 8px 8px 0 0;
+  padding: 1rem 2rem;
+  font-weight: bold;
+  cursor: pointer;
+  position: relative;
+  transition: background 0.2s;
+  font-size: 1rem;
+}
+
+.tab-btn.active {
+  background: #1565c0;
+}
+
+.tab-btn.franchise {
+  background: #ff5722;
+}
+
+.tab-btn.franchise.active {
+  background: #e64a19;
+}
+
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+/* =============================================================================
+   BADGES ET INDICATEURS
+============================================================================= */
+
+.badge {
+  background: #e64a19;
+  color: #fff;
+  border-radius: 12px;
+  padding: 0.2em 0.7em;
+  font-size: 0.9em;
+  position: absolute;
+  top: 0.5em;
+  right: -1.2em;
+  font-weight: bold;
+}
+
+.statut-badge {
+  padding: 0.3rem 0.8rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: bold;
+}
+
+.statut-en_attente {
+  background: #fff3e0;
+  color: #f57c00;
+}
+
+.statut-validee, .statut-valide {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.statut-en_preparation {
+  background: #f3e5f5;
+  color: #7b1fa2;
+}
+
+.statut-livree {
+  background: #e8f5e8;
+  color: #2e7d32;
+}
+
+.statut-annulee, .statut-refuse {
+  background: #ffebee;
+  color: #d32f2f;
+}
+
+.badge-success {
+  background: #4caf50;
+  color: white;
+  padding: 0.3rem 0.8rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+.badge-warning {
+  background: #ff9800;
+  color: white;
+  padding: 0.3rem 0.8rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+.badge-danger {
+  background: #f44336;
+  color: white;
+  padding: 0.3rem 0.8rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+.badge-info {
+  background: #2196f3;
+  color: white;
+  padding: 0.3rem 0.8rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+/* Badges pour les statuts spécifiques */
+.status-valide { background: #e8f5e8; color: #2e7d32; }
+.status-en_attente { background: #fff3e0; color: #f57c00; }
+.status-refuse { background: #ffebee; color: #d32f2f; }
+
+/* Badges pour les produits */
+.badge-obligatoire {
+  background: #e8f5e8;
+  color: #2e7d32;
+}
+
+.badge-optionnel {
+  background: #fff3e0;
+  color: #f57c00;
+}
+
+.badge-stock-ok {
+  background: #e8f5e8;
+  color: #2e7d32;
+}
+
+.badge-stock-faible {
+  background: #fff3e0;
+  color: #f57c00;
+}
+
+.badge-rupture {
+  background: #ffebee;
+  color: #d32f2f;
+}
+
+/* Badges pour les types de produits */
+.type-badge {
+  padding: 0.3rem 0.8rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: bold;
+}
+
+.type-aliment {
+  background: #e8f5e8;
+  color: #2e7d32;
+}
+
+.type-boisson {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.type-préparé {
+  background: #fff3e0;
+  color: #f57c00;
+}
+
+.obligatoire-oui {
+  color: #4caf50;
+  font-weight: bold;
+}
+
+.obligatoire-non {
+  color: #ff9800;
+}
+
+/* =============================================================================
+   ALERTES
+============================================================================= */
+
 .alert {
-  padding: 15px;
+  padding: 1rem;
   border-radius: 6px;
   margin-bottom: 1rem;
+  font-weight: bold;
 }
 
 .alert-success {
-  background-color: #d4edda;
+  background: #d4edda;
   color: #155724;
+  border: 1px solid #c3e6cb;
 }
 
 .alert-error {
-  background-color: #f8d7da;
+  background: #f8d7da;
   color: #721c24;
+  border: 1px solid #f5c6cb;
 }
 
-.breadcrumb {
-  width: 100%;
-  max-width: 500px;
-  margin: 2rem auto 0 auto;
-  padding-left: 0;
+.alert-warning {
+  background: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeaa7;
 }
-.breadcrumb ol {
-  list-style: none;
-  display: flex;
-  gap: 8px;
-  font-size: 1rem;
-  color: #fff;
-  opacity: 0.85;
-  padding-left: 0;
+
+.alert-info {
+  background: #d1ecf1;
+  color: #0c5460;
+  border: 1px solid #bee5eb;
 }
-.breadcrumb li {
-  display: flex;
-  align-items: center;
+
+/* =============================================================================
+   CARDS ET SECTIONS
+============================================================================= */
+
+.section-card {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  padding: 2rem 2.5rem;
+  margin-bottom: 2.5rem;
 }
-.breadcrumb a {
-  color: #fff;
-  text-decoration: underline;
+
+.section-card h2 {
+  margin-bottom: 1.2rem;
 }
-.breadcrumb .sep {
+
+.section-card.franchise h2 {
   color: #ff5722;
-  margin: 0 4px;
+}
+
+.section-card.admin h2 {
+  color: #1976d2;
+}
+
+.section-card.client h2 {
+  color: #f1ee04;
+}
+
+/* Topbar pour les pages */
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.topbar .btn {
+  background-color: #fff;
+  color: #ff5722;
+  border: none;
+  font-weight: bold;
+  box-shadow: 0 2px 8px #0001;
+  margin-left: 1rem;
+}
+
+.topbar .btn:hover {
+  background-color: #ffe0d3;
+  color: #e64a19;
+}
+
+/* =============================================================================
+   STATS ET OVERVIEW
+============================================================================= */
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.stat-item {
+  text-align: center;
+  padding: 1rem;
+  border-radius: 6px;
+  border: 2px solid #eee;
+}
+
+.stat-item.critical {
+  border-color: #f44336;
+  background: #ffebee;
+}
+
+.stat-item.warning {
+  border-color: #ff9800;
+  background: #fff3e0;
+}
+
+.stat-item.success {
+  border-color: #4caf50;
+  background: #e8f5e8;
+}
+
+.stat-item.info {
+  border-color: #2196f3;
+  background: #e3f2fd;
+}
+
+.stat-number {
+  font-size: 1.8rem;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+
+.stat-label {
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.stats-section {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.stat-card {
+  background: #fff;
+  border-radius: 8px;
+  padding: 1.5rem;
+  text-align: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  border-left: 4px solid #ff5722;
+}
+
+.stat-value {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #ff5722;
+}
+
+.stat-label {
+  color: #666;
+  margin-top: 0.5rem;
+}
+
+/* Widget d'aperçu global */
+.global-overview {
+  background: white;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* =============================================================================
+   PRODUITS ET COMMANDES SPÉCIFIQUES
+============================================================================= */
+
+.produit-item {
+  background: #f8f9fa;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  transition: border-color 0.2s;
+}
+
+.produit-item.selected {
+  border-color: #ff5722;
+  background: #fff8f0;
+}
+
+.produit-item.indisponible {
+  opacity: 0.6;
+  background: #f5f5f5;
+}
+
+.produit-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.produit-nom {
+  font-weight: bold;
+  color: #333;
+}
+
+.produit-prix {
+  color: #ff5722;
+  font-weight: bold;
+}
+
+.produit-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.quantite-input {
+  width: 80px !important;
+  padding: 0.3rem !important;
+  margin-left: 1rem;
+}
+
+.commande-resume {
+  background: #fff8f0;
+  border: 2px solid #ff5722;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin: 2rem 0;
+}
+
+.commande-totaux {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 2px solid #ff5722;
+}
+
+/* Détails des commandes */
+.detail-section {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.detail-section h4 {
+  margin-top: 0;
+  color: #1976d2;
+}
+
+.produit-detail {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #eee;
+}
+
+.produit-detail:last-child {
+  border-bottom: none;
+}
+
+.stock-warning {
+  color: #f57c00;
+  font-weight: bold;
+  font-size: 0.9rem;
+}
+
+.stock-ok {
+  color: #4caf50;
+  font-size: 0.9rem;
+}
+
+/* =============================================================================
+   PROFIL UTILISATEUR
+============================================================================= */
+
+.profile-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.profile-field {
+  display: flex;
+  flex-direction: column;
+}
+
+.profile-field.full-width {
+  grid-column: span 2;
+}
+
+.profile-field label {
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+  color: #333;
+}
+
+.profile-field .value {
+  padding: 0.7rem;
+  background: #f8f8f8;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+}
+
+.profile-field input,
+.profile-field textarea {
+  padding: 0.7rem;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-family: inherit;
+}
+
+.profile-field textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.edit-mode {
+  display: none;
+}
+
+.btn-group {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+/* =============================================================================
+   URGENCES ET PROXIMITÉ
+============================================================================= */
+
+.commande-urgente {
+  background: #fff3e0 !important;
+}
+
+.commande-urgente-livraison {
+  background: #ffebee !important;
+  border-left: 4px solid #f44336 !important;
+}
+
+.commande-attention-livraison {
+  background: #fff8e1 !important;
+  border-left: 4px solid #ff9800 !important;
+}
+
+.camion-urgence { 
+  background: #fff3e0 !important; 
+}
+
+.camion-ok { 
+  color: #388e3c; 
+  font-weight: bold; 
+}
+
+.camion-maintenance { 
+  color: #e64a19; 
+  font-weight: bold; 
+}
+
+.date-livraison { 
+  font-size: 0.95em; 
+  color: #1976d2; 
+}
+
+.distance-info {
+  font-size: 0.85rem;
+  color: #666;
+  margin-top: 0.2rem;
+}
+
+.urgence-badge {
+  display: inline-block;
+  padding: 0.2rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: bold;
+  margin-left: 0.5rem;
+}
+
+.urgence-normale {
+  background: #e8f5e8;
+  color: #2e7d32;
+}
+
+.urgence-attention {
+  background: #fff3e0;
+  color: #f57c00;
+}
+
+.urgence-urgente {
+  background: #ffebee;
+  color: #d32f2f;
+}
+
+.proximity-info {
+  background: #e8f5e8;
+  border: 1px solid #4caf50;
+  border-radius: 6px;
+  padding: 0.8rem;
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+}
+
+/* =============================================================================
+   STOCKS ET ENTREPÔTS
+============================================================================= */
+
+.stock-item {
+  border: 1px solid #ddd;
+  padding: 1rem;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+  background: #f9f9f9;
+}
+
+.stock-item h5 {
+  margin: 0 0 1rem 0;
+  color: #333;
+  font-weight: bold;
+}
+
+/* =============================================================================
+   UTILITY CLASSES
+============================================================================= */
+
+.text-center {
+  text-align: center;
+}
+
+.text-right {
+  text-align: right;
+}
+
+.text-left {
+  text-align: left;
+}
+
+.mb-1 { margin-bottom: 1rem; }
+.mb-2 { margin-bottom: 2rem; }
+.mt-1 { margin-top: 1rem; }
+.mt-2 { margin-top: 2rem; }
+
+.hidden {
+  display: none;
+}
+
+.full-width {
+  width: 100%;
+}
+
+hr {
+  margin: 2rem 0;
+  border: none;
+  border-top: 1px solid #ddd;
+}
+
+/* =============================================================================
+   RESPONSIVE DESIGN
+============================================================================= */
+
+@media (max-width: 1200px) {
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+  
+  .stats-grid {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  }
+  
+  table {
+    font-size: 0.9rem;
+  }
+  
+  .distance-info {
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 900px) {
+  .dashboard-layout {
+    flex-direction: column;
+  }
+  
+  .sidebar {
+    flex-direction: row;
+    width: 100%;
+    min-height: unset;
+    padding: 1rem;
+    gap: 1rem;
+  }
+  
+  .main-content {
+    padding: 1rem;
+  }
+  
+  .modal-content {
+    padding: 1.5rem;
+    margin: 1rem;
+  }
+  
+  .tabs {
+    flex-direction: column;
+  }
+  
+  .quick-nav {
+    flex-direction: column;
+  }
+  
+  .profile-section { 
+    grid-template-columns: 1fr; 
+  }
+  
+  .profile-field.full-width { 
+    grid-column: span 1; 
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 768px) {
@@ -140,10 +1228,15 @@ table th {
 
   table th, table td {
     font-size: 14px;
+    padding: 0.5rem;
   }
 
   button, .btn {
     width: 100%;
     margin-bottom: 1rem;
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr;
   }
 }

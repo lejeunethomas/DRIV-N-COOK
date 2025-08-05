@@ -1,114 +1,221 @@
 <?php
 require_once '../includes/auth.php';
-require_role('admin');
+require_admin();
 ?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Gestion des camions - Admin</title>
+    <title>Gestion des ventes - Admin</title>
     <link rel="stylesheet" href="../css/style.css">
-    <style>
-        .tabs { display: flex; gap: 2rem; margin-bottom: 2rem; }
-        .tab-btn {
-            background: #1976d2; color: #fff; border: none; border-radius: 8px 8px 0 0;
-            padding: 1rem 2rem; font-weight: bold; cursor: pointer; font-size: 1.1rem;
-            position: relative;
-        }
-        .tab-btn.active { background: #1565c0; }
-        .badge {
-            background: #e64a19; color: #fff; border-radius: 12px; padding: 0.2em 0.7em;
-            font-size: 0.9em; position: absolute; top: 0.5em; right: -1.2em;
-        }
-        .accordion-row { cursor: pointer; transition: background 0.2s; }
-        .accordion-row:hover { background: #f3f8fd; }
-        .accordion-details { display: none; background: #f9f9f9; }
-        .accordion-details.open { display: table-row; }
-        .camion-urgence { background: #fff3e0 !important; }
-        .camion-ok { color: #388e3c; font-weight: bold; }
-        .camion-maintenance { color: #e64a19; font-weight: bold; }
-        .date-livraison { font-size: 0.95em; color: #1976d2; }
-        .btn-action { background: #1976d2; color: #fff; border: none; border-radius: 6px; padding: 0.5rem 1.2rem; margin: 0 0.3rem; cursor: pointer; }
-        .btn-action:hover { background: #1565c0; }
-        table { width: 100%; border-collapse: collapse; margin-bottom: 2rem; }
-        th, td { padding: 0.7rem 1rem; border-bottom: 1px solid #eee; }
-        th { background: #f3f8fd; }
-        .dashboard-layout {
-            display: flex;
-            min-height: 100vh;
-        }
-        .sidebar {
-            background: #1976d2;
-            color: #fff;
-            width: 220px;
-            padding: 2rem 1rem;
-            display: flex;
-            flex-direction: column;
-            gap: 2rem;
-            min-height: 100vh;
-        }
-        .sidebar h2 {
-            color: #fff;
-            margin-bottom: 2rem;
-            font-size: 1.3rem;
-            text-align: center;
-        }
-        .sidebar a {
-            color: #fff;
-            text-decoration: none;
-            font-weight: bold;
-            margin-bottom: 1rem;
-            display: block;
-            padding: 0.7rem 1rem;
-            border-radius: 6px;
-            transition: background 0.2s;
-        }
-        .sidebar a.active, .sidebar a:hover {
-            background: #1565c0;
-        }
-        .main-content {
-            flex: 1;
-            padding: 2.5rem 3rem;
-            background: #f3f8fd;
-        }
-        @media (max-width: 900px) {
-            .dashboard-layout { flex-direction: column; }
-            .sidebar { flex-direction: row; width: 100%; min-height: unset; padding: 1rem; gap: 1rem;}
-            .main-content { padding: 1rem; }
-        }
-    </style>
+    <script src="../js/vente.js"></script>
 </head>
 <body>
     <div class="dashboard-layout">
-        <nav class="sidebar">
+        <nav class="sidebar admin">
             <h2>Admin</h2>
             <a href="index.php">Tableau de bord</a>
             <a href="franchisés.php">Gérer les franchisés</a>
             <a href="camions.php">Gérer les camions</a>
             <a href="produits.php">Gérer les produits</a>
-            <a href="ventes.php" class ="active">Voir les ventes</a>
+            <a href="entrepots.php">Gérer les entrepôts</a>
+            <a href="ventes.php" class="active">Voir les ventes</a>
             <a href="commandes.php">Voir les commandes</a>
             <form action="../api/users/logout.php" method="post" style="margin-top:auto;">
                 <button type="submit" class="logout-btn" style="width:100%;">Déconnexion</button>
             </form>
         </nav>
-        <main class="main-content">
-            <h1>Gestion des camions</h1>
+        
+        <main class="main-content admin">
+            <h1 class="admin">Gestion des ventes</h1>
+
+            <!-- Navigation par onglets -->
             <div class="tabs">
-                <button class="tab-btn active" data-tab="disponibles">Camions disponibles</button>
-                <button class="tab-btn" data-tab="maintenance">Camions en maintenance</button>
-                <button class="tab-btn" data-tab="urgence">Camions d'urgence</button>
+                <button class="tab-button active" data-tab="ventes" onclick="showTab('ventes')">
+                    📊 Toutes les ventes
+                </button>
+                <button class="tab-button" data-tab="stats" onclick="showTab('stats')">
+                    📈 Statistiques
+                </button>
+                <button class="tab-button" data-tab="produits" onclick="showTab('produits')">
+                    🛒 Produits vendus
+                </button>
             </div>
-            <table id="camion-table">
-                <thead>
+
+            <!-- Statistiques générales -->
+            <div class="stats-grid" style="margin-bottom: 2rem;">
+                <div class="stat-item success">
+                    <div class="stat-number" id="total-ventes" style="color: #4caf50;">0€</div>
+                    <div class="stat-label">Ventes totales</div>
+                </div>
+                <div class="stat-item info">
+                    <div class="stat-number" id="ventes-jour" style="color: #2196f3;">0€</div>
+                    <div class="stat-label">Aujourd'hui</div>
+                </div>
+                <div class="stat-item warning">
+                    <div class="stat-number" id="ventes-semaine" style="color: #ff9800;">0€</div>
+                    <div class="stat-label">Cette semaine</div>
+                </div>
+                <div class="stat-item primary">
+                    <div class="stat-number" id="ventes-mois" style="color: #1976d2;">0€</div>
+                    <div class="stat-label">Ce mois</div>
+                </div>
+            </div>
+
+            <!-- Onglet Ventes -->
+            <div id="tab-ventes" class="tab-content active">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <h3>Liste des ventes</h3>
+                    <button class="add-btn" id="add-ventes-btn">+ Enregistrer une vente</button>
+                </div>
+                
+                <!-- Filtres -->
+                <div class="filters" style="margin-bottom: 1rem; display: flex; gap: 1rem; align-items: center;">
+                    <label for="filter-camion">Camion :</label>
+                    <select id="filter-camion" onchange="filterVentes()">
+                        <option value="">Tous les camions</option>
+                    </select>
+                    
+                    <label for="filter-periode">Période :</label>
+                    <select id="filter-periode" onchange="filterVentes()">
+                        <option value="">Toutes les périodes</option>
+                        <option value="aujourdhui">Aujourd'hui</option>
+                        <option value="semaine">Cette semaine</option>
+                        <option value="mois">Ce mois</option>
+                    </select>
+                </div>
+                
+                <table id="ventes-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Camion</th>
+                            <th>Franchisé</th>
+                            <th>Produits</th>
+                            <th>Montant</th>
+                            <th>Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+
+            <!-- Onglet Statistiques -->
+            <div id="tab-stats" class="tab-content">
+                <h3>Analyse des ventes</h3>
+                <div id="charts-container">
+                    <!-- Graphiques à implémenter plus tard -->
+                    <p>Graphiques en cours de développement...</p>
+                </div>
+            </div>
+
+            <!-- Onglet Produits -->
+            <div id="tab-produits" class="tab-content">
+                <h3>Produits les plus vendus</h3>
+                <table id="produits-vendus-table">
+                    <thead>
+                        <tr>
+                            <th>Produit</th>
+                            <th>Quantité totale</th>
+                            <th>Chiffre d'affaires</th>
+                            <th>Nombre de ventes</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Configuration spécifique Admin
+        document.addEventListener('DOMContentLoaded', function() {
+            // Charger les données initiales
+            loadAdminVentesData();
+            loadCamionsFilter();
+        });
+
+        // Fonction de filtrage des ventes
+        function filterVentes() {
+            const camion = document.getElementById('filter-camion').value;
+            const periode = document.getElementById('filter-periode').value;
+            
+            // Recharger les ventes avec les filtres
+            loadAdminVentesData(camion, periode);
+        }
+
+        // Gestion des onglets
+        function showTab(tabName) {
+            // Cacher tous les onglets
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Afficher l'onglet sélectionné
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // Chargement des données admin (différent des franchisés)
+        async function loadAdminVentesData(camion = '', periode = '') {
+            try {
+                let url = '../api/ventes/list_admin.php';
+                const params = new URLSearchParams();
+                if (camion) params.append('camion', camion);
+                if (periode) params.append('periode', periode);
+                if (params.toString()) url += '?' + params.toString();
+
+                const response = await fetch(url);
+                const ventes = await response.json();
+                
+                displayAdminVentesTable(ventes);
+            } catch (error) {
+                console.error('Erreur lors du chargement des ventes admin:', error);
+            }
+        }
+
+        function displayAdminVentesTable(ventes) {
+            const tbody = document.querySelector('#ventes-table tbody');
+            tbody.innerHTML = '';
+            
+            ventes.forEach(vente => {
+                tbody.innerHTML += `
                     <tr>
-                        <th>ID</th>
-                        <th>Modèle</th>
-                        <th>Statut</th>
-                        <th>Date de livraison</th>
-                        <th>Actions</th>
+                        <td>#${vente.id}</td>
+                        <td>${vente.camion_nom || 'N/A'}</td>
+                        <td>${vente.franchisé_nom || 'N/A'}</td>
+                        <td>${vente.produits_resume || 'N/A'}</td>
+                        <td><strong>${parseFloat(vente.montant).toFixed(2)}€</strong></td>
+                        <td>${new Date(vente.date_vente).toLocaleString('fr-FR')}</td>
+                        <td class="actions">
+                            <button class="btn-action" onclick="viewVenteDetails(${vente.id})">Détails</button>
+                            <button class="btn-action danger" onclick="deleteVenteAdmin(${vente.id})">Supprimer</button>
+                        </td>
                     </tr>
-                </thead>
-                <tbody id="camion-list">
-                </tbody>
-            </table>
+                `;
+            });
+        }
+
+        async function loadCamionsFilter() {
+            try {
+                const response = await fetch('../api/camions/list.php');
+                const camions = await response.json();
+                
+                const select = document.getElementById('filter-camion');
+                camions.forEach(camion => {
+                    const option = document.createElement('option');
+                    option.value = camion.id;
+                    option.textContent = `${camion.nom} - ${camion.localisation}`;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Erreur lors du chargement des camions:', error);
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,5 +1,5 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) {
+if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
 
@@ -20,12 +20,7 @@ function get_user_name() {
 }
 
 function require_role($role) {
-    if (!is_logged_in()) {
-        header('Location: ../login.html');
-        exit;
-    }
-    
-    if ($_SESSION['role'] !== $role) {
+    if (!isset($_SESSION['role']) || $_SESSION['role'] !== $role) {
         header('Location: ../login.html');
         exit;
     }
@@ -38,13 +33,22 @@ function require_login() {
     }
 }
 
-function require_franchise_validated() {
-    require_login();
-    
-    if ($_SESSION['role'] !== 'franchise') {
+function require_admin() {
+    if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin' || !isset($_SESSION['table']) || $_SESSION['table'] !== 'clients') {
         header('Location: ../login.html');
         exit;
     }
+}
+
+function require_franchise() {
+    if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'franchise' || !isset($_SESSION['table']) || $_SESSION['table'] !== 'users') {
+        header('Location: ../franchise/attente.html');
+        exit;
+    }
+}
+
+function require_franchise_validated() {
+    require_franchise();
     
     if (isset($_SESSION['statut'])) {
         switch($_SESSION['statut']) {
@@ -56,6 +60,10 @@ function require_franchise_validated() {
                 break;
             case 'refuse':
                 header('Location: ../login.html?error=compte_refuse');
+                exit;
+                break;
+            case 'desactive':
+                header('Location: ../login.html?error=compte_desactive');
                 exit;
                 break;
         }

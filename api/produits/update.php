@@ -16,13 +16,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
     try {
         $conn = Database::getInstance()->getConnection();
         
-        $stmt = $conn->prepare("UPDATE produits SET nom = ?, type = ?, prix_unitaire = ?, obligatoire = ?, entrepot_id = ? WHERE id = ?");
+        $stmt = $conn->prepare("UPDATE produits SET nom = ?, type = ?, prix_unitaire = ?, obligatoire = ?, quantite_minimale = ? WHERE id = ?");
         $stmt->execute([
             $data['nom'],
             $data['type'] ?? 'aliment',
             $data['prix_unitaire'],
             isset($data['obligatoire']) ? ($data['obligatoire'] ? 1 : 0) : 1,
-            $data['entrepot_id'] ?? null,
+            isset($data['quantite_minimale']) ? intval($data['quantite_minimale']) : 0,
             $data['id']
         ]);
         

@@ -6,7 +6,7 @@ try {
     $conn = Database::getInstance()->getConnection();
     
     $stmt = $conn->query("
-        SELECT id, nom, type, prix_unitaire, obligatoire, entrepot_id 
+        SELECT id, nom, type, prix_unitaire, obligatoire
         FROM produits 
         ORDER BY type, nom
     ");

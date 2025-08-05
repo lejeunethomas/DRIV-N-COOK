@@ -1,6 +1,6 @@
 <?php
 require_once '../includes/auth.php';
-require_role('admin');
+require_admin();
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -8,92 +8,25 @@ require_role('admin');
     <meta charset="UTF-8">
     <title>Gestion des camions - Admin</title>
     <link rel="stylesheet" href="../css/style.css">
-    <style>
-        .tabs { display: flex; gap: 2rem; margin-bottom: 2rem; }
-        .tab-btn {
-            background: #1976d2; color: #fff; border: none; border-radius: 8px 8px 0 0;
-            padding: 1rem 2rem; font-weight: bold; cursor: pointer; font-size: 1.1rem;
-            position: relative;
-        }
-        .tab-btn.active { background: #1565c0; }
-        .badge {
-            background: #e64a19; color: #fff; border-radius: 12px; padding: 0.2em 0.7em;
-            font-size: 0.9em; position: absolute; top: 0.5em; right: -1.2em;
-        }
-        .accordion-row { cursor: pointer; transition: background 0.2s; }
-        .accordion-row:hover { background: #f3f8fd; }
-        .accordion-details { display: none; background: #f9f9f9; }
-        .accordion-details.open { display: table-row; }
-        .camion-urgence { background: #fff3e0 !important; }
-        .camion-ok { color: #388e3c; font-weight: bold; }
-        .camion-maintenance { color: #e64a19; font-weight: bold; }
-        .date-livraison { font-size: 0.95em; color: #1976d2; }
-        .btn-action { background: #1976d2; color: #fff; border: none; border-radius: 6px; padding: 0.5rem 1.2rem; margin: 0 0.3rem; cursor: pointer; }
-        .btn-action:hover { background: #1565c0; }
-        table { width: 100%; border-collapse: collapse; margin-bottom: 2rem; }
-        th, td { padding: 0.7rem 1rem; border-bottom: 1px solid #eee; }
-        th { background: #f3f8fd; }
-        .dashboard-layout {
-            display: flex;
-            min-height: 100vh;
-        }
-        .sidebar {
-            background: #1976d2;
-            color: #fff;
-            width: 220px;
-            padding: 2rem 1rem;
-            display: flex;
-            flex-direction: column;
-            gap: 2rem;
-            min-height: 100vh;
-        }
-        .sidebar h2 {
-            color: #fff;
-            margin-bottom: 2rem;
-            font-size: 1.3rem;
-            text-align: center;
-        }
-        .sidebar a {
-            color: #fff;
-            text-decoration: none;
-            font-weight: bold;
-            margin-bottom: 1rem;
-            display: block;
-            padding: 0.7rem 1rem;
-            border-radius: 6px;
-            transition: background 0.2s;
-        }
-        .sidebar a.active, .sidebar a:hover {
-            background: #1565c0;
-        }
-        .main-content {
-            flex: 1;
-            padding: 2.5rem 3rem;
-            background: #f3f8fd;
-        }
-        @media (max-width: 900px) {
-            .dashboard-layout { flex-direction: column; }
-            .sidebar { flex-direction: row; width: 100%; min-height: unset; padding: 1rem; gap: 1rem;}
-            .main-content { padding: 1rem; }
-        }
-    </style>
 </head>
 <body>
     <div class="dashboard-layout">
-        <nav class="sidebar">
+        <nav class="sidebar admin">
             <h2>Admin</h2>
             <a href="index.php">Tableau de bord</a>
             <a href="franchisés.php">Gérer les franchisés</a>
             <a href="camions.php" class="active">Gérer les camions</a>
             <a href="produits.php">Gérer les produits</a>
+            <a href="entrepots.php">Gérer les entrepôts</a>
             <a href="ventes.php">Voir les ventes</a>
             <a href="commandes.php">Voir les commandes</a>
             <form action="../api/users/logout.php" method="post" style="margin-top:auto;">
                 <button type="submit" class="logout-btn" style="width:100%;">Déconnexion</button>
             </form>
         </nav>
-        <main class="main-content">
-            <h1>Gestion des camions</h1>
+        
+        <main class="main-content admin">
+            <h1 class="admin">Gestion des camions</h1>
             <div class="tabs">
                 <button class="tab-btn active" id="tab-camions-btn" onclick="switchTab('camions')">
                     Parc de camions
@@ -151,9 +84,11 @@ require_role('admin');
 
     document.addEventListener('DOMContentLoaded', async function() {
         const demandesRes = await fetch('../api/camions/demandes.php');
-        const demandes = await demandesRes.json();
+        demandes = await demandesRes.json();
+        
         document.getElementById('badge-demandes').textContent = demandes.length;
         document.getElementById('badge-demandes').style.display = demandes.length ? '' : 'none';
+        
         const tbodyDem = document.getElementById('liste-demandes-camion');
         demandes.forEach(demande => {
             tbodyDem.innerHTML += `
@@ -164,10 +99,10 @@ require_role('admin');
                     <td>${demande.emplacement}</td>
                     <td>${demande.menu}</td>
                     <td>${demande.jours}</td>
-                    <td>${demande.date_demande}</td>
+                    <td>${new Date(demande.date_demande).toLocaleDateString('fr-FR')}</td>
                     <td>
-                        <button class="btn-action" onclick="validerDemande(${demande.id})">Valider</button>
-                        <button class="btn-action" onclick="refuserDemande(${demande.id})">Refuser</button>
+                        <button class="btn-action" onclick="validerDemande(${demande.id})" style="background: #4caf50;">Valider</button>
+                        <button class="btn-action" onclick="refuserDemande(${demande.id})" style="background: #f44336;">Refuser</button>
                     </td>
                 </tr>
             `;
@@ -224,12 +159,254 @@ require_role('admin');
         }
     }
 
-    function validerDemande(id) {
-        alert("Valider la demande #" + id);
+    async function validerDemande(demandeId) {
+        // Récupérer les détails de la demande
+        const demande = demandes.find(d => d.id == demandeId);
+        if (!demande) {
+            alert('Demande non trouvée');
+            return;
+        }
+        
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <h3>Valider la demande de camion</h3>
+                
+                <div class="demande-details">
+                    <h4>Détails de la demande :</h4>
+                    <div style="background: #f8f9fa; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
+                        <strong>Franchisé :</strong> ${demande.franchise_nom} ${demande.franchise_prenom}<br>
+                        <strong>Nom du camion :</strong> ${demande.nom_camion}<br>
+                        <strong>Emplacement :</strong> ${demande.emplacement}<br>
+                        <strong>Menu :</strong> ${demande.menu}<br>
+                        <strong>Jours d'ouverture :</strong> ${demande.jours}<br>
+                        <strong>N° Permis :</strong> ${demande.numero_permis}
+                    </div>
+                </div>
+                
+                <form id="validation-form">
+                    <div class="form-group">
+                        <label for="date_livraison">Date de livraison prévue *</label>
+                        <input type="date" id="date_livraison" name="date_livraison" required 
+                               min="${new Date().toISOString().split('T')[0]}"
+                               value="${new Date(Date.now() + 14*24*60*60*1000).toISOString().split('T')[0]}">
+                        <small style="color: #666;">La livraison est fixée par défaut à 2 semaines</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="commentaire_validation">Commentaire (optionnel)</label>
+                        <textarea id="commentaire_validation" name="commentaire" 
+                                  placeholder="Instructions particulières, notes..."></textarea>
+                    </div>
+                    
+                    <div style="background: #e8f5e8; border: 1px solid #4caf50; border-radius: 6px; padding: 1rem; margin: 1rem 0;">
+                        <strong>Validation de la demande :</strong><br>
+                        <small>
+                            • Un camion sera automatiquement créé<br>
+                            • Une immatriculation unique sera générée<br>
+                            • Le franchisé sera notifié de la validation
+                        </small>
+                    </div>
+                    
+                    <div class="modal-actions">
+                        <button type="button" class="btn-secondary" onclick="closeModal()">Annuler</button>
+                        <button type="submit" class="btn-primary" style="background: #4caf50;">Valider la demande</button>
+                    </div>
+                </form>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        document.getElementById('validation-form').onsubmit = async function(e) {
+            e.preventDefault();
+            await submitValidationDemande(demandeId, 'valider');
+        };
     }
-    function refuserDemande(id) {
-        alert("Refuser la demande #" + id);
+
+    async function refuserDemande(demandeId) {
+        const demande = demandes.find(d => d.id == demandeId);
+        if (!demande) {
+            alert('Demande non trouvée');
+            return;
+        }
+        
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <h3>Refuser la demande de camion</h3>
+                
+                <div class="demande-details">
+                    <h4>Demande de :</h4>
+                    <div style="background: #f8f9fa; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
+                        <strong>${demande.franchise_nom} ${demande.franchise_prenom}</strong><br>
+                        <small>Camion : ${demande.nom_camion} | Emplacement : ${demande.emplacement}</small>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="raison_refus">Raison du refus *</label>
+                    <textarea id="raison_refus" required 
+                              placeholder="Expliquez pourquoi cette demande est refusée (documents manquants, emplacement non autorisé, etc.)"></textarea>
+                </div>
+                
+                <div style="background: #ffebee; border: 1px solid #f44336; border-radius: 6px; padding: 1rem; margin: 1rem 0;">
+                    <strong>Attention :</strong><br>
+                    <small>Le franchisé recevra une notification de refus avec votre commentaire.</small>
+                </div>
+                
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="closeModal()">Annuler</button>
+                    <button type="button" class="btn-danger" onclick="confirmRefus(${demandeId})">Confirmer le refus</button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
     }
+
+    async function confirmRefus(demandeId) {
+        const raison = document.getElementById('raison_refus').value;
+        if (!raison.trim()) {
+            alert('Veuillez indiquer une raison pour le refus');
+            return;
+        }
+        
+        await submitValidationDemande(demandeId, 'refuser', { commentaire: raison });
+    }
+
+    async function submitValidationDemande(demandeId, action, extraData = {}) {
+        try {
+            const formData = action === 'valider' ? {
+                demande_id: demandeId,
+                action: action,
+                date_livraison: document.getElementById('date_livraison')?.value,
+                commentaire: document.getElementById('commentaire_validation')?.value,
+                ...extraData
+            } : {
+                demande_id: demandeId,
+                action: action,
+                ...extraData
+            };
+            
+            const response = await fetch('../api/camions/validate_demande.php', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(formData)
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                showAlert(result.message, 'success');
+                closeModal();
+                location.reload();
+            } else {
+                showAlert('Erreur: ' + result.message, 'error');
+            }
+        } catch (error) {
+            showAlert('Erreur réseau lors de la validation', 'error');
+            console.error('Erreur:', error);
+        }
+    }
+
+    function closeModal() {
+        const modal = document.querySelector('.modal');
+        if (modal) modal.remove();
+    }
+
+    function showAlert(message, type) {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type}`;
+        alertDiv.style.cssText = `
+            position: fixed; top: 20px; right: 20px; z-index: 1001;
+            padding: 1rem 1.5rem; border-radius: 6px; font-weight: bold;
+            max-width: 400px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            ${type === 'success' ? 'background: #d4edda; color: #155724; border: 1px solid #c3e6cb;' : 
+              'background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb;'}
+        `;
+        alertDiv.textContent = message;
+        
+        document.body.appendChild(alertDiv);
+        
+        setTimeout(() => {
+            alertDiv.remove();
+        }, 5000);
+    }
+
+    let demandes = [];
+
+    document.addEventListener('DOMContentLoaded', async function() {
+        const demandesRes = await fetch('../api/camions/demandes.php');
+        demandes = await demandesRes.json();
+
+        document.getElementById('badge-demandes').textContent = demandes.length;
+        document.getElementById('badge-demandes').style.display = demandes.length ? '' : 'none';
+        
+        const tbodyDem = document.getElementById('liste-demandes-camion');
+        demandes.forEach(demande => {
+            tbodyDem.innerHTML += `
+                <tr>
+                    <td>${demande.franchise_nom} ${demande.franchise_prenom}</td>
+                    <td><strong>${demande.nom_camion}</strong></td>
+                    <td>${demande.numero_permis}</td>
+                    <td>${demande.emplacement}</td>
+                    <td>${demande.menu}</td>
+                    <td>${demande.jours}</td>
+                    <td>${new Date(demande.date_demande).toLocaleDateString('fr-FR')}</td>
+                    <td>
+                        <button class="btn-action" onclick="validerDemande(${demande.id})" style="background: #4caf50;">Valider</button>
+                        <button class="btn-action" onclick="refuserDemande(${demande.id})" style="background: #f44336;">Refuser</button>
+                    </td>
+                </tr>
+            `;
+        });
+        
+        const camionsRes = await fetch('../api/camions/list.php');
+        let camions = await camionsRes.json();
+
+        camions.sort((a, b) => {
+            if ((b.demande_maintenance ? 1 : 0) - (a.demande_maintenance ? 1 : 0) !== 0)
+                return (b.demande_maintenance ? 1 : 0) - (a.demande_maintenance ? 1 : 0);
+            return a.franchise_nom.localeCompare(b.franchise_nom);
+        });
+
+        const tbody = document.getElementById('liste-camions');
+        camions.forEach(camion => {
+            const urgence = camion.demande_maintenance ? 'camion-urgence' : '';
+            tbody.innerHTML += `
+                <tr class="accordion-row ${urgence}" onclick="toggleDetails(this)">
+                    <td>${camion.id}</td>
+                    <td>${camion.franchise_nom}</td>
+                    <td>${camion.etat}</td>
+                    <td>${camion.emplacement}</td>
+                    <td>${camion.prochaine_maintenance ?? '-'}</td>
+                    <td>
+                        ${camion.demande_maintenance 
+                            ? '<span class="camion-maintenance">À traiter</span>' 
+                            : '<span class="camion-ok">OK</span>'}
+                    </td>
+                    <td>
+                        ${camion.date_livraison 
+                            ? '<span class="date-livraison">'+camion.date_livraison+'</span>' 
+                            : '-'}
+                    </td>
+                </tr>
+                <tr class="accordion-details">
+                    <td colspan="7">
+                        <strong>Détails du camion #${camion.id}</strong><br>
+                        Menu : ${camion.menu ?? '-'}<br>
+                        Jours d'ouverture : ${camion.jours ?? '-'}<br>
+                        Historique entretiens : ${camion.historique_entretiens ?? '-'}<br>
+                        <button class="btn-action">Modifier</button>
+                        <button class="btn-action">Maintenance</button>
+                    </td>
+                </tr>
+            `;
+        });
+    });
     </script>
 </body>
 </html>

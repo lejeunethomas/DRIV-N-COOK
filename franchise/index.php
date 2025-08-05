@@ -8,94 +8,21 @@ require_franchise_validated();
     <meta charset="UTF-8">
     <title>Tableau de bord Franchisé</title>
     <link rel="stylesheet" href="../css/style.css">
-    <style>
-        .dashboard-layout {
-            display: flex;
-            min-height: 100vh;
-        }
-        .sidebar {
-            background: #ff5722;
-            color: #fff;
-            width: 220px;
-            padding: 2rem 1rem;
-            display: flex;
-            flex-direction: column;
-            gap: 2rem;
-            min-height: 100vh;
-        }
-        .sidebar h2 {
-            color: #fff;
-            margin-bottom: 2rem;
-            font-size: 1.3rem;
-            text-align: center;
-        }
-        .sidebar a {
-            color: #fff;
-            text-decoration: none;
-            font-weight: bold;
-            margin-bottom: 1rem;
-            display: block;
-            padding: 0.7rem 1rem;
-            border-radius: 6px;
-            transition: background 0.2s;
-        }
-        .sidebar a.active, .sidebar a:hover {
-            background: #e64a19;
-        }
-        .main-content {
-            flex: 1;
-            padding: 2.5rem 3rem;
-            background: #fff8f0;
-        }
-        .section-card {
-            background: #fff;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px #0001;
-            padding: 2rem 2.5rem;
-            margin-bottom: 2.5rem;
-        }
-        .section-card h2 {
-            color: #ff5722;
-            margin-bottom: 1.2rem;
-        }
-        .topbar {
-            display: flex;
-            justify-content: flex-end;
-            align-items: center;
-            margin-bottom: 2rem;
-        }
-        .logout-btn {
-            background: #ff5722;
-            color: #fff;
-            border: none;
-            border-radius: 6px;
-            padding: 0.7rem 1.5rem;
-            font-weight: bold;
-            cursor: pointer;
-        }
-        .logout-btn:hover {
-            background: #e64a19;
-        }
-        @media (max-width: 900px) {
-            .dashboard-layout { flex-direction: column; }
-            .sidebar { flex-direction: row; width: 100%; min-height: unset; padding: 1rem; gap: 1rem;}
-            .main-content { padding: 1rem; }
-        }
-    </style>
 </head>
 <body>
     <div class="dashboard-layout">
-        <nav class="sidebar">
+        <nav class="sidebar franchise">
             <h2>Mon espace</h2>
             <a href="index.php" class="active">Tableau de bord</a>
             <a href="ventes.php">Mes ventes</a>
+            <a href="menu.php">Mon menu</a>
             <a href="commandes.php">Commandes de stock</a>
             <a href="compte.php">Mon compte</a>
             <form action="../api/users/logout.php" method="post" style="margin-top:auto;">
-                <button type="submit" class="logout-btn" style="width:100%;">Déconnexion</button>
+                <button type="submit" class="logout-btn franchise" style="width:100%;">Déconnexion</button>
             </form>
         </nav>
-        <main class="main-content">
+        <main class="main-content franchise">
             <div class="topbar">
                 <h1 style="margin:0; color:#e64a19;">Bienvenue sur votre espace franchisé</h1>
             </div>
@@ -103,7 +30,11 @@ require_franchise_validated();
             <div class="section-card">
                 <section id="camions">
                     <h2>Mon camion</h2>
-                    <button onclick="afficherFormDemandeCamion()">Demander un camion</button>
+                    <div id="camion-status">
+                    </div>
+                    <button id="btn-demande-camion" onclick="afficherFormDemandeCamion()" style="display:none;">
+                        Demander mon camion
+                    </button>
                     <div id="form-demande-camion" style="display:none;">
                         <h3>Demande de camion</h3>
                         <form id="demandeCamionForm">
@@ -164,6 +95,8 @@ function fermerFormDemandeCamion() {
 }
 
 document.addEventListener('DOMContentLoaded', async function() {
+    await loadCamionStatus();
+    
     try {
         const res = await fetch('../api/users/profile.php');
         const user = await res.json();
@@ -208,6 +141,8 @@ document.addEventListener('DOMContentLoaded', async function() {
             }
         };
     }
+
+    await loadCommandesEnCours();
 });
 
 async function geocodeAddress(address) {
@@ -244,6 +179,82 @@ function afficherDemandeEnAttente(data) {
         </div>
     `;
     document.getElementById('camions').insertAdjacentHTML('beforeend', recap);
+}
+
+async function loadCommandesEnCours() {
+    try {
+        const response = await fetch('../api/commandes/list_by_user.php');
+        const commandes = await response.json();
+        
+        const commandesEnCours = commandes.filter(c => c.statut === 'en_attente' || c.statut === 'validee');
+        
+        if (commandesEnCours.length > 0) {
+            const commandesSection = document.getElementById('commandes');
+            commandesSection.innerHTML = `
+                <h2>Commandes en cours</h2>
+                ${commandesEnCours.map(commande => `
+                    <div style="background: #fff8f0; border: 1px solid #ff5722; border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
+                        <strong>Commande du ${new Date(commande.date_commande).toLocaleDateString('fr-FR')}</strong><br>
+                        <small>Entrepôt: ${commande.entrepot_nom} | Total: ${parseFloat(commande.total).toFixed(2)}€ | Statut: ${commande.statut}</small>
+                    </div>
+                `).join('')}
+                <a href="commandes.php" class="btn">Gérer mes commandes</a>
+            `;
+        }
+    } catch (error) {
+        console.error('Erreur lors du chargement des commandes:', error);
+    }
+}
+
+async function loadCamionStatus() {
+    try {
+        const camionsRes = await fetch('../api/camions/get_by_user.php');
+        const camions = await camionsRes.json();
+        const statusDiv = document.getElementById('camion-status');
+        const btnDemande = document.getElementById('btn-demande-camion');
+        
+        if (Array.isArray(camions) && camions.length > 0) {
+            // Le franchisé a un camion
+            const camion = camions[0];
+            statusDiv.innerHTML = `
+                <div class="camion-info" style="background: #e8f5e8; padding: 1rem; border-radius: 6px; margin: 1rem 0;">
+                    <h3 style="color: #4caf50; margin: 0 0 0.5rem 0;">Votre camion "${camion.nom_camion}"</h3>
+                    <p><strong>Immatriculation :</strong> ${camion.immatriculation}</p>
+                    <p><strong>État :</strong> ${camion.etat}</p>
+                    <p><strong>Emplacement :</strong> ${camion.emplacement || 'Non défini'}</p>
+                    ${camion.date_livraison ? `<p><strong>Date de livraison :</strong> ${new Date(camion.date_livraison).toLocaleDateString('fr-FR')}</p>` : ''}
+                </div>
+            `;
+            btnDemande.style.display = 'none';
+        } else {
+            // Vérifier s'il y a une demande en attente
+            const demandesRes = await fetch('../api/camions/demande_status.php');
+            const demandes = await demandesRes.json();
+            
+            if (demandes.has_pending) {
+                statusDiv.innerHTML = `
+                    <div class="demande-attente" style="background: #fff3cd; padding: 1rem; border-radius: 6px; margin: 1rem 0;">
+                        <h3 style="color: #856404; margin: 0 0 0.5rem 0;">Demande en cours de traitement</h3>
+                        <p>Votre demande de camion est en cours d'analyse par notre équipe.</p>
+                        <p><strong>Camion demandé :</strong> ${demandes.nom_camion}</p>
+                        <p><strong>Date de demande :</strong> ${new Date(demandes.date_demande).toLocaleDateString('fr-FR')}</p>
+                    </div>
+                `;
+                btnDemande.style.display = 'none';
+            } else {
+                // Aucun camion, aucune demande
+                statusDiv.innerHTML = `
+                    <div class="no-camion" style="background: #f8d7da; padding: 1rem; border-radius: 6px; margin: 1rem 0;">
+                        <h3 style="color: #721c24; margin: 0 0 0.5rem 0;">Aucun camion attribué</h3>
+                        <p>Vous n'avez pas encore de camion. Faites une demande pour commencer votre activité !</p>
+                    </div>
+                `;
+                btnDemande.style.display = 'block';
+            }
+        }
+    } catch (error) {
+        console.error('Erreur lors du chargement du statut camion:', error);
+    }
 }
 </script>
 </body>

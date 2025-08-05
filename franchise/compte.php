@@ -8,190 +8,21 @@ require_franchise_validated();
     <meta charset="UTF-8">
     <title>Mon compte - Franchisé</title>
     <link rel="stylesheet" href="../css/style.css">
-    <style>
-        .dashboard-layout {
-            display: flex;
-            min-height: 100vh;
-        }
-        .sidebar {
-            background: #ff5722;
-            color: #fff;
-            width: 220px;
-            padding: 2rem 1rem;
-            display: flex;
-            flex-direction: column;
-            gap: 2rem;
-            min-height: 100vh;
-        }
-        .sidebar h2 {
-            color: #fff;
-            margin-bottom: 2rem;
-            font-size: 1.3rem;
-            text-align: center;
-        }
-        .sidebar a {
-            color: #fff;
-            text-decoration: none;
-            font-weight: bold;
-            margin-bottom: 1rem;
-            display: block;
-            padding: 0.7rem 1rem;
-            border-radius: 6px;
-            transition: background 0.2s;
-        }
-        .sidebar a.active, .sidebar a:hover {
-            background: #e64a19;
-        }
-        .main-content {
-            flex: 1;
-            padding: 2.5rem 3rem;
-            background: #fff8f0;
-        }
-        .section-card {
-            background: #fff;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px #0001;
-            padding: 2rem 2.5rem;
-            margin-bottom: 2.5rem;
-        }
-        .section-card h2 {
-            color: #ff5722;
-            margin-bottom: 1.2rem;
-        }
-        .topbar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
-        }
-        .logout-btn {
-            background: #ff5722;
-            color: #fff;
-            border: none;
-            border-radius: 6px;
-            padding: 0.7rem 1.5rem;
-            font-weight: bold;
-            cursor: pointer;
-        }
-        .logout-btn:hover {
-            background: #e64a19;
-        }
-        .profile-section {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-        }
-        .profile-field {
-            display: flex;
-            flex-direction: column;
-        }
-        .profile-field.full-width {
-            grid-column: span 2;
-        }
-        .profile-field label {
-            font-weight: bold;
-            margin-bottom: 0.5rem;
-            color: #333;
-        }
-        .profile-field .value {
-            padding: 0.7rem;
-            background: #f8f8f8;
-            border-radius: 6px;
-            border: 1px solid #ddd;
-        }
-        .profile-field input,
-        .profile-field textarea {
-            padding: 0.7rem;
-            border-radius: 6px;
-            border: 1px solid #ccc;
-            font-family: inherit;
-        }
-        .profile-field textarea {
-            resize: vertical;
-            min-height: 80px;
-        }
-        .edit-mode {
-            display: none;
-        }
-        .btn-group {
-            display: flex;
-            gap: 1rem;
-            margin-top: 1.5rem;
-        }
-        .btn-secondary {
-            background: #6c757d;
-            color: #fff;
-            border: none;
-            padding: 0.7rem 1.5rem;
-            border-radius: 6px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-        .btn-secondary:hover {
-            background: #5a6268;
-        }
-        .alert {
-            padding: 1rem;
-            border-radius: 6px;
-            margin-bottom: 1rem;
-            font-weight: bold;
-        }
-        .alert-success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-        .alert-error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-        .stats-section {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-            margin-top: 2rem;
-        }
-        .stat-card {
-            background: #fff;
-            border-radius: 8px;
-            padding: 1.5rem;
-            text-align: center;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            border-left: 4px solid #ff5722;
-        }
-        .stat-value {
-            font-size: 2rem;
-            font-weight: bold;
-            color: #ff5722;
-        }
-        .stat-label {
-            color: #666;
-            margin-top: 0.5rem;
-        }
-        @media (max-width: 900px) {
-            .dashboard-layout { flex-direction: column; }
-            .sidebar { flex-direction: row; width: 100%; min-height: unset; padding: 1rem; gap: 1rem;}
-            .main-content { padding: 1rem; }
-            .profile-section { grid-template-columns: 1fr; }
-            .profile-field.full-width { grid-column: span 1; }
-        }
-    </style>
 </head>
 <body>
     <div class="dashboard-layout">
-        <nav class="sidebar">
+        <nav class="sidebar franchise">
             <h2>Mon espace</h2>
             <a href="index.php">Tableau de bord</a>
             <a href="ventes.php">Mes ventes</a>
+            <a href="menu.php">Mon menu</a>
             <a href="commandes.php">Commandes de stock</a>
             <a href="compte.php" class="active">Mon compte</a>
             <form action="../api/users/logout.php" method="post" style="margin-top:auto;">
-                <button type="submit" class="logout-btn" style="width:100%;">Déconnexion</button>
+                <button type="submit" class="logout-btn franchise" style="width:100%;">Déconnexion</button>
             </form>
         </nav>
-        <main class="main-content">
+        <main class="main-content franchise">
             <div class="topbar">
                 <h1 style="margin:0; color:#e64a19;">Mon compte</h1>
                 <button id="edit-btn" class="btn" onclick="toggleEditMode()">Modifier</button>
@@ -199,7 +30,7 @@ require_franchise_validated();
 
             <div id="alert-container"></div>
 
-            <div class="section-card">
+            <div class="section-card franchise">
                 <h2>Informations personnelles</h2>
                 
                 <div id="view-mode">
@@ -280,7 +111,7 @@ require_franchise_validated();
                 <div class="stats-section">
                     <div class="stat-card">
                         <div class="stat-value" id="stat-camions">0</div>
-                        <div class="stat-label">Camions actifs</div>
+                        <div class="stat-label">Mon camion</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-value" id="stat-ventes">0€</div>
@@ -391,8 +222,37 @@ require_franchise_validated();
 
         async function loadStats() {
             try {
+                // Statistique du camion du franchisé (1 seul maximum)
+                const camionsRes = await fetch('../api/camions/get_by_user.php');
+                const camions = await camionsRes.json();
+                const nbCamions = Array.isArray(camions) && camions.length > 0 ? 1 : 0;
+                document.getElementById('stat-camions').textContent = nbCamions;
+                
+                document.querySelector('#stat-camions').parentElement.querySelector('.stat-label').textContent = 
+                    nbCamions > 0 ? 'Mon camion' : 'Aucun camion';
+
+                // Statistique des commandes en cours
+                const commandesRes = await fetch('../api/commandes/list_by_user.php');
+                const commandes = await commandesRes.json();
+                const commandesEnCours = Array.isArray(commandes) ? 
+                    commandes.filter(c => c.statut === 'en_attente' || c.statut === 'validee').length : 0;
+                document.getElementById('stat-commandes').textContent = commandesEnCours;
+
+                // Statistique des ventes du mois
+                try {
+                    const ventesRes = await fetch('../api/ventes/stats_by_user.php');
+                    const ventes = await ventesRes.json();
+                    const ventesTotal = ventes.total_mois || 0;
+                    document.getElementById('stat-ventes').textContent = ventesTotal.toFixed(2) + '€';
+                } catch (error) {
+                    document.getElementById('stat-ventes').textContent = 'N/A';
+                }
+                
             } catch (error) {
                 console.error('Erreur lors du chargement des statistiques:', error);
+                document.getElementById('stat-camions').textContent = 'Erreur';
+                document.getElementById('stat-ventes').textContent = 'Erreur';
+                document.getElementById('stat-commandes').textContent = 'Erreur';
             }
         }
 

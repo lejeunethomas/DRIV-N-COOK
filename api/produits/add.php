@@ -16,13 +16,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         $conn = Database::getInstance()->getConnection();
         
-        $stmt = $conn->prepare("INSERT INTO produits (nom, type, prix_unitaire, obligatoire, entrepot_id) VALUES (?, ?, ?, ?, ?)");
+        $stmt = $conn->prepare("INSERT INTO produits (nom, type, prix_unitaire, obligatoire, quantite_minimale) VALUES (?, ?, ?, ?, ?)");
         $stmt->execute([
             $data['nom'],
             $data['type'] ?? 'aliment',
             $data['prix_unitaire'],
             isset($data['obligatoire']) ? ($data['obligatoire'] ? 1 : 0) : 1,
-            $data['entrepot_id'] ?? null
+            isset($data['quantite_minimale']) ? intval($data['quantite_minimale']) : 0
         ]);
         
         echo json_encode(['success' => true, 'message' => 'Produit ajouté avec succès', 'id' => $conn->lastInsertId()]);

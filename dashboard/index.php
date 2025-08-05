@@ -1,6 +1,6 @@
 <?php
 require_once '../includes/auth.php';
-require_role('admin');
+require_admin();
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -8,183 +8,175 @@ require_role('admin');
     <meta charset="UTF-8">
     <title>Tableau de bord Admin - DRIV'N'COOK</title>
     <link rel="stylesheet" href="../css/style.css">
-    <style>
-        .dashboard-layout {
-            display: flex;
-            min-height: 100vh;
-        }
-        .sidebar {
-            background: #1976d2;
-            color: #fff;
-            width: 220px;
-            padding: 2rem 1rem;
-            display: flex;
-            flex-direction: column;
-            gap: 2rem;
-            min-height: 100vh;
-        }
-        .sidebar h2 {
-            color: #fff;
-            margin-bottom: 2rem;
-            font-size: 1.3rem;
-            text-align: center;
-        }
-        .sidebar a {
-            color: #fff;
-            text-decoration: none;
-            font-weight: bold;
-            margin-bottom: 1rem;
-            display: block;
-            padding: 0.7rem 1rem;
-            border-radius: 6px;
-            transition: background 0.2s;
-        }
-        .sidebar a.active, .sidebar a:hover {
-            background: #1565c0;
-        }
-        .main-content {
-            flex: 1;
-            padding: 2.5rem 3rem;
-            background: #f3f8fd;
-        }
-        .section-card {
-            background: #fff;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px #0001;
-            padding: 2rem 2.5rem;
-            margin-bottom: 2.5rem;
-        }
-        .section-card h2 {
-            color: #1976d2;
-            margin-bottom: 1.2rem;
-        }
-        .topbar {
-            display: flex;
-            justify-content: flex-end;
-            align-items: center;
-            margin-bottom: 2rem;
-        }
-        .logout-btn {
-            background: #1976d2;
-            color: #fff;
-            border: none;
-            border-radius: 6px;
-            padding: 0.7rem 1.5rem;
-            font-weight: bold;
-            cursor: pointer;
-        }
-        .logout-btn:hover {
-            background: #1565c0;
-        }
-        .dashboard-cards {
-            display: flex;
-            gap:2rem;
-            flex-wrap:wrap;
-            margin-bottom:2rem;
-            justify-content: center;
-        }
-        .cta-card {
-            background: #fff;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px #0001;
-            padding: 2rem 2.5rem;
-            min-width: 180px;
-            text-align: center;
-        }
-        .cta-card h2 {
-            color: #1976d2;
-            margin-bottom: 0.7rem;
-        }
-        .cta-card p {
-            font-size: 2rem;
-            font-weight: bold;
-            margin: 0;
-        }
-        .dashboard-links {
-            display: flex;
-            gap: 1.5rem;
-            justify-content: center;
-            margin-bottom: 2rem;
-        }
-        .dashboard-links .btn {
-            background: #1976d2;
-            color: #fff;
-            border-radius: 8px;
-            padding: 0.8rem 2rem;
-            font-weight: bold;
-            text-decoration: none;
-            transition: background 0.2s;
-        }
-        .dashboard-links .btn:hover {
-            background: #1565c0;
-        }
-        @media (max-width: 900px) {
-            .dashboard-layout { flex-direction: column; }
-            .sidebar { flex-direction: row; width: 100%; min-height: unset; padding: 1rem; gap: 1rem;}
-            .main-content { padding: 1rem; }
-        }
-    </style>
 </head>
 <body>
     <div class="dashboard-layout">
-        <nav class="sidebar">
+        <nav class="sidebar admin">
             <h2>Admin</h2>
             <a href="index.php" class="active">Tableau de bord</a>
             <a href="franchisés.php">Gérer les franchisés</a>
             <a href="camions.php">Gérer les camions</a>
             <a href="produits.php">Gérer les produits</a>
+            <a href="entrepots.php">Gérer les entrepôts</a>
             <a href="ventes.php">Voir les ventes</a>
             <a href="commandes.php">Voir les commandes</a>
             <form action="../api/users/logout.php" method="post" style="margin-top:auto;">
                 <button type="submit" class="logout-btn" style="width:100%;">Déconnexion</button>
             </form>
         </nav>
-        <main class="main-content">
-            <div class="topbar"></div>
-            <h1 style="text-align:center; margin-bottom:2rem; color:#1976d2;">Tableau de bord Administrateur</h1>
-            <div class="dashboard-cards">
-                <div class="cta-card" id="stat-franchise">
-                    <h2>Franchisés</h2>
-                    <p id="nb-franchise">...</p>
+        
+        <main class="main-content admin">
+            <h1 class="admin" style="text-align:center; margin-bottom:2rem;">Tableau de bord Administrateur</h1>
+            
+            <!-- Statistiques générales -->
+            <div class="stats-grid" style="margin-bottom: 3rem;">
+                <div class="stat-item info">
+                    <div class="stat-number" id="nb-franchise" style="color: #1976d2;">...</div>
+                    <div class="stat-label">Franchisés</div>
                 </div>
-                <div class="cta-card" id="stat-camion">
-                    <h2>Camions</h2>
-                    <p id="nb-camion">...</p>
+                <div class="stat-item info">
+                    <div class="stat-number" id="nb-camion" style="color: #1976d2;">...</div>
+                    <div class="stat-label">Camions en service</div>
                 </div>
-                <div class="cta-card" id="stat-vente">
-                    <h2>Ventes</h2>
-                    <p id="nb-vente">...</p>
+                <div class="stat-item success">
+                    <div class="stat-number" id="nb-vente" style="color: #4caf50;">...</div>
+                    <div class="stat-label">Ventes totales</div>
                 </div>
-                <div class="cta-card" id="stat-commande">
-                    <h2>Commandes</h2>
-                    <p id="nb-commande">...</p>
+                <div class="stat-item warning">
+                    <div class="stat-number" id="nb-commande" style="color: #ff9800;">...</div>
+                    <div class="stat-label">Commandes</div>
                 </div>
             </div>
-            <div class="dashboard-links">
-                <a href="franchisés.php" class="btn">Gérer les franchisés</a>
-                <a href="camions.php" class="btn">Gérer les camions</a>
-                <a href="produits.php" class="btn">Gérer les produits</a>
-                <a href="ventes.php" class="btn">Voir les ventes</a>
-                <a href="commandes.php" class="btn">Voir les commandes</a>
+            
+            <!-- Statistiques des demandes en attente -->
+            <div class="section-card admin">
+                <h2>Éléments nécessitant votre attention</h2>
+                <div class="stats-grid">
+                    <div class="stat-item warning" id="pending-franchises">
+                        <div class="stat-number" id="nb-pending-franchises" style="color: #ff9800;">...</div>
+                        <div class="stat-label">Comptes franchisés en attente</div>
+                    </div>
+                    <div class="stat-item critical" id="pending-trucks">
+                        <div class="stat-number" id="nb-pending-trucks" style="color: #f44336;">...</div>
+                        <div class="stat-label">Demandes de camions</div>
+                    </div>
+                    <div class="stat-item warning" id="pending-orders">
+                        <div class="stat-number" id="nb-pending-orders" style="color: #ff9800;">...</div>
+                        <div class="stat-label">Commandes en attente</div>
+                    </div>
+                    <div class="stat-item critical" id="stock-alerts">
+                        <div class="stat-number" id="nb-stock-alerts" style="color: #f44336;">...</div>
+                        <div class="stat-label">Alertes de stock</div>
+                    </div>
+                </div>
+                
+                <!-- Actions rapides pour les alertes -->
+                <div class="quick-nav" style="margin-top: 1.5rem;">
+                    <a href="franchisés.php" class="btn-nav" id="btn-pending-franchises" style="display:none;">
+                        Valider les comptes
+                    </a>
+                    <a href="camions.php" class="btn-nav" id="btn-pending-trucks" style="display:none;">
+                        Traiter les demandes
+                    </a>
+                    <a href="commandes.php" class="btn-nav" id="btn-pending-orders" style="display:none;">
+                        Valider les commandes
+                    </a>
+                    <a href="entrepots.php" class="btn-nav" id="btn-stock-alerts" style="display:none;">
+                        Gérer les stocks
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Navigation rapide vers les sections -->
+            <div class="section-card admin">
+                <h2>Navigation rapide</h2>
+                <div class="quick-nav">
+                    <a href="franchisés.php" class="btn-nav"> Gérer les franchisés</a>
+                    <a href="camions.php" class="btn-nav"> Gérer les camions</a>
+                    <a href="produits.php" class="btn-nav"> Gérer les produits</a>
+                    <a href="entrepots.php" class="btn-nav"> Gérer les entrepôts</a>
+                    <a href="ventes.php" class="btn-nav"> Voir les ventes</a>
+                    <a href="commandes.php" class="btn-nav"> Voir les commandes</a>
+                </div>
             </div>
         </main>
     </div>
+    
     <script>
-        fetch('../api/users/get_all.php')
-            .then(res => res.json())
-            .then(data => document.getElementById('nb-franchise').textContent = data.length);
+        // Charger les statistiques principales
+        async function loadMainStats() {
+            try {
+                // Franchisés
+                const franchisesRes = await fetch('../api/users/get_all.php');
+                const franchises = await franchisesRes.json();
+                document.getElementById('nb-franchise').textContent = franchises.length || '0';
 
-        fetch('../api/camions/get_by_user.php?admin=1')
-            .then(res => res.json())
-            .then(data => document.getElementById('nb-camion').textContent = data.length);
+                // Camions
+                const camionsRes = await fetch('../api/camions/get_by_user.php?admin=1');
+                const camions = await camionsRes.json();
+                document.getElementById('nb-camion').textContent = camions.length || '0';
 
-        fetch('../api/ventes/add.php?stats=1')
-            .then(res => res.json())
-            .then(data => document.getElementById('nb-vente').textContent = data.total ?? '0');
+                // Ventes
+                const ventesRes = await fetch('../api/ventes/add.php?stats=1');
+                const ventes = await ventesRes.json();
+                document.getElementById('nb-vente').textContent = ventes.total || '0€';
 
-        fetch('../api/commandes/list_by_user.php?admin=1')
-            .then(res => res.json())
-            .then(data => document.getElementById('nb-commande').textContent = data.length);
+                // Commandes
+                const commandesRes = await fetch('../api/commandes/list_by_user.php?admin=1');
+                const commandes = await commandesRes.json();
+                document.getElementById('nb-commande').textContent = commandes.length || '0';
+                
+            } catch (error) {
+                console.error('Erreur lors du chargement des statistiques:', error);
+            }
+        }
+
+        // Charger les alertes et éléments nécessitant attention
+        async function loadAlerts() {
+            try {
+                // Comptes franchisés en attente
+                const pendingFranchisesRes = await fetch('../api/users/validation.php');
+                const pendingFranchises = await pendingFranchisesRes.json();
+                const nbPendingFranchises = pendingFranchises.length || 0;
+                document.getElementById('nb-pending-franchises').textContent = nbPendingFranchises;
+                document.getElementById('btn-pending-franchises').style.display = nbPendingFranchises > 0 ? 'inline-flex' : 'none';
+
+                // Demandes de camions
+                const pendingTrucksRes = await fetch('../api/camions/demandes.php');
+                const pendingTrucks = await pendingTrucksRes.json();
+                const nbPendingTrucks = pendingTrucks.length || 0;
+                document.getElementById('nb-pending-trucks').textContent = nbPendingTrucks;
+                document.getElementById('btn-pending-trucks').style.display = nbPendingTrucks > 0 ? 'inline-flex' : 'none';
+
+                // Commandes en attente
+                const pendingOrdersRes = await fetch('../api/commandes/list_all.php?statut=en_attente');
+                const pendingOrders = await pendingOrdersRes.json();
+                const nbPendingOrders = pendingOrders.length || 0;
+                document.getElementById('nb-pending-orders').textContent = nbPendingOrders;
+                document.getElementById('btn-pending-orders').style.display = nbPendingOrders > 0 ? 'inline-flex' : 'none';
+
+                // Alertes de stock
+                const stocksRes = await fetch('../api/stocks/list.php');
+                const stocks = await stocksRes.json();
+                const stockAlerts = stocks.filter(s => s.quantite == 0 || s.alerte == 1).length || 0;
+                document.getElementById('nb-stock-alerts').textContent = stockAlerts;
+                document.getElementById('btn-stock-alerts').style.display = stockAlerts > 0 ? 'inline-flex' : 'none';
+
+            } catch (error) {
+                console.error('Erreur lors du chargement des alertes:', error);
+            }
+        }
+
+        // Initialisation au chargement de la page
+        document.addEventListener('DOMContentLoaded', function() {
+            loadMainStats();
+            loadAlerts();
+
+            // Actualisation automatique des alertes toutes les 30 secondes
+            setInterval(() => {
+                loadAlerts();
+            }, 30000);
+        });
     </script>
 </body>
 </html>

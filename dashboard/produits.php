@@ -1,6 +1,6 @@
 <?php
 require_once '../includes/auth.php';
-require_role('admin');
+require_admin();
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -8,265 +8,17 @@ require_role('admin');
     <meta charset="UTF-8">
     <title>Gestion des produits - Admin</title>
     <link rel="stylesheet" href="../css/style.css">
-    <style>
-        .dashboard-layout {
-            display: flex;
-            min-height: 100vh;
-        }
-        .sidebar {
-            background: #1976d2;
-            color: #fff;
-            width: 220px;
-            padding: 2rem 1rem;
-            display: flex;
-            flex-direction: column;
-            gap: 2rem;
-            min-height: 100vh;
-        }
-        .sidebar h2 {
-            color: #fff;
-            margin-bottom: 2rem;
-            font-size: 1.3rem;
-            text-align: center;
-        }
-        .sidebar a {
-            color: #fff;
-            text-decoration: none;
-            font-weight: bold;
-            margin-bottom: 1rem;
-            display: block;
-            padding: 0.7rem 1rem;
-            border-radius: 6px;
-            transition: background 0.2s;
-        }
-        .sidebar a.active, .sidebar a:hover {
-            background: #1565c0;
-        }
-        .main-content {
-            flex: 1;
-            padding: 2.5rem 3rem;
-            background: #f3f8fd;
-        }
-        .btn-action {
-            background: #1976d2;
-            color: #fff;
-            border: none;
-            border-radius: 6px;
-            padding: 0.5rem 1.2rem;
-            margin: 0 0.3rem;
-            cursor: pointer;
-            font-size: 0.9rem;
-        }
-        .btn-action:hover {
-            background: #1565c0;
-        }
-        .btn-action.danger {
-            background: #f44336;
-        }
-        .btn-action.danger:hover {
-            background: #d32f2f;
-        }
-        .add-btn {
-            background: #4caf50;
-            color: white;
-            border: none;
-            padding: 1rem 2rem;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
-            margin-bottom: 2rem;
-        }
-        .add-btn:hover {
-            background: #45a049;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 2rem;
-            background: white;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        th, td {
-            padding: 1rem;
-            border-bottom: 1px solid #eee;
-            text-align: left;
-        }
-        th {
-            background: #f8f9fa;
-            font-weight: bold;
-            color: #333;
-        }
-        tr:hover {
-            background: #f9f9f9;
-        }
-        .type-badge {
-            padding: 0.3rem 0.8rem;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: bold;
-        }
-        .type-aliment {
-            background: #e8f5e8;
-            color: #2e7d32;
-        }
-        .type-boisson {
-            background: #e3f2fd;
-            color: #1976d2;
-        }
-        .type-prepare {
-            background: #fff3e0;
-            color: #f57c00;
-        }
-        .obligatoire-oui {
-            color: #4caf50;
-            font-weight: bold;
-        }
-        .obligatoire-non {
-            color: #ff9800;
-        }
-        
-        /* Modal styles */
-        .modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.6);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-        .modal-content {
-            background: white;
-            padding: 2.5rem;
-            border-radius: 12px;
-            max-width: 500px;
-            width: 90%;
-            max-height: 80vh;
-            overflow-y: auto;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-        }
-        .modal h3 {
-            margin-top: 0;
-            color: #1976d2;
-        }
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-        .form-group label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: bold;
-            color: #333;
-        }
-        .form-group input,
-        .form-group select {
-            width: 100%;
-            padding: 0.8rem;
-            border: 2px solid #ddd;
-            border-radius: 6px;
-            font-size: 1rem;
-            transition: border-color 0.2s;
-        }
-        .form-group input:focus,
-        .form-group select:focus {
-            border-color: #1976d2;
-            outline: none;
-        }
-        .checkbox-group {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        .checkbox-group input[type="checkbox"] {
-            width: auto;
-        }
-        .modal-actions {
-            display: flex;
-            gap: 1rem;
-            justify-content: flex-end;
-            margin-top: 2rem;
-        }
-        .btn-primary {
-            background: #1976d2;
-            color: white;
-            border: none;
-            padding: 0.8rem 1.5rem;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-        .btn-primary:hover {
-            background: #1565c0;
-        }
-        .btn-secondary {
-            background: #666;
-            color: white;
-            border: none;
-            padding: 0.8rem 1.5rem;
-            border-radius: 6px;
-            cursor: pointer;
-        }
-        .btn-secondary:hover {
-            background: #555;
-        }
-        .logout-btn {
-            background: #f44336;
-            color: white;
-            border: none;
-            padding: 0.8rem 1.5rem;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-        .logout-btn:hover {
-            background: #d32f2f;
-        }
-        .alert {
-            padding: 1rem;
-            border-radius: 6px;
-            margin-bottom: 1rem;
-            font-weight: bold;
-        }
-        .alert-success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-        .alert-error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-        @media (max-width: 900px) {
-            .dashboard-layout {
-                flex-direction: column;
-            }
-            .sidebar {
-                flex-direction: row;
-                width: 100%;
-                min-height: unset;
-                padding: 1rem;
-                gap: 1rem;
-            }
-            .main-content {
-                padding: 1rem;
-            }
-        }
-    </style>
+    <script src="../js/admin/stock-management.js"></script>
 </head>
 <body>
     <div class="dashboard-layout">
-        <nav class="sidebar">
+        <nav class="sidebar admin">
             <h2>Admin</h2>
             <a href="index.php">Tableau de bord</a>
             <a href="franchisés.php">Gérer les franchisés</a>
             <a href="camions.php">Gérer les camions</a>
             <a href="produits.php" class="active">Gérer les produits</a>
+            <a href="entrepots.php">Gérer les entrepôts</a>
             <a href="ventes.php">Voir les ventes</a>
             <a href="commandes.php">Voir les commandes</a>
             <form action="../api/users/logout.php" method="post" style="margin-top:auto;">
@@ -274,10 +26,42 @@ require_role('admin');
             </form>
         </nav>
 
-        <div class="main-content">
-            <h1>Gestion des produits</h1>
+        <main class="main-content admin">
+            <h1 class="admin">Gestion des produits</h1>
             
-            <div id="alert-container"></div>
+            <!-- Navigation rapide -->
+            <div class="quick-nav">
+                <a href="#" class="btn-nav current">Produits</a>
+                <a href="entrepots.php" class="btn-nav">Entrepôts</a>
+                <a href="commandes.php" class="btn-nav">Commandes</a>
+            </div>
+            
+            <!-- Vue d'ensemble globale -->
+            <div class="global-overview">
+                <h3 style="margin: 0 0 1rem 0; color: #1976d2;">Vue d'ensemble du système</h3>
+                <div class="stats-grid">
+                    <div class="stat-item critical">
+                        <div class="stat-number" id="global-ruptures" style="color: #f44336;">0</div>
+                        <div class="stat-label">Ruptures</div>
+                    </div>
+                    <div class="stat-item warning">
+                        <div class="stat-number" id="global-alertes" style="color: #ff9800;">0</div>
+                        <div class="stat-label">Alertes</div>
+                    </div>
+                    <div class="stat-item success">
+                        <div class="stat-number" id="global-stocks-ok" style="color: #4caf50;">0</div>
+                        <div class="stat-label">Stocks OK</div>
+                    </div>
+                    <div class="stat-item info">
+                        <div class="stat-number" id="global-entrepots" style="color: #2196f3;">0</div>
+                        <div class="stat-label">Entrepôts</div>
+                    </div>
+                    <div class="stat-item info">
+                        <div class="stat-number" id="global-produits" style="color: #2196f3;">0</div>
+                        <div class="stat-label">Produits</div>
+                    </div>
+                </div>
+            </div>
             
             <button class="add-btn" onclick="showAddProductModal()">+ Ajouter un produit</button>
             
@@ -289,28 +73,38 @@ require_role('admin');
                         <th>Type</th>
                         <th>Prix unitaire</th>
                         <th>Obligatoire</th>
-                        <th>Entrepôt</th>
+                        <th>État stock</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody id="products-table">
                 </tbody>
             </table>
-        </div>
+        </main>
     </div>
 
     <script>
+        // Variables spécifiques à la page produits
         let products = [];
+        let entrepots = [];
+        let stocks = [];
 
-        async function loadProducts() {
-            try {
-                const response = await fetch('../api/produits/list.php');
-                products = await response.json();
-                displayProducts();
-            } catch (error) {
-                showAlert('Erreur lors du chargement des produits', 'error');
-                console.error('Erreur:', error);
-            }
+        // Chargement initial
+        document.addEventListener('DOMContentLoaded', function() {
+            loadAllData();
+            startGlobalMonitoring();
+        });
+
+        async function loadAllData() {
+            // Utiliser les fonctions communes
+            await loadAllStockData();
+            
+            // Récupérer les données depuis le module commun
+            products = globalStockData.products;
+            entrepots = globalStockData.entrepots;
+            stocks = globalStockData.stocks;
+            
+            displayProducts();
         }
 
         function displayProducts() {
@@ -322,16 +116,23 @@ require_role('admin');
                 const obligatoireClass = product.obligatoire ? 'obligatoire-oui' : 'obligatoire-non';
                 const obligatoireText = product.obligatoire ? 'Oui' : 'Non';
                 
+                const productStocks = stocks.filter(s => s.produit_id == product.id);
+                const stockStatus = getStockStatusBadge(productStocks);
+                
                 tbody.innerHTML += `
                     <tr>
                         <td>${product.id}</td>
-                        <td><strong>${product.nom}</strong></td>
+                        <td><strong>${product.nom}</strong>
+                            ${product.quantite_minimale > 0 ? `<br><small style="color: #ff5722;">Min: ${product.quantite_minimale}</small>` : ''}
+                        </td>
                         <td><span class="type-badge ${typeClass}">${product.type}</span></td>
-                        <td>${parseFloat(product.prix_unitaire).toFixed(2)}€</td>
+                        <td>${formatPrice(product.prix_unitaire)}</td>
                         <td><span class="${obligatoireClass}">${obligatoireText}</span></td>
-                        <td>${product.entrepot_id || 'Principal'}</td>
+                        <td>${stockStatus}</td>
                         <td>
                             <button class="btn-action" onclick="editProduct(${product.id})">Modifier</button>
+                            <button class="btn-action" onclick="viewProductStocks(${product.id})">Voir stocks</button>
+                            <button class="btn-action" onclick="showProductModal(${product.id})">Dupliquer</button>
                             <button class="btn-action danger" onclick="deleteProduct(${product.id})">Supprimer</button>
                         </td>
                     </tr>
@@ -339,6 +140,7 @@ require_role('admin');
             });
         }
 
+        // Fonctions spécifiques à la page produits
         function showAddProductModal() {
             showProductModal();
         }
@@ -357,38 +159,75 @@ require_role('admin');
             const modal = document.createElement('div');
             modal.className = 'modal';
             modal.innerHTML = `
-                <div class="modal-content">
+                <div class="modal-content" style="max-width: 700px;">
                     <h3>${title}</h3>
                     <form id="product-form">
                         <div class="form-group">
                             <label for="nom">Nom du produit *</label>
                             <input type="text" id="nom" name="nom" required value="${product?.nom || ''}">
                         </div>
-                        <div class="form-group">
-                            <label for="type">Type *</label>
-                            <select id="type" name="type" required>
-                                <option value="aliment" ${product?.type === 'aliment' ? 'selected' : ''}>Aliment</option>
-                                <option value="boisson" ${product?.type === 'boisson' ? 'selected' : ''}>Boisson</option>
-                                <option value="préparé" ${product?.type === 'préparé' ? 'selected' : ''}>Plat préparé</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="prix_unitaire">Prix unitaire (€) *</label>
-                            <input type="number" id="prix_unitaire" name="prix_unitaire" step="0.01" min="0" required value="${product?.prix_unitaire || ''}">
-                        </div>
-                        <div class="form-group">
-                            <div class="checkbox-group">
-                                <input type="checkbox" id="obligatoire" name="obligatoire" ${product?.obligatoire ? 'checked' : ''}>
-                                <label for="obligatoire">Produit obligatoire (80% minimum)</label>
+                        <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div class="form-group">
+                                <label for="type">Type *</label>
+                                <select id="type" name="type" required onchange="updateUniteOptions()">
+                                    <option value="aliment" ${product?.type === 'aliment' ? 'selected' : ''}>Aliment</option>
+                                    <option value="boisson" ${product?.type === 'boisson' ? 'selected' : ''}>Boisson</option>
+                                    <option value="préparé" ${product?.type === 'préparé' ? 'selected' : ''}>Plat préparé</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="prix_unitaire">Prix unitaire (€) *</label>
+                                <input type="number" id="prix_unitaire" name="prix_unitaire" step="0.01" min="0" required value="${product?.prix_unitaire || ''}">
                             </div>
                         </div>
-                        <div class="form-group">
-                            <label for="entrepot_id">Entrepôt</label>
-                            <input type="number" id="entrepot_id" name="entrepot_id" placeholder="ID entrepôt (optionnel)" value="${product?.entrepot_id || ''}">
+                        
+                        <!-- Section produit obligatoire -->
+                        <div class="form-group" style="border: 1px solid #ddd; padding: 1rem; border-radius: 6px; background: #f8f9fa;">
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="obligatoire" name="obligatoire" ${product?.obligatoire ? 'checked' : ''} onchange="toggleQuantiteMinimale()">
+                                <label for="obligatoire">Produit obligatoire (pour avantages fidélité)</label>
+                            </div>
+                            
+                            <div id="quantite-minimale-container" style="margin-top: 1rem; ${product?.obligatoire ? '' : 'display: none;'}">
+                                <label for="quantite_minimale">Quantité minimale à commander *</label>
+                                <input type="number" id="quantite_minimale" name="quantite_minimale" min="0" step="1" value="${product?.quantite_minimale || 0}">
+                                <small style="color: #666;">Si 0, aucune quantité minimale n'est imposée</small>
+                            </div>
                         </div>
+                        
+                        ${!isEdit ? `
+                        <hr style="margin: 2rem 0; border: 1px solid #ddd;">
+                        <h4 style="color: #1976d2; margin-bottom: 1rem;">Stocks initiaux dans les entrepôts</h4>
+                        <div id="stocks-container">
+                            ${entrepots.map(entrepot => `
+                                <div class="stock-item" style="border: 1px solid #ddd; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
+                                    <h5 style="margin: 0 0 1rem 0; color: #333;">${entrepot.nom}</h5>
+                                    <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
+                                        <div class="form-group" style="margin-bottom: 0;">
+                                            <label>Quantité initiale</label>
+                                            <input type="number" name="stock_${entrepot.id}_quantite" step="0.001" min="0" value="0" style="padding: 0.5rem;">
+                                        </div>
+                                        <div class="form-group" style="margin-bottom: 0;">
+                                            <label>Unité</label>
+                                            <select name="stock_${entrepot.id}_unite" class="unite-select" style="padding: 0.5rem;">
+                                                <option value="kg">Kilogrammes</option>
+                                                <option value="litres">Litres</option>
+                                                <option value="unites">Unités</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group" style="margin-bottom: 0;">
+                                            <label>Seuil d'alerte</label>
+                                            <input type="number" name="stock_${entrepot.id}_seuil" step="0.001" min="0" value="10" style="padding: 0.5rem;">
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        ` : ''}
+                        
                         <div class="modal-actions">
                             <button type="button" class="btn-secondary" onclick="closeModal()">Annuler</button>
-                            <button type="submit" class="btn-primary">${isEdit ? 'Modifier' : 'Ajouter'}</button>
+                            <button type="submit" class="btn-primary">${isEdit ? 'Modifier' : 'Ajouter avec stocks'}</button>
                         </div>
                     </form>
                 </div>
@@ -396,39 +235,106 @@ require_role('admin');
             
             document.body.appendChild(modal);
             
+            updateUniteOptions();
+            
             document.getElementById('product-form').onsubmit = async function(e) {
                 e.preventDefault();
                 const formData = new FormData(e.target);
                 const data = Object.fromEntries(formData);
                 data.obligatoire = document.getElementById('obligatoire').checked;
+                data.quantite_minimale = document.getElementById('quantite_minimale').value || 0;
                 
                 if (isEdit) {
                     data.id = product.id;
                     await updateProduct(data);
                 } else {
-                    await addProduct(data);
+                    data.stocks = [];
+                    entrepots.forEach(entrepot => {
+                        const quantite = parseFloat(formData.get(`stock_${entrepot.id}_quantite`)) || 0;
+                        if (quantite > 0) {
+                            data.stocks.push({
+                                entrepot_id: entrepot.id,
+                                quantite: quantite,
+                                unite: formData.get(`stock_${entrepot.id}_unite`),
+                                seuil_alerte: parseFloat(formData.get(`stock_${entrepot.id}_seuil`)) || 10
+                            });
+                        }
+                    });
+                    
+                    await addProductWithStocks(data);
                 }
             };
         }
 
-        async function addProduct(data) {
+        function toggleQuantiteMinimale() {
+            const obligatoire = document.getElementById('obligatoire').checked;
+            const container = document.getElementById('quantite-minimale-container');
+            const input = document.getElementById('quantite_minimale');
+            
+            if (obligatoire) {
+                container.style.display = 'block';
+                input.required = true;
+            } else {
+                container.style.display = 'none';
+                input.required = false;
+                input.value = 0;
+            }
+        }
+
+        async function addProductWithStocks(data) {
             try {
-                const response = await fetch('../api/produits/add.php', {
+                const productResponse = await fetch('../api/produits/add.php', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify(data)
+                    body: JSON.stringify({
+                        nom: data.nom,
+                        type: data.type,
+                        prix_unitaire: data.prix_unitaire,
+                        obligatoire: data.obligatoire
+                    })
                 });
-                const result = await response.json();
+                const productResult = await productResponse.json();
                 
-                if (result.success) {
-                    showAlert('Produit ajouté avec succès !', 'success');
-                    closeModal();
-                    loadProducts();
-                } else {
-                    showAlert('Erreur: ' + result.message, 'error');
+                if (!productResult.success) {
+                    showAlert('Erreur lors de la création du produit: ' + productResult.message, 'error');
+                    return;
                 }
+                
+                const productId = productResult.id;
+                
+                let stocksCreated = 0;
+                for (const stock of data.stocks) {
+                    try {
+                        const stockResponse = await fetch('../api/stocks/update.php', {
+                            method: 'PUT',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify({
+                                entrepot_id: stock.entrepot_id,
+                                produit_id: productId,
+                                quantite: stock.quantite,
+                                unite: stock.unite,
+                                seuil_alerte: stock.seuil_alerte
+                            })
+                        });
+                        const stockResult = await stockResponse.json();
+                        
+                        if (stockResult.success) {
+                            stocksCreated++;
+                        }
+                    } catch (error) {
+                        console.error('Erreur lors de la création du stock:', error);
+                    }
+                }
+                
+                showAlert(
+                    `Produit créé avec succès ! ${stocksCreated} stock(s) ajouté(s) dans ${data.stocks.length} entrepôt(s).`, 
+                    'success'
+                );
+                closeModal();
+                await loadAllData();
+                
             } catch (error) {
-                showAlert('Erreur réseau lors de l\'ajout', 'error');
+                showAlert('Erreur réseau lors de la création', 'error');
                 console.error('Erreur:', error);
             }
         }
@@ -445,7 +351,7 @@ require_role('admin');
                 if (result.success) {
                     showAlert('Produit mis à jour avec succès !', 'success');
                     closeModal();
-                    loadProducts();
+                    await loadAllData();
                 } else {
                     showAlert('Erreur: ' + result.message, 'error');
                 }
@@ -470,7 +376,7 @@ require_role('admin');
                 
                 if (result.success) {
                     showAlert('Produit supprimé avec succès !', 'success');
-                    loadProducts();
+                    await loadAllData();
                 } else {
                     showAlert('Erreur: ' + result.message, 'error');
                 }
@@ -504,10 +410,6 @@ require_role('admin');
             if (e.target.classList.contains('modal')) {
                 closeModal();
             }
-        });
-
-        document.addEventListener('DOMContentLoaded', function() {
-            loadProducts();
         });
     </script>
 </body>
