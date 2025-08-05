@@ -597,102 +597,54 @@ table tr:hover {
 }
 
 .badge-success {
-  background: #4caf50;
-  color: white;
-  padding: 0.3rem 0.8rem;
-  border-radius: 12px;
-  font-size: 0.8rem;
-  font-weight: bold;
+  background: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
 }
 
 .badge-warning {
-  background: #ff9800;
-  color: white;
-  padding: 0.3rem 0.8rem;
-  border-radius: 12px;
-  font-size: 0.8rem;
+  background: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeaa7;
+  cursor: pointer;
+}
+
+.badge-warning:hover {
+  background: #ffeaa7;
+}
+
+.badge-secondary {
+  background: #e2e3e5;
+  color: #6c757d;
+  border: 1px solid #d6d8db;
+}
+
+/* Styles pour l'aperçu des réductions */
+.preview-reduction {
+  background: linear-gradient(135deg, #e3f2fd 0%, #f8f9fa 100%);
+  border-left: 4px solid #1976d2;
+}
+
+/* Animation pour les changements de réduction */
+.reduction-highlight {
+  animation: highlightReduction 2s ease-in-out;
+}
+
+@keyframes highlightReduction {
+  0% { background-color: #d4edda; }
+  50% { background-color: #c3e6cb; }
+  100% { background-color: transparent; }
+}
+
+/* Styles pour l'historique */
+.historique-increase {
+  color: #4caf50 !important;
   font-weight: bold;
 }
 
-.badge-danger {
-  background: #f44336;
-  color: white;
-  padding: 0.3rem 0.8rem;
-  border-radius: 12px;
-  font-size: 0.8rem;
+.historique-decrease {
+  color: #f44336 !important;
   font-weight: bold;
-}
-
-.badge-info {
-  background: #2196f3;
-  color: white;
-  padding: 0.3rem 0.8rem;
-  border-radius: 12px;
-  font-size: 0.8rem;
-  font-weight: bold;
-}
-
-/* Badges pour les statuts spécifiques */
-.status-valide { background: #e8f5e8; color: #2e7d32; }
-.status-en_attente { background: #fff3e0; color: #f57c00; }
-.status-refuse { background: #ffebee; color: #d32f2f; }
-
-/* Badges pour les produits */
-.badge-obligatoire {
-  background: #e8f5e8;
-  color: #2e7d32;
-}
-
-.badge-optionnel {
-  background: #fff3e0;
-  color: #f57c00;
-}
-
-.badge-stock-ok {
-  background: #e8f5e8;
-  color: #2e7d32;
-}
-
-.badge-stock-faible {
-  background: #fff3e0;
-  color: #f57c00;
-}
-
-.badge-rupture {
-  background: #ffebee;
-  color: #d32f2f;
-}
-
-/* Badges pour les types de produits */
-.type-badge {
-  padding: 0.3rem 0.8rem;
-  border-radius: 20px;
-  font-size: 0.85rem;
-  font-weight: bold;
-}
-
-.type-aliment {
-  background: #e8f5e8;
-  color: #2e7d32;
-}
-
-.type-boisson {
-  background: #e3f2fd;
-  color: #1976d2;
-}
-
-.type-préparé {
-  background: #fff3e0;
-  color: #f57c00;
-}
-
-.obligatoire-oui {
-  color: #4caf50;
-  font-weight: bold;
-}
-
-.obligatoire-non {
-  color: #ff9800;
 }
 
 /* =============================================================================

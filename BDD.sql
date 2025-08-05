@@ -1,5 +1,5 @@
 -- Suppression si existant
-DROP TABLE IF EXISTS vente_details, demandes_camion, commande_details, commandes, ventes, camions, produits, users, clients, entrepots, stocks;
+DROP TABLE IF EXISTS vente_details, demandes_camion, commande_details, commandes, ventes, camions, produits, users, clients, entrepots, stocks, menus, historique_reductions;
 
 -- Table des clients (incluant admin)
 CREATE TABLE clients (
@@ -71,7 +71,8 @@ CREATE TABLE produits (
     type ENUM('aliment', 'boisson', 'préparé') DEFAULT 'aliment',
     prix_unitaire DECIMAL(10,2) NOT NULL,
     obligatoire BOOLEAN DEFAULT TRUE,
-    quantite_minimale INT DEFAULT 0
+    quantite_minimale INT DEFAULT 0,
+    reduction_fidelite DECIMAL(5,2) DEFAULT 0.00 COMMENT 'Réduction en pourcentage pour les clients fidèles (0-100)'
 );
 
 -- Table des entrepôts
@@ -160,6 +161,33 @@ CREATE TABLE vente_details (
     FOREIGN KEY (produit_id) REFERENCES produits(id) ON DELETE CASCADE
 );
 
+-- Table des menus
+CREATE TABLE menus (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    nom VARCHAR(100) NOT NULL,
+    description TEXT,
+    prix DECIMAL(10,2) NOT NULL,
+    categorie ENUM('plat', 'boisson', 'dessert', 'accompagnement') DEFAULT 'plat',
+    ingredients TEXT,
+    allergenes VARCHAR(255),
+    date_creation DATETIME DEFAULT CURRENT_TIMESTAMP,
+    date_modification DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Ajouter une table de liaison entre les menus et les produits
+CREATE TABLE menu_produits (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    menu_id INT NOT NULL,
+    produit_id INT NOT NULL,
+    quantite_necessaire DECIMAL(10,3) NOT NULL DEFAULT 1,
+    unite ENUM('kg', 'litres', 'unites') DEFAULT 'unites',
+    FOREIGN KEY (menu_id) REFERENCES menus(id) ON DELETE CASCADE,
+    FOREIGN KEY (produit_id) REFERENCES produits(id) ON DELETE CASCADE,
+    UNIQUE KEY unique_menu_produit (menu_id, produit_id)
+);
+
 -- Données exemple pour l'admin
 INSERT INTO clients (nom, prenom, email, mot_de_passe, role) VALUES
 ('Admin', 'Système', 'admin@drivncook.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin');
@@ -197,6 +225,68 @@ INSERT INTO stocks (entrepot_id, produit_id, quantite, unite, seuil_alerte) VALU
 (3, 1, 250.0, 'kg', 50.0),    -- Pain artisanal à Marseille
 (3, 6, 800.0, 'unites', 100); -- Coca-Cola à Marseille
 
+-- Données exemple pour les menus
+INSERT INTO menus (user_id, nom, description, prix, categorie, ingredients, allergenes) VALUES
+(1, 'Burger Classique', 'Pain artisanal, steak haché, salade, tomate, fromage cheddar', 8.90, 'plat', 'Pain, Steak haché, Salade, Tomate, Fromage cheddar', 'gluten, lactose'),
+(1, 'Hot-Dog Gourmet', 'Saucisse artisanale, pain brioche, oignons confits', 6.50, 'plat', 'Saucisse, Pain brioche, Oignons', 'gluten'),
+(1, 'Coca-Cola 33cl', 'Boisson gazeuse rafraîchissante', 2.50, 'boisson', 'Coca-Cola', ''),
+(1, 'Frites maison', 'Pommes de terre fraîches, cuites dans notre huile spéciale', 3.50, 'accompagnement', 'Pommes de terre, Huile végétale', '');
+
+-- Ajouter des données exemple pour la table de liaison menu_produits
+INSERT INTO menu_produits (menu_id, produit_id, quantite_necessaire, unite) VALUES
+-- Burger Classique (menu_id = 1)
+(1, 1, 0.15, 'kg'),  -- Pain artisanal
+(1, 2, 0.15, 'kg'),  -- Steak haché
+(1, 5, 0.05, 'kg'),  -- Tomates
+(1, 3, 0.03, 'kg'),  -- Fromage cheddar
+
+-- Hot-Dog Gourmet (menu_id = 2)
+(2, 1, 0.10, 'kg'),  -- Pain brioche
+(2, 2, 0.12, 'kg'),  -- Saucisse
+
+-- Coca-Cola (menu_id = 3) - produit direct
+(3, 6, 1, 'unites'), -- Coca-Cola
+
+-- Frites maison (menu_id = 4)
+(4, 1, 0.20, 'kg');  -- Pommes de terre (supposons que c'est le produit 1)
+
+-- Modifier les données exemple pour refléter la vraie logique métier
+UPDATE produits SET 
+    obligatoire = 0, 
+    quantite_minimale = 0 
+WHERE type IN ('aliment', 'préparé');
+
+-- Les produits en partenariat commercial (obligatoires)
+UPDATE produits SET 
+    obligatoire = 1,
+    quantite_minimale = 10
+WHERE nom IN ('Coca-Cola 33cl', 'Eau minérale 50cl', 'Jus d orange 25cl');
+
+-- Ajouter des produits partenaires exemple
+INSERT INTO produits (nom, type, prix_unitaire, obligatoire, quantite_minimale) VALUES
+('Yaourt Danone Vanille', 'préparé', 2.80, 1, 15),  -- Partenariat Danone
+('Chips Lay s Nature', 'préparé', 2.20, 1, 20),    -- Partenariat Lay's
+('Cookie Ben & Jerry s', 'préparé', 3.50, 1, 10),  -- Partenariat Ben & Jerry's
+('Red Bull 25cl', 'boisson', 3.00, 1, 25);          -- Partenariat Red Bull
+
+-- Mettre à jour les stocks avec les nouveaux produits partenaires
+INSERT INTO stocks (entrepot_id, produit_id, quantite, unite, seuil_alerte) VALUES
+-- Produits partenaires à Paris
+(1, 13, 200.0, 'unites', 50),   -- Yaourt Danone
+(1, 14, 300.0, 'unites', 80),   -- Chips Lay's
+(1, 15, 150.0, 'unites', 30),   -- Cookie Ben & Jerry's
+(1, 16, 400.0, 'unites', 100),  -- Red Bull
+
+-- Produits partenaires à Lyon
+(2, 13, 150.0, 'unites', 50),
+(2, 14, 250.0, 'unites', 80),
+(2, 16, 300.0, 'unites', 100),
+
+-- Produits partenaires à Marseille  
+(3, 13, 180.0, 'unites', 50),
+(3, 15, 120.0, 'unites', 30),
+(3, 16, 350.0, 'unites', 100);
+
 -- Créer des vues pour faciliter les requêtes
 CREATE VIEW view_stocks_alerte AS
 SELECT 
@@ -211,3 +301,11 @@ SELECT
 FROM stocks s
 JOIN produits p ON s.produit_id = p.id
 JOIN entrepots e ON s.entrepot_id = e.id;
+
+-- Mettre à jour les produits partenaires existants avec des réductions exemple
+UPDATE produits SET reduction_fidelite = 15.00 WHERE nom = 'Coca-Cola 33cl';
+UPDATE produits SET reduction_fidelite = 10.00 WHERE nom = 'Eau minérale 50cl';
+UPDATE produits SET reduction_fidelite = 20.00 WHERE nom = 'Yaourt Danone Vanille';
+UPDATE produits SET reduction_fidelite = 12.00 WHERE nom = 'Chips Lay s Nature';
+UPDATE produits SET reduction_fidelite = 25.00 WHERE nom = 'Cookie Ben & Jerry s';
+UPDATE produits SET reduction_fidelite = 18.00 WHERE nom = 'Red Bull 25cl';

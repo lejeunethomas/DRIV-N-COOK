@@ -6,9 +6,31 @@ require_franchise_validated();
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Mon menu</title>
+    <title>Mon menu - Franchisé</title>
     <link rel="stylesheet" href="../css/style.css">
-    <script src="../js/vente.js"></script>
+    <style>
+        .category-separator {
+            background: #f8f9fa !important;
+        }
+        .plat-indisponible {
+            opacity: 0.6;
+            background: #f5f5f5;
+        }
+        .badge {
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+        .badge-success { background: #d4edda; color: #155724; }
+        .badge-danger { background: #f8d7da; color: #721c24; }
+        .badge-warning { background: #fff3cd; color: #856404; }
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+    </style>
 </head>
 <body>
     <div class="dashboard-layout">
@@ -25,15 +47,16 @@ require_franchise_validated();
         </nav>
 
         <main class="main-content franchise">
+            <h1 style="color:#e64a19;">Gestion de mon menu</h1>
+            
             <div class="section-card franchise">
-                <h2>Mon menu</h2>
-            </div>
-
-            <div class="menu-section">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                    <h3>Gérer les plats</h3>
+                    <div>
+                        <h2>Mon menu food truck</h2>
+                        <p style="color: #666; margin: 0;">Gérez vos plats, boissons et accompagnements</p>
+                    </div>
                     <button class="add-btn franchise" id="add-plat-btn">
-                        + Ajouter un plat
+                        ➕ Ajouter un plat
                     </button>
                 </div>
 
@@ -41,8 +64,8 @@ require_franchise_validated();
                     <thead>
                         <tr>
                             <th>Nom du plat</th>
-                            <th>Description</th>
-                            <th>Prix</th>
+                            <th>Description & Ingrédients</th>
+                            <th>Prix & Statut</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -53,5 +76,7 @@ require_franchise_validated();
             </div>
         </main>
     </div>
+    
+    <script src="../js/menu.js"></script>
 </body>
 </html>

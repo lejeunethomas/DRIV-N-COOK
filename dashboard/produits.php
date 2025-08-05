@@ -73,6 +73,7 @@ require_admin();
                         <th>Type</th>
                         <th>Prix unitaire</th>
                         <th>Obligatoire</th>
+                        <th>Réduction fidélité</th>
                         <th>État stock</th>
                         <th>Actions</th>
                     </tr>
@@ -119,6 +120,13 @@ require_admin();
                 const productStocks = stocks.filter(s => s.produit_id == product.id);
                 const stockStatus = getStockStatusBadge(productStocks);
                 
+                // Badge de réduction fidélité
+                const reductionBadge = product.obligatoire && product.reduction_fidelite > 0 ? 
+                    `<span class="badge badge-success" title="Réduction fidélité active">-${product.reduction_fidelite}%</span>` :
+                    product.obligatoire ? 
+                    `<span class="badge badge-warning" title="Pas de réduction définie" onclick="editReduction(${product.id})">Définir réduction</span>` :
+                    '<span class="badge badge-secondary">N/A</span>';
+                
                 tbody.innerHTML += `
                     <tr>
                         <td>${product.id}</td>
@@ -128,11 +136,12 @@ require_admin();
                         <td><span class="type-badge ${typeClass}">${product.type}</span></td>
                         <td>${formatPrice(product.prix_unitaire)}</td>
                         <td><span class="${obligatoireClass}">${obligatoireText}</span></td>
+                        <td style="text-align: center;">${reductionBadge}</td>
                         <td>${stockStatus}</td>
                         <td>
                             <button class="btn-action" onclick="editProduct(${product.id})">Modifier</button>
+                            ${product.obligatoire ? `<button class="btn-action" onclick="editReduction(${product.id})">Réduction</button>` : ''}
                             <button class="btn-action" onclick="viewProductStocks(${product.id})">Voir stocks</button>
-                            <button class="btn-action" onclick="showProductModal(${product.id})">Dupliquer</button>
                             <button class="btn-action danger" onclick="deleteProduct(${product.id})">Supprimer</button>
                         </td>
                     </tr>
@@ -140,94 +149,55 @@ require_admin();
             });
         }
 
-        // Fonctions spécifiques à la page produits
-        function showAddProductModal() {
-            showProductModal();
-        }
-
-        function editProduct(id) {
-            const product = products.find(p => p.id == id);
-            if (product) {
-                showProductModal(product);
+        // Fonction pour éditer la réduction fidélité
+        async function editReduction(productId) {
+            const product = products.find(p => p.id == productId);
+            if (!product) return;
+            
+            if (!product.obligatoire) {
+                showAlert('Seuls les produits obligatoires peuvent avoir des réductions fidélité', 'warning');
+                return;
             }
-        }
-
-        function showProductModal(product = null) {
-            const isEdit = product !== null;
-            const title = isEdit ? 'Modifier le produit' : 'Ajouter un produit';
             
             const modal = document.createElement('div');
             modal.className = 'modal';
             modal.innerHTML = `
-                <div class="modal-content" style="max-width: 700px;">
-                    <h3>${title}</h3>
-                    <form id="product-form">
+                <div class="modal-content">
+                    <h3>Réduction fidélité - ${product.nom}</h3>
+                    
+                    <div style="background: #e3f2fd; padding: 1rem; border-radius: 6px; margin-bottom: 1.5rem; border-left: 4px solid #1976d2;">
+                        <p style="margin: 0; color: #1976d2; font-weight: 500;">
+                            <strong>Produit partenaire :</strong> ${product.nom}<br>
+                            <strong>Prix de base :</strong> ${parseFloat(product.prix_unitaire).toFixed(2)}€<br>
+                            <strong>Réduction actuelle :</strong> ${product.reduction_fidelite || 0}%
+                        </p>
+                    </div>
+                    
+                    <form id="reduction-form">
                         <div class="form-group">
-                            <label for="nom">Nom du produit *</label>
-                            <input type="text" id="nom" name="nom" required value="${product?.nom || ''}">
-                        </div>
-                        <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                            <div class="form-group">
-                                <label for="type">Type *</label>
-                                <select id="type" name="type" required onchange="updateUniteOptions()">
-                                    <option value="aliment" ${product?.type === 'aliment' ? 'selected' : ''}>Aliment</option>
-                                    <option value="boisson" ${product?.type === 'boisson' ? 'selected' : ''}>Boisson</option>
-                                    <option value="préparé" ${product?.type === 'préparé' ? 'selected' : ''}>Plat préparé</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label for="prix_unitaire">Prix unitaire (€) *</label>
-                                <input type="number" id="prix_unitaire" name="prix_unitaire" step="0.01" min="0" required value="${product?.prix_unitaire || ''}">
-                            </div>
+                            <label for="reduction_fidelite">Réduction fidélité (%) *</label>
+                            <input type="number" id="reduction_fidelite" name="reduction_fidelite" 
+                                   min="0" max="100" step="0.01" required
+                                   value="${product.reduction_fidelite || 0}"
+                                   placeholder="Ex: 15.00">
+                            <small style="color: #666;">
+                                Réduction accordée aux clients avec carte de fidélité (0-100%)
+                            </small>
                         </div>
                         
-                        <!-- Section produit obligatoire -->
-                        <div class="form-group" style="border: 1px solid #ddd; padding: 1rem; border-radius: 6px; background: #f8f9fa;">
-                            <div class="checkbox-group">
-                                <input type="checkbox" id="obligatoire" name="obligatoire" ${product?.obligatoire ? 'checked' : ''} onchange="toggleQuantiteMinimale()">
-                                <label for="obligatoire">Produit obligatoire (pour avantages fidélité)</label>
-                            </div>
-                            
-                            <div id="quantite-minimale-container" style="margin-top: 1rem; ${product?.obligatoire ? '' : 'display: none;'}">
-                                <label for="quantite_minimale">Quantité minimale à commander *</label>
-                                <input type="number" id="quantite_minimale" name="quantite_minimale" min="0" step="1" value="${product?.quantite_minimale || 0}">
-                                <small style="color: #666;">Si 0, aucune quantité minimale n'est imposée</small>
-                            </div>
+                        <div class="form-group">
+                            <label for="commentaire">Commentaire (optionnel)</label>
+                            <textarea id="commentaire" name="commentaire" rows="2" 
+                                      placeholder="Raison de cette modification..."></textarea>
                         </div>
                         
-                        ${!isEdit ? `
-                        <hr style="margin: 2rem 0; border: 1px solid #ddd;">
-                        <h4 style="color: #1976d2; margin-bottom: 1rem;">Stocks initiaux dans les entrepôts</h4>
-                        <div id="stocks-container">
-                            ${entrepots.map(entrepot => `
-                                <div class="stock-item" style="border: 1px solid #ddd; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
-                                    <h5 style="margin: 0 0 1rem 0; color: #333;">${entrepot.nom}</h5>
-                                    <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
-                                        <div class="form-group" style="margin-bottom: 0;">
-                                            <label>Quantité initiale</label>
-                                            <input type="number" name="stock_${entrepot.id}_quantite" step="0.001" min="0" value="0" style="padding: 0.5rem;">
-                                        </div>
-                                        <div class="form-group" style="margin-bottom: 0;">
-                                            <label>Unité</label>
-                                            <select name="stock_${entrepot.id}_unite" class="unite-select" style="padding: 0.5rem;">
-                                                <option value="kg">Kilogrammes</option>
-                                                <option value="litres">Litres</option>
-                                                <option value="unites">Unités</option>
-                                            </select>
-                                        </div>
-                                        <div class="form-group" style="margin-bottom: 0;">
-                                            <label>Seuil d'alerte</label>
-                                            <input type="number" name="stock_${entrepot.id}_seuil" step="0.001" min="0" value="10" style="padding: 0.5rem;">
-                                        </div>
-                                    </div>
-                                </div>
-                            `).join('')}
+                        <div id="preview-reduction" style="background: #f8f9fa; padding: 1rem; border-radius: 6px; margin: 1rem 0;">
+                            <!-- Aperçu sera affiché ici -->
                         </div>
-                        ` : ''}
                         
                         <div class="modal-actions">
                             <button type="button" class="btn-secondary" onclick="closeModal()">Annuler</button>
-                            <button type="submit" class="btn-primary">${isEdit ? 'Modifier' : 'Ajouter avec stocks'}</button>
+                            <button type="submit" class="btn-primary">Appliquer la réduction</button>
                         </div>
                     </form>
                 </div>
@@ -235,182 +205,141 @@ require_admin();
             
             document.body.appendChild(modal);
             
-            updateUniteOptions();
+            // Mettre à jour l'aperçu en temps réel
+            const reductionInput = document.getElementById('reduction_fidelite');
+            const updatePreview = () => {
+                const reduction = parseFloat(reductionInput.value) || 0;
+                const prixBase = parseFloat(product.prix_unitaire);
+                const prixReduit = prixBase * (1 - reduction / 100);
+                const economie = prixBase - prixReduit;
+                
+                document.getElementById('preview-reduction').innerHTML = `
+                    <h4 style="margin: 0 0 0.5rem 0; color: #1976d2;">Aperçu de la réduction :</h4>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; text-align: center;">
+                        <div>
+                            <strong>Prix normal</strong><br>
+                            <span style="font-size: 1.1rem;">${prixBase.toFixed(2)}€</span>
+                        </div>
+                        <div>
+                            <strong>Prix fidélité</strong><br>
+                            <span style="font-size: 1.1rem; color: #4caf50;">${prixReduit.toFixed(2)}€</span>
+                        </div>
+                        <div>
+                            <strong>Économie</strong><br>
+                            <span style="font-size: 1.1rem; color: #f44336;">-${economie.toFixed(2)}€</span>
+                        </div>
+                    </div>
+                    ${reduction > 0 ? `
+                        <div style="margin-top: 0.5rem; text-align: center; color: #4caf50; font-weight: 500;">
+                            ✅ Les clients fidèles économiseront ${economie.toFixed(2)}€ sur ce produit
+                        </div>
+                    ` : `
+                        <div style="margin-top: 0.5rem; text-align: center; color: #666;">
+                            Aucune réduction appliquée
+                        </div>
+                    `}
+                `;
+            };
             
-            document.getElementById('product-form').onsubmit = async function(e) {
+            reductionInput.addEventListener('input', updatePreview);
+            updatePreview(); // Affichage initial
+            
+            // Gérer la soumission
+            document.getElementById('reduction-form').onsubmit = async function(e) {
                 e.preventDefault();
                 const formData = new FormData(e.target);
                 const data = Object.fromEntries(formData);
-                data.obligatoire = document.getElementById('obligatoire').checked;
-                data.quantite_minimale = document.getElementById('quantite_minimale').value || 0;
+                data.produit_id = productId;
                 
-                if (isEdit) {
-                    data.id = product.id;
-                    await updateProduct(data);
-                } else {
-                    data.stocks = [];
-                    entrepots.forEach(entrepot => {
-                        const quantite = parseFloat(formData.get(`stock_${entrepot.id}_quantite`)) || 0;
-                        if (quantite > 0) {
-                            data.stocks.push({
-                                entrepot_id: entrepot.id,
-                                quantite: quantite,
-                                unite: formData.get(`stock_${entrepot.id}_unite`),
-                                seuil_alerte: parseFloat(formData.get(`stock_${entrepot.id}_seuil`)) || 10
-                            });
-                        }
-                    });
-                    
-                    await addProductWithStocks(data);
-                }
+                await updateReduction(data);
             };
         }
 
-        function toggleQuantiteMinimale() {
-            const obligatoire = document.getElementById('obligatoire').checked;
-            const container = document.getElementById('quantite-minimale-container');
-            const input = document.getElementById('quantite_minimale');
-            
-            if (obligatoire) {
-                container.style.display = 'block';
-                input.required = true;
-            } else {
-                container.style.display = 'none';
-                input.required = false;
-                input.value = 0;
-            }
-        }
-
-        async function addProductWithStocks(data) {
+        // Fonction pour mettre à jour la réduction
+        async function updateReduction(data) {
             try {
-                const productResponse = await fetch('../api/produits/add.php', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({
-                        nom: data.nom,
-                        type: data.type,
-                        prix_unitaire: data.prix_unitaire,
-                        obligatoire: data.obligatoire
-                    })
-                });
-                const productResult = await productResponse.json();
-                
-                if (!productResult.success) {
-                    showAlert('Erreur lors de la création du produit: ' + productResult.message, 'error');
-                    return;
-                }
-                
-                const productId = productResult.id;
-                
-                let stocksCreated = 0;
-                for (const stock of data.stocks) {
-                    try {
-                        const stockResponse = await fetch('../api/stocks/update.php', {
-                            method: 'PUT',
-                            headers: {'Content-Type': 'application/json'},
-                            body: JSON.stringify({
-                                entrepot_id: stock.entrepot_id,
-                                produit_id: productId,
-                                quantite: stock.quantite,
-                                unite: stock.unite,
-                                seuil_alerte: stock.seuil_alerte
-                            })
-                        });
-                        const stockResult = await stockResponse.json();
-                        
-                        if (stockResult.success) {
-                            stocksCreated++;
-                        }
-                    } catch (error) {
-                        console.error('Erreur lors de la création du stock:', error);
-                    }
-                }
-                
-                showAlert(
-                    `Produit créé avec succès ! ${stocksCreated} stock(s) ajouté(s) dans ${data.stocks.length} entrepôt(s).`, 
-                    'success'
-                );
-                closeModal();
-                await loadAllData();
-                
-            } catch (error) {
-                showAlert('Erreur réseau lors de la création', 'error');
-                console.error('Erreur:', error);
-            }
-        }
-
-        async function updateProduct(data) {
-            try {
-                const response = await fetch('../api/produits/update.php', {
+                const response = await fetch('../api/produits/update_reduction.php', {
                     method: 'PUT',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify(data)
                 });
+                
                 const result = await response.json();
                 
                 if (result.success) {
-                    showAlert('Produit mis à jour avec succès !', 'success');
+                    showAlert(`✅ ${result.message}`, 'success');
                     closeModal();
-                    await loadAllData();
+                    await loadAllData(); // Recharger les données
                 } else {
-                    showAlert('Erreur: ' + result.message, 'error');
+                    showAlert('Erreur : ' + result.message, 'error');
                 }
-            } catch (error) {
-                showAlert('Erreur réseau lors de la mise à jour', 'error');
-                console.error('Erreur:', error);
-            }
-        }
-
-        async function deleteProduct(id) {
-            if (!confirm('Êtes-vous sûr de vouloir supprimer ce produit ?')) {
-                return;
-            }
-            
-            try {
-                const response = await fetch('../api/produits/delete.php', {
-                    method: 'DELETE',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({id: id})
-                });
-                const result = await response.json();
                 
-                if (result.success) {
-                    showAlert('Produit supprimé avec succès !', 'success');
-                    await loadAllData();
-                } else {
-                    showAlert('Erreur: ' + result.message, 'error');
-                }
             } catch (error) {
-                showAlert('Erreur réseau lors de la suppression', 'error');
-                console.error('Erreur:', error);
+                console.error('Erreur lors de la mise à jour de la réduction:', error);
+                showAlert('Erreur réseau lors de la mise à jour', 'error');
             }
         }
 
-        function closeModal() {
-            const modal = document.querySelector('.modal');
-            if (modal) modal.remove();
-        }
-
-        function showAlert(message, type) {
-            const alertContainer = document.getElementById('alert-container');
-            const alertClass = type === 'success' ? 'alert-success' : 'alert-error';
-            
-            alertContainer.innerHTML = `
-                <div class="alert ${alertClass}">
-                    ${message}
-                </div>
-            `;
-            
-            setTimeout(() => {
-                alertContainer.innerHTML = '';
-            }, 5000);
-        }
-
-        document.addEventListener('click', function(e) {
-            if (e.target.classList.contains('modal')) {
-                closeModal();
+        // Fonction pour voir l'historique des réductions
+        async function viewHistoriqueReductions(productId = null) {
+            try {
+                const url = productId ? 
+                    `../api/produits/historique_reductions.php?produit_id=${productId}` :
+                    '../api/produits/historique_reductions.php';
+                    
+                const response = await fetch(url);
+                const historique = await response.json();
+                
+                const modal = document.createElement('div');
+                modal.className = 'modal modal-large';
+                modal.innerHTML = `
+                    <div class="modal-content">
+                        <h3>${productId ? 'Historique du produit' : 'Historique global des réductions fidélité'}</h3>
+                        
+                        ${Array.isArray(historique) && historique.length > 0 ? `
+                            <table style="margin: 0;">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Produit</th>
+                                        <th>Ancien taux</th>
+                                        <th>Nouveau taux</th>
+                                        <th>Admin</th>
+                                        <th>Commentaire</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${historique.map(h => `
+                                        <tr>
+                                            <td>${new Date(h.date_modification).toLocaleDateString('fr-FR')}<br>
+                                                <small>${new Date(h.date_modification).toLocaleTimeString('fr-FR')}</small>
+                                            </td>
+                                            <td><strong>${h.produit_nom}</strong></td>
+                                            <td>${parseFloat(h.ancien_taux).toFixed(2)}%</td>
+                                            <td style="color: ${h.nouveau_taux > h.ancien_taux ? '#4caf50' : '#f44336'};">
+                                                ${parseFloat(h.nouveau_taux).toFixed(2)}%
+                                            </td>
+                                            <td>${h.admin_nom} ${h.admin_prenom}</td>
+                                            <td><small>${h.commentaire || '-'}</small></td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        ` : '<p style="text-align: center; color: #666; margin: 2rem 0;">Aucun historique disponible</p>'}
+                        
+                        <div class="modal-actions">
+                            <button type="button" class="btn-secondary" onclick="closeModal()">Fermer</button>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.appendChild(modal);
+                
+            } catch (error) {
+                console.error('Erreur lors du chargement de l\'historique:', error);
+                showAlert('Erreur lors du chargement de l\'historique', 'error');
             }
-        });
+        }
     </script>
 </body>
 </html>
