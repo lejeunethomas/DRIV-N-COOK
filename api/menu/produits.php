@@ -8,7 +8,7 @@ header('Content-Type: application/json');
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     // Récupérer les produits liés à un plat
     if (!isset($_GET['menu_id'])) {
-        echo json_encode(['error' => 'menu_id manquant']);
+        echo json_encode(array('error' => 'menu_id manquant'));
         exit;
     }
     
@@ -22,13 +22,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             WHERE mp.menu_id = ?
             ORDER BY p.obligatoire DESC, p.nom
         ");
-        $stmt->execute([$_GET['menu_id']]);
+        $stmt->execute(array($_GET['menu_id']));
         $produits = $stmt->fetchAll();
         
         echo json_encode($produits);
         
     } catch (Exception $e) {
-        echo json_encode(['error' => $e->getMessage()]);
+        echo json_encode(array('error' => $e->getMessage()));
     }
     
 } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -36,7 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $data = json_decode(file_get_contents('php://input'), true);
     
     if (!$data || empty($data['menu_id']) || !isset($data['produits'])) {
-        echo json_encode(['success' => false, 'message' => 'Données manquantes']);
+        echo json_encode(array('success' => false, 'message' => 'Données manquantes'));
         exit;
     }
     
@@ -47,36 +47,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         
         // Vérifier que le menu appartient au franchisé
         $stmt = $conn->prepare("SELECT id FROM menus WHERE id = ? AND user_id = ?");
-        $stmt->execute([$data['menu_id'], $userId]);
+        $stmt->execute(array($data['menu_id'], $userId));
         if (!$stmt->fetch()) {
-            echo json_encode(['success' => false, 'message' => 'Menu non trouvé']);
+            echo json_encode(array('success' => false, 'message' => 'Menu non trouvé'));
             exit;
         }
         
         // Supprimer les anciennes liaisons
         $stmt = $conn->prepare("DELETE FROM menu_produits WHERE menu_id = ?");
-        $stmt->execute([$data['menu_id']]);
+        $stmt->execute(array($data['menu_id']));
         
         // Ajouter les nouvelles liaisons
         $stmt = $conn->prepare("INSERT INTO menu_produits (menu_id, produit_id, quantite_necessaire, unite) VALUES (?, ?, ?, ?)");
         
         foreach ($data['produits'] as $produit) {
             if (!empty($produit['produit_id']) && !empty($produit['quantite_necessaire'])) {
-                $stmt->execute([
+                $stmt->execute(array(
                     $data['menu_id'],
                     $produit['produit_id'],
                     $produit['quantite_necessaire'],
-                    $produit['unite'] ?? 'unites'
-                ]);
+                    isset($produit['unite']) ? $produit['unite'] : 'unites'
+                ));
             }
         }
         
         $conn->commit();
-        echo json_encode(['success' => true, 'message' => 'Ingrédients mis à jour avec succès']);
+        echo json_encode(array('success' => true, 'message' => 'Ingrédients mis à jour avec succès'));
         
     } catch (Exception $e) {
         $conn->rollBack();
-        echo json_encode(['success' => false, 'message' => 'Erreur serveur : ' . $e->getMessage()]);
+        echo json_encode(array('success' => false, 'message' => 'Erreur serveur : ' . $e->getMessage()));
     }
 }
 ?>

@@ -4,18 +4,18 @@ session_start();
 header('Content-Type: application/json');
 
 if (!isset($_SESSION['user_id'])) {
-    echo json_encode(['error' => 'Non authentifié']);
+    echo json_encode(array('error' => 'Non authentifié'));
     exit;
 }
 
 try {
     $conn = Database::getInstance()->getConnection();
     
-    $periode = $_GET['periode'] ?? 'mois';
+    $periode = isset($_GET['periode']) ? $_GET['periode'] : 'mois';
     $userId = $_SESSION['role'] === 'admin' ? null : $_SESSION['user_id'];
     
     $whereClause = $userId ? "WHERE v.user_id = ?" : "";
-    $params = $userId ? [$userId] : [];
+    $params = $userId ? array($userId) : array();
     
     // Statistiques générales
     $stmt = $conn->prepare("
@@ -33,28 +33,9 @@ try {
     $stmt->execute($params);
     $stats = $stmt->fetchAll();
     
-    // Top produits
-    $stmt = $conn->prepare("
-        SELECT p.nom, SUM(vd.quantite) as quantite_vendue, SUM(vd.prix_total) as ca_produit
-        FROM vente_details vd
-        JOIN ventes v ON vd.vente_id = v.id
-        JOIN produits p ON vd.produit_id = p.id
-        {$whereClause}
-        AND v.date_vente >= DATE_SUB(NOW(), INTERVAL 1 {$periode})
-        GROUP BY p.id
-        ORDER BY quantite_vendue DESC
-        LIMIT 10
-    ");
-    $stmt->execute($params);
-    $topProduits = $stmt->fetchAll();
-    
-    echo json_encode([
-        'stats_quotidiennes' => $stats,
-        'top_produits' => $topProduits,
-        'periode' => $periode
-    ]);
+    echo json_encode($stats);
     
 } catch (Exception $e) {
-    echo json_encode(['error' => $e->getMessage()]);
+    echo json_encode(array('error' => $e->getMessage()));
 }
 ?>

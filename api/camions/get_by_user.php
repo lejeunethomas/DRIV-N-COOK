@@ -23,12 +23,12 @@ try {
             LEFT JOIN users u ON c.user_id = u.id
             WHERE c.user_id = ?
         ");
-        $stmt->execute([$userId]);
+        $stmt->execute(array($userId));
         $camions = $stmt->fetchAll();
         
         echo json_encode($camions);
     }
 } catch (Exception $e) {
-    echo json_encode([]);
+    echo json_encode(array('error' => $e->getMessage()));
 }
 ?>

@@ -1,7 +1,7 @@
 <?php
 require_once '../../includes/db.php';
 require_once '../../includes/auth.php';
-require_admin(); // Au lieu de require_role('admin')
+require_admin();
 
 header('Content-Type: application/json');
 
@@ -9,7 +9,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $data = json_decode(file_get_contents('php://input'), true);
     
     if (!$data || empty($data['commande_id']) || empty($data['action'])) {
-        echo json_encode(['success' => false, 'message' => 'Données manquantes']);
+        echo json_encode(array('success' => false, 'message' => 'Données manquantes'));
         exit;
     }
     
@@ -30,10 +30,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 LEFT JOIN stocks s ON p.id = s.produit_id AND s.entrepot_id = c.entrepot_id
                 WHERE cd.commande_id = ?
             ");
-            $stmt->execute([$data['commande_id']]);
+            $stmt->execute(array($data['commande_id']));
             $details = $stmt->fetchAll();
             
-            $stocksInsuffisants = [];
+            $stocksInsuffisants = array();
             foreach ($details as $detail) {
                 if ($detail['stock_disponible'] < $detail['quantite']) {
                     $stocksInsuffisants[] = $detail['produit_nom'] . 
@@ -42,10 +42,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             
             if (!empty($stocksInsuffisants)) {
-                echo json_encode([
+                echo json_encode(array(
                     'success' => false, 
                     'message' => 'Stocks insuffisants pour: ' . implode(', ', $stocksInsuffisants)
-                ]);
+                ));
                 exit;
             }
             
@@ -58,12 +58,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     validee_par = ? 
                 WHERE id = ?
             ");
-            $stmt->execute([
-                $data['date_livraison'],
-                $data['commentaire'],
+            $stmt->execute(array(
+                isset($data['date_livraison']) ? $data['date_livraison'] : null,
+                isset($data['commentaire']) ? $data['commentaire'] : null,
                 $_SESSION['user_id'],
                 $data['commande_id']
-            ]);
+            ));
             
             // Réserver les stocks (optionnel - on peut aussi attendre la livraison)
             if (isset($data['reserver_stocks']) && $data['reserver_stocks']) {
@@ -75,7 +75,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             SELECT entrepot_id FROM commandes WHERE id = ?
                         )
                     ");
-                    $stmt->execute([$detail['quantite'], $detail['produit_id'], $data['commande_id']]);
+                    $stmt->execute(array($detail['quantite'], $detail['produit_id'], $data['commande_id']));
                 }
             }
             
@@ -85,27 +85,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt = $conn->prepare("
                 UPDATE commandes 
                 SET statut = 'annulee', 
-                    commentaire_admin = ?, 
-                    validee_par = ?
+                    commentaire_admin = ?
                 WHERE id = ?
             ");
-            $stmt->execute([
-                $data['commentaire'] ?? 'Commande annulée par l\'administrateur',
-                $adminId,
-                $data['commande_id']
-            ]);
+            $commentaireAnnulation = isset($data['commentaire']) ? $data['commentaire'] : 'Commande annulée par l\'administrateur';
+            $stmt->execute(array($commentaireAnnulation, $data['commande_id']));
             
             $message = 'Commande annulée';
             
         } elseif ($data['action'] === 'livrer') {
-            // Déduire les stocks lors de la livraison
+            // Marquer comme livrée et déduire des stocks
             $stmt = $conn->prepare("
                 SELECT cd.produit_id, cd.quantite, c.entrepot_id
                 FROM commande_details cd
                 LEFT JOIN commandes c ON cd.commande_id = c.id
                 WHERE cd.commande_id = ?
             ");
-            $stmt->execute([$data['commande_id']]);
+            $stmt->execute(array($data['commande_id']));
             $details = $stmt->fetchAll();
             
             foreach ($details as $detail) {
@@ -114,7 +110,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     SET quantite = GREATEST(0, quantite - ?) 
                     WHERE produit_id = ? AND entrepot_id = ?
                 ");
-                $stmt->execute([$detail['quantite'], $detail['produit_id'], $detail['entrepot_id']]);
+                $stmt->execute(array($detail['quantite'], $detail['produit_id'], $detail['entrepot_id']));
             }
             
             $stmt = $conn->prepare("
@@ -123,19 +119,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     commentaire_admin = CONCAT(COALESCE(commentaire_admin, ''), '\n', 'Livré le ', NOW())
                 WHERE id = ?
             ");
-            $stmt->execute([$data['commande_id']]);
+            $stmt->execute(array($data['commande_id']));
             
             $message = 'Commande marquée comme livrée et stocks mis à jour';
         }
         
         $conn->commit();
-        echo json_encode(['success' => true, 'message' => $message]);
+        echo json_encode(array('success' => true, 'message' => $message));
         
     } catch (Exception $e) {
         $conn->rollBack();
-        echo json_encode(['success' => false, 'message' => 'Erreur serveur : ' . $e->getMessage()]);
+        echo json_encode(array('success' => false, 'message' => 'Erreur serveur : ' . $e->getMessage()));
     }
 } else {
-    echo json_encode(['success' => false, 'message' => 'Méthode non autorisée']);
+    echo json_encode(array('success' => false, 'message' => 'Méthode non autorisée'));
 }
 ?>

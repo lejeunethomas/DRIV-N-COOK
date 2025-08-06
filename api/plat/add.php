@@ -9,7 +9,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $data = json_decode(file_get_contents('php://input'), true);
     
     if (!$data || empty($data['nom']) || empty($data['prix'])) {
-        echo json_encode(['success' => false, 'message' => 'Nom et prix obligatoires']);
+        echo json_encode(array('success' => false, 'message' => 'Nom et prix obligatoires'));
         exit;
     }
     
@@ -24,15 +24,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             VALUES (?, ?, ?, ?, ?, ?, ?)
         ");
         
-        $stmt->execute([
+        $stmt->execute(array(
             $userId,
             $data['nom'],
-            $data['description'] ?? '',
+            isset($data['description']) ? $data['description'] : '',
             $data['prix'],
-            $data['categorie'] ?? 'plat',
-            $data['ingredients'] ?? '',
-            $data['allergenes'] ?? ''
-        ]);
+            isset($data['categorie']) ? $data['categorie'] : 'plat',
+            isset($data['ingredients']) ? $data['ingredients'] : '',
+            isset($data['allergenes']) ? $data['allergenes'] : ''
+        ));
         
         $menuId = $conn->lastInsertId();
         
@@ -42,28 +42,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             foreach ($data['ingredients_techniques'] as $ingredient) {
                 if (!empty($ingredient['produit_id']) && !empty($ingredient['quantite_necessaire'])) {
-                    $stmt->execute([
+                    $stmt->execute(array(
                         $menuId,
                         $ingredient['produit_id'],
                         $ingredient['quantite_necessaire'],
-                        $ingredient['unite'] ?? 'unites'
-                    ]);
+                        isset($ingredient['unite']) ? $ingredient['unite'] : 'unites'
+                    ));
                 }
             }
         }
         
         $conn->commit();
-        echo json_encode([
+        echo json_encode(array(
             'success' => true, 
             'message' => 'Plat ajouté avec succès',
             'id' => $menuId
-        ]);
+        ));
         
     } catch (Exception $e) {
         $conn->rollBack();
-        echo json_encode(['success' => false, 'message' => 'Erreur serveur : ' . $e->getMessage()]);
+        echo json_encode(array('success' => false, 'message' => 'Erreur serveur : ' . $e->getMessage()));
     }
 } else {
-    echo json_encode(['success' => false, 'message' => 'Méthode non autorisée']);
+    echo json_encode(array('success' => false, 'message' => 'Méthode non autorisée'));
 }
 ?>

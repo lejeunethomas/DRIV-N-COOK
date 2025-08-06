@@ -10,7 +10,7 @@ try {
     
     $statut = isset($_GET['statut']) ? $_GET['statut'] : '';
     $whereClause = $statut ? "WHERE c.statut = ?" : "";
-    $params = $statut ? [$statut] : [];
+    $params = $statut ? array($statut) : array();
     
     $stmt = $conn->prepare("
         SELECT c.*, 
@@ -50,7 +50,7 @@ try {
     $commandes = $stmt->fetchAll();
     
     // Calculer les distances et temps de livraison
-    foreach ($commandes as &$commande) {
+    foreach ($commandes as $key => $commande) {
         if ($commande['entrepot_latitude'] && $commande['entrepot_longitude'] && 
             $commande['franchise_latitude'] && $commande['franchise_longitude']) {
             
@@ -59,19 +59,19 @@ try {
                 $commande['franchise_latitude'], $commande['franchise_longitude']
             );
             
-            $commande['distance_km'] = round($distance, 2);
-            $commande['temps_livraison_estime'] = calculateDeliveryTime($distance);
-            $commande['urgence_livraison'] = calculateUrgency($distance, $commande['date_commande']);
+            $commandes[$key]['distance_km'] = round($distance, 2);
+            $commandes[$key]['temps_livraison_estime'] = calculateDeliveryTime($distance);
+            $commandes[$key]['urgence_livraison'] = calculateUrgency($distance, $commande['date_commande']);
         } else {
-            $commande['distance_km'] = null;
-            $commande['temps_livraison_estime'] = 'Non calculable';
-            $commande['urgence_livraison'] = 'normale';
+            $commandes[$key]['distance_km'] = null;
+            $commandes[$key]['temps_livraison_estime'] = 'Non calculable';
+            $commandes[$key]['urgence_livraison'] = 'normale';
         }
     }
     
     echo json_encode($commandes);
 } catch (Exception $e) {
-    echo json_encode(['error' => $e->getMessage()]);
+    echo json_encode(array('error' => $e->getMessage()));
 }
 
 function calculateDistance($lat1, $lon1, $lat2, $lon2) {
@@ -80,7 +80,7 @@ function calculateDistance($lat1, $lon1, $lat2, $lon2) {
             cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * cos(deg2rad($theta));
     $dist = acos($dist);
     $dist = rad2deg($dist);
-    return $dist * 111.13384;
+    return $dist * 111.13384; // Conversion en km
 }
 
 function calculateDeliveryTime($distanceKm) {

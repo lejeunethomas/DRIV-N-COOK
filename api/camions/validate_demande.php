@@ -9,7 +9,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $data = json_decode(file_get_contents('php://input'), true);
     
     if (!$data || empty($data['demande_id']) || empty($data['action'])) {
-        echo json_encode(['success' => false, 'message' => 'Données manquantes']);
+        echo json_encode(array('success' => false, 'message' => 'Données manquantes'));
         exit;
     }
     
@@ -27,11 +27,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             JOIN users u ON d.user_id = u.id 
             WHERE d.id = ? AND d.etat = 'en attente'
         ");
-        $stmt->execute([$data['demande_id']]);
+        $stmt->execute(array($data['demande_id']));
         $demande = $stmt->fetch();
         
         if (!$demande) {
-            echo json_encode(['success' => false, 'message' => 'Demande non trouvée ou déjà traitée']);
+            echo json_encode(array('success' => false, 'message' => 'Demande non trouvée ou déjà traitée'));
             exit;
         }
         
@@ -49,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $dateLivraison = isset($data['date_livraison']) ? $data['date_livraison'] : 
                 date('Y-m-d', strtotime('+14 days')); // Par défaut : livraison dans 2 semaines
                 
-            $stmt->execute([
+            $stmt->execute(array(
                 $demande['user_id'],
                 $demande['nom_camion'],
                 $immatriculation,
@@ -57,7 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $demande['menu'],
                 $demande['jours'],
                 $dateLivraison
-            ]);
+            ));
             
             $camionId = $conn->lastInsertId();
             
@@ -69,10 +69,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     commentaire_admin = ?
                 WHERE id = ?
             ");
-            $stmt->execute([
-                $data['commentaire'] ?? "Demande validée. Camion #{$camionId} créé avec immatriculation {$immatriculation}",
-                $data['demande_id']
-            ]);
+            $commentaireAdmin = isset($data['commentaire']) ? $data['commentaire'] : 
+                "Demande validée. Camion #{$camionId} créé avec immatriculation {$immatriculation}";
+            $stmt->execute(array($commentaireAdmin, $data['demande_id']));
             
             $message = "Demande validée ! Camion créé avec l'immatriculation {$immatriculation}. Livraison prévue le " . date('d/m/Y', strtotime($dateLivraison));
             
@@ -85,27 +84,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     commentaire_admin = ?
                 WHERE id = ?
             ");
-            $stmt->execute([
-                $data['commentaire'] ?? 'Demande refusée par l\'administrateur',
-                $data['demande_id']
-            ]);
+            $commentaireRefus = isset($data['commentaire']) ? $data['commentaire'] : 'Demande refusée par l\'administrateur';
+            $stmt->execute(array($commentaireRefus, $data['demande_id']));
             
             $message = 'Demande refusée';
         }
         
         $conn->commit();
-        echo json_encode([
+        echo json_encode(array(
             'success' => true, 
             'message' => $message,
             'camion_id' => isset($camionId) ? $camionId : null
-        ]);
+        ));
         
     } catch (Exception $e) {
         $conn->rollBack();
-        echo json_encode(['success' => false, 'message' => 'Erreur serveur : ' . $e->getMessage()]);
+        echo json_encode(array('success' => false, 'message' => 'Erreur serveur : ' . $e->getMessage()));
     }
 } else {
-    echo json_encode(['success' => false, 'message' => 'Méthode non autorisée']);
+    echo json_encode(array('success' => false, 'message' => 'Méthode non autorisée'));
 }
 
 function generateImmatriculation($conn) {
@@ -118,7 +115,7 @@ function generateImmatriculation($conn) {
     
     // Vérifier l'unicité
     $stmt = $conn->prepare("SELECT id FROM camions WHERE immatriculation = ?");
-    $stmt->execute([$immatriculation]);
+    $stmt->execute(array($immatriculation));
     
     if ($stmt->fetch()) {
         // Si déjà utilisée, recommencer
