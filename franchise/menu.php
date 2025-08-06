@@ -70,7 +70,6 @@ require_franchise_validated();
                         </tr>
                     </thead>
                     <tbody id="menu-list">
-                        <!-- Les plats seront chargés ici via JavaScript -->
                     </tbody>
                 </table>
             </div>

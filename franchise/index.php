@@ -214,7 +214,6 @@ async function loadCamionStatus() {
         const btnDemande = document.getElementById('btn-demande-camion');
         
         if (Array.isArray(camions) && camions.length > 0) {
-            // Le franchisé a un camion
             const camion = camions[0];
             statusDiv.innerHTML = `
                 <div class="camion-info" style="background: #e8f5e8; padding: 1rem; border-radius: 6px; margin: 1rem 0;">
@@ -227,7 +226,6 @@ async function loadCamionStatus() {
             `;
             btnDemande.style.display = 'none';
         } else {
-            // Vérifier s'il y a une demande en attente
             const demandesRes = await fetch('../api/camions/demande_status.php');
             const demandes = await demandesRes.json();
             
@@ -242,7 +240,6 @@ async function loadCamionStatus() {
                 `;
                 btnDemande.style.display = 'none';
             } else {
-                // Aucun camion, aucune demande
                 statusDiv.innerHTML = `
                     <div class="no-camion" style="background: #f8d7da; padding: 1rem; border-radius: 6px; margin: 1rem 0;">
                         <h3 style="color: #721c24; margin: 0 0 0.5rem 0;">Aucun camion attribué</h3>

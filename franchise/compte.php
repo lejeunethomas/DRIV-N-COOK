@@ -126,8 +126,59 @@ require_franchise_validated();
         </main>
     </div>
 
+    <script src="../js/admin/common.js"></script>
+
     <script>
         let userProfile = null;
+
+        function showAlert(message, type) {
+            AdminCommon.utils.showAlert(message, type);
+        }
+
+        function displayProfile(profile) {
+            document.getElementById('view-nom').textContent = profile.nom || '-';
+            document.getElementById('view-prenom').textContent = profile.prenom || '-';
+            document.getElementById('view-email').textContent = profile.email || '-';
+            document.getElementById('view-telephone').textContent = profile.telephone || '-';
+            document.getElementById('view-numero-permis').textContent = profile.numero_permis || 'Non renseigné';
+            document.getElementById('view-lieu').textContent = profile.lieu_installation || '-';
+            document.getElementById('view-motivation').textContent = profile.motivation || '-';
+            document.getElementById('view-date').textContent = profile.date_inscription ? 
+                AdminCommon.utils.formatDate(profile.date_inscription) : '-';
+        }
+
+        async function loadStats() {
+            try {
+                const camionsRes = await fetch('../api/camions/get_by_user.php');
+                const camions = await camionsRes.json();
+                const nbCamions = Array.isArray(camions) && camions.length > 0 ? 1 : 0;
+                document.getElementById('stat-camions').textContent = nbCamions;
+                
+                document.querySelector('#stat-camions').parentElement.querySelector('.stat-label').textContent = 
+                    nbCamions > 0 ? 'Mon camion' : 'Aucun camion';
+
+                const commandesRes = await fetch('../api/commandes/list_by_user.php');
+                const commandes = await commandesRes.json();
+                const commandesEnCours = Array.isArray(commandes) ? 
+                    commandes.filter(c => c.statut === 'en_attente' || c.statut === 'validee').length : 0;
+                document.getElementById('stat-commandes').textContent = commandesEnCours;
+
+                try {
+                    const ventesRes = await fetch('../api/ventes/stats_by_user.php');
+                    const ventes = await ventesRes.json();
+                    const ventesTotal = ventes.total_mois || 0;
+                    document.getElementById('stat-ventes').textContent = AdminCommon.utils.formatPrice(ventesTotal);
+                } catch (error) {
+                    document.getElementById('stat-ventes').textContent = 'N/A';
+                }
+                
+            } catch (error) {
+                console.error('Erreur lors du chargement des statistiques:', error);
+                document.getElementById('stat-camions').textContent = 'Erreur';
+                document.getElementById('stat-ventes').textContent = 'Erreur';
+                document.getElementById('stat-commandes').textContent = 'Erreur';
+            }
+        }
 
         async function loadProfile() {
             try {
@@ -145,17 +196,6 @@ require_franchise_validated();
                 showAlert('Erreur réseau lors du chargement du profil', 'error');
                 console.error('Erreur:', error);
             }
-        }
-
-        function displayProfile(profile) {
-            document.getElementById('view-nom').textContent = profile.nom || '-';
-            document.getElementById('view-prenom').textContent = profile.prenom || '-';
-            document.getElementById('view-email').textContent = profile.email || '-';
-            document.getElementById('view-telephone').textContent = profile.telephone || '-';
-            document.getElementById('view-numero-permis').textContent = profile.numero_permis || 'Non renseigné';
-            document.getElementById('view-lieu').textContent = profile.lieu_installation || '-';
-            document.getElementById('view-motivation').textContent = profile.motivation || '-';
-            document.getElementById('view-date').textContent = profile.date_inscription ? new Date(profile.date_inscription).toLocaleDateString('fr-FR') : '-';
         }
 
         function toggleEditMode() {
@@ -181,15 +221,11 @@ require_franchise_validated();
 
         async function saveProfile(formData) {
             try {
-                const response = await fetch('../api/users/profile.php', {
+                const result = await AdminCommon.utils.apiRequest('../api/users/profile.php', {
                     method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(formData)
+                    data: formData,
+                    showLoader: true
                 });
-                
-                const result = await response.json();
                 
                 if (result.success) {
                     showAlert('Profil mis à jour avec succès !', 'success');
@@ -201,58 +237,6 @@ require_franchise_validated();
                 }
             } catch (error) {
                 showAlert('Erreur réseau lors de la sauvegarde', 'error');
-                console.error('Erreur:', error);
-            }
-        }
-
-        function showAlert(message, type) {
-            const alertContainer = document.getElementById('alert-container');
-            const alertClass = type === 'success' ? 'alert-success' : 'alert-error';
-            
-            alertContainer.innerHTML = `
-                <div class="alert ${alertClass}">
-                    ${message}
-                </div>
-            `;
-            
-            setTimeout(() => {
-                alertContainer.innerHTML = '';
-            }, 5000);
-        }
-
-        async function loadStats() {
-            try {
-                // Statistique du camion du franchisé (1 seul maximum)
-                const camionsRes = await fetch('../api/camions/get_by_user.php');
-                const camions = await camionsRes.json();
-                const nbCamions = Array.isArray(camions) && camions.length > 0 ? 1 : 0;
-                document.getElementById('stat-camions').textContent = nbCamions;
-                
-                document.querySelector('#stat-camions').parentElement.querySelector('.stat-label').textContent = 
-                    nbCamions > 0 ? 'Mon camion' : 'Aucun camion';
-
-                // Statistique des commandes en cours
-                const commandesRes = await fetch('../api/commandes/list_by_user.php');
-                const commandes = await commandesRes.json();
-                const commandesEnCours = Array.isArray(commandes) ? 
-                    commandes.filter(c => c.statut === 'en_attente' || c.statut === 'validee').length : 0;
-                document.getElementById('stat-commandes').textContent = commandesEnCours;
-
-                // Statistique des ventes du mois
-                try {
-                    const ventesRes = await fetch('../api/ventes/stats_by_user.php');
-                    const ventes = await ventesRes.json();
-                    const ventesTotal = ventes.total_mois || 0;
-                    document.getElementById('stat-ventes').textContent = ventesTotal.toFixed(2) + '€';
-                } catch (error) {
-                    document.getElementById('stat-ventes').textContent = 'N/A';
-                }
-                
-            } catch (error) {
-                console.error('Erreur lors du chargement des statistiques:', error);
-                document.getElementById('stat-camions').textContent = 'Erreur';
-                document.getElementById('stat-ventes').textContent = 'Erreur';
-                document.getElementById('stat-commandes').textContent = 'Erreur';
             }
         }
 

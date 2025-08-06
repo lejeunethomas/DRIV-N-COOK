@@ -52,503 +52,247 @@ require_admin();
             <h1 class="admin">Gestion des franchisés</h1>
             
             <div class="tabs">
-                <button class="tab-btn active" id="tab-franchise-btn" onclick="switchTab('franchise')">
+                <button class="tab-btn active" onclick="AdminCommon.utils.switchTab('franchise', loadFranchises)">
                     Tous les franchisés
                 </button>
-                <button class="tab-btn" id="tab-validation-btn" onclick="switchTab('validation')">
+                <button class="tab-btn" onclick="AdminCommon.utils.switchTab('validation', loadValidation)">
                     Comptes à valider <span class="badge" id="badge-validation" style="display:none;">0</span>
                 </button>
             </div>
 
-            <div id="tab-franchise" class="tab-content" style="display: block;">
+            <div id="tab-franchise" class="tab-content active">
                 <button class="add-btn" onclick="showAddFranchiseModal()">+ Ajouter un franchisé</button>
-                <table id="franchise-table">
-                    <thead>
-                        <tr>
-                            <th>Nom complet</th>
-                            <th>Email</th>
-                            <th>Téléphone</th>
-                            <th>Lieu</th>
-                            <th>Statut</th>
-                            <th>Date inscription</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    </tbody>
-                </table>
+                <div id="franchise-table-container"></div>
             </div>
 
-            <div id="tab-validation" class="tab-content" style="display:none;">
+            <div id="tab-validation" class="tab-content">
                 <h2>Comptes franchisés en attente de validation</h2>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Nom complet</th>
-                            <th>Email</th>
-                            <th>Téléphone</th>
-                            <th>Lieu souhaité</th>
-                            <th>Motivation</th>
-                            <th>Date inscription</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="liste-validation">
-                        <!-- Les données seront chargées ici -->
-                    </tbody>
-                </table>
+                <div id="validation-table-container"></div>
             </div>
         </main>
     </div>
 
+    <script src="../js/admin/common.js"></script>
+
     <script>
-        // Variables globales
-        let demandes = [];
-
-        // Fonction pour changer d'onglet  
-        function switchTab(tab) {
-            // Masquer tous les contenus
-            document.getElementById('tab-franchise').style.display = 'none';
-            document.getElementById('tab-validation').style.display = 'none';
+        const franchiseManager = {
+            data: { franchises: [], validationQueue: [] },
             
-            // Retirer la classe active de tous les boutons
-            document.getElementById('tab-franchise-btn').classList.remove('active');
-            document.getElementById('tab-validation-btn').classList.remove('active');
-            
-            // Afficher le contenu sélectionné et activer le bouton
-            if (tab === 'franchise') {
-                document.getElementById('tab-franchise').style.display = 'block';
-                document.getElementById('tab-franchise-btn').classList.add('active');
-                loadFranchises();
-            } else {
-                document.getElementById('tab-validation').style.display = 'block';
-                document.getElementById('tab-validation-btn').classList.add('active');
-                loadValidation();
-            }
-        }
-
-        // Charger tous les franchisés
-        async function loadFranchises() {
-            try {
-                const res = await fetch('../api/users/get_all.php');
-                if (!res.ok) throw new Error('Erreur réseau');
+            config: {
+                endpoints: {
+                    getAll: '../api/users/get_all.php',
+                    validation: '../api/users/validation.php',
+                    register: '../api/users/register.php',
+                    update: '../api/users/update.php',
+                    delete: '../api/users/delete.php'
+                },
                 
-                const franchises = await res.json();
-                console.log('Franchisés chargés:', franchises);
-                
-                const tbody = document.querySelector('#franchise-table tbody');
-                if (!tbody) {
-                    console.error('Tbody non trouvé');
-                    return;
-                }
-                
-                tbody.innerHTML = '';
-                
-                if (!Array.isArray(franchises) || franchises.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Aucun franchisé trouvé</td></tr>';
-                    return;
-                }
-                
-                franchises.forEach(franchise => {
-                    const statusClass = `status-${franchise.statut || 'valide'}`;
-                    const statusText = {
-                        'valide': 'Validé',
-                        'en_attente': 'En attente',
-                        'refuse': 'Refusé'
-                    }[franchise.statut || 'valide'];
+                tables: {
+                    franchise: {
+                        headers: ['Nom complet', 'Email', 'Téléphone', 'Lieu', 'Statut', 'Date inscription', 'Actions'],
+                        rowBuilder: (franchise) => [
+                            `${franchise.nom || ''} ${franchise.prenom || ''}`,
+                            franchise.email || '',
+                            franchise.telephone || 'Non renseigné',
+                            franchise.lieu_installation || 'Non renseigné',
+                            `<span class="status-badge status-${franchise.statut || 'valide'}">${getStatusLabel(franchise.statut)}</span>`,
+                            AdminCommon.utils.formatDate(franchise.date_inscription),
+                            `<button class="btn-action" onclick="editFranchise(${franchise.id})">Modifier</button>
+                             <button class="btn-action danger" onclick="deleteFranchise(${franchise.id})">Supprimer</button>`
+                        ]
+                    },
                     
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${franchise.nom || ''} ${franchise.prenom || ''}</td>
-                        <td>${franchise.email || ''}</td>
-                        <td>${franchise.telephone || 'Non renseigné'}</td>
-                        <td>${franchise.lieu_installation || 'Non renseigné'}</td>
-                        <td><span class="status-badge ${statusClass}">${statusText}</span></td>
-                        <td>${franchise.date_inscription ? new Date(franchise.date_inscription).toLocaleDateString('fr-FR') : '-'}</td>
-                        <td>
-                            <button class="btn-action" onclick="editFranchise(${franchise.id})">Modifier</button>
-                            <button class="btn-action danger" onclick="deleteFranchise(${franchise.id})">Supprimer</button>
-                        </td>
-                    `;
-                    tbody.appendChild(row);
-                });
-                
-            } catch (error) {
-                console.error('Erreur lors du chargement des franchisés:', error);
-                document.querySelector('#franchise-table tbody').innerHTML = 
-                    '<tr><td colspan="7" style="text-align:center;color:red;">Erreur lors du chargement</td></tr>';
-            }
-        }
-
-        // Charger les comptes en attente de validation
-        async function loadValidation() {
-            try {
-                const res = await fetch('../api/users/validation.php');
-                if (!res.ok) throw new Error('Erreur réseau');
-                
-                const comptes = await res.json();
-                console.log('Comptes en attente:', comptes);
-                
-                document.getElementById('badge-validation').textContent = comptes.length;
-                document.getElementById('badge-validation').style.display = comptes.length ? 'inline' : 'none';
-                
-                const tbody = document.getElementById('liste-validation');
-                if (!tbody) {
-                    console.error('Tbody validation non trouvé');
-                    return;
-                }
-                
-                tbody.innerHTML = '';
-                
-                if (!Array.isArray(comptes) || comptes.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Aucun compte en attente</td></tr>';
-                    return;
-                }
-                
-                comptes.forEach(compte => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${compte.nom || ''} ${compte.prenom || ''}</td>
-                        <td>${compte.email || ''}</td>
-                        <td>${compte.telephone || 'Non renseigné'}</td>
-                        <td>${compte.lieu_installation || 'Non renseigné'}</td>
-                        <td title="${compte.motivation || ''}">${compte.motivation ? (compte.motivation.substring(0, 50) + (compte.motivation.length > 50 ? '...' : '')) : 'Non renseigné'}</td>
-                        <td>${compte.date_inscription ? new Date(compte.date_inscription).toLocaleDateString('fr-FR') : '-'}</td>
-                        <td>
-                            <button class="btn-action success" onclick="validerCompte(${compte.id}, 'valider')">Valider</button>
-                            <button class="btn-action danger" onclick="validerCompte(${compte.id}, 'refuser')">Refuser</button>
-                        </td>
-                    `;
-                    tbody.appendChild(row);
-                });
-                
-            } catch (error) {
-                console.error('Erreur lors du chargement des validations:', error);
-                document.getElementById('liste-validation').innerHTML = 
-                    '<tr><td colspan="7" style="text-align:center;color:red;">Erreur lors du chargement</td></tr>';
-            }
-        }
-
-        // Valider ou refuser un compte
-        async function validerCompte(userId, action) {
-            try {
-                const res = await fetch('../api/users/validation.php', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({user_id: userId, action: action})
-                });
-                
-                const result = await res.json();
-                
-                if (result.success) {
-                    alert(`Compte ${action === 'valider' ? 'validé' : 'refusé'} avec succès!`);
-                    loadValidation();
-                    if (action === 'valider') {
-                        loadFranchises(); 
+                    validation: {
+                        headers: ['Nom complet', 'Email', 'Téléphone', 'Lieu souhaité', 'Motivation', 'Date inscription', 'Actions'],
+                        rowBuilder: (compte) => [
+                            `${compte.nom || ''} ${compte.prenom || ''}`,
+                            compte.email || '',
+                            compte.telephone || 'Non renseigné',
+                            compte.lieu_installation || 'Non renseigné',
+                            `<span title="${compte.motivation || ''}">${AdminCommon.utils.truncateText(compte.motivation)}</span>`,
+                            AdminCommon.utils.formatDate(compte.date_inscription),
+                            `<button class="btn-action success" onclick="validerCompte(${compte.id}, 'valider')">Valider</button>
+                             <button class="btn-action danger" onclick="validerCompte(${compte.id}, 'refuser')">Refuser</button>`
+                        ]
                     }
-                } else {
-                    alert('Erreur: ' + result.message);
+                },
+                
+                statusLabels: {
+                    'valide': 'Validé',
+                    'en_attente': 'En attente', 
+                    'refuse': 'Refusé'
+                },
+                
+                formFields: {
+                    base: [
+                        { name: 'nom', label: 'Nom', type: 'text', required: true },
+                        { name: 'prenom', label: 'Prénom', type: 'text', required: true },
+                        { name: 'email', label: 'Email', type: 'email', required: true },
+                        { name: 'telephone', label: 'Téléphone', type: 'tel' },
+                        { name: 'numero_permis', label: 'Numéro de permis', type: 'text' },
+                        { name: 'lieu_installation', label: 'Lieu d\'installation', type: 'text', required: true }
+                    ],
+                    add: [
+                        { name: 'password', label: 'Mot de passe temporaire', type: 'password', required: true },
+                        { name: 'motivation', label: 'Motivation', type: 'textarea' }
+                    ]
                 }
-            } catch (error) {
-                console.error('Erreur:', error);
-                alert('Erreur lors de la validation du compte');
             }
-        }
+        };
 
-        // MODAL D'AJOUT DE FRANCHISÉ
-        function showAddFranchiseModal() {
-            const modal = document.createElement('div');
-            modal.className = 'modal';
-            modal.innerHTML = `
-                <div class="modal-content">
-                    <h3>Ajouter un nouveau franchisé</h3>
-                    <form id="add-franchise-form">
-                        <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                            <div class="form-group">
-                                <label for="add-nom">Nom *</label>
-                                <input type="text" id="add-nom" name="nom" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="add-prenom">Prénom *</label>
-                                <input type="text" id="add-prenom" name="prenom" required>
-                            </div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="add-email">Email *</label>
-                            <input type="email" id="add-email" name="email" required>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="add-password">Mot de passe temporaire *</label>
-                            <input type="password" id="add-password" name="password" required>
-                            <small style="color: #666;">Le franchisé pourra le modifier lors de sa première connexion</small>
-                        </div>
-                        
-                        <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                            <div class="form-group">
-                                <label for="add-telephone">Téléphone</label>
-                                <input type="tel" id="add-telephone" name="telephone" placeholder="Ex: 06 12 34 56 78">
-                            </div>
-                            <div class="form-group">
-                                <label for="add-numero-permis">Numéro de permis</label>
-                                <input type="text" id="add-numero-permis" name="numero_permis" placeholder="Ex: 123456789012">
-                            </div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="add-lieu">Lieu d'installation souhaité *</label>
-                            <input type="text" id="add-lieu" name="lieu_installation" required placeholder="Ex: Paris, Lyon, Marseille...">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="add-motivation">Motivation *</label>
-                            <textarea id="add-motivation" name="motivation" required rows="3" 
-                                      placeholder="Motivations pour devenir franchisé..."></textarea>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="add-statut">Statut initial</label>
-                            <select id="add-statut" name="statut">
-                                <option value="valide">Validé (accès immédiat)</option>
-                                <option value="en_attente">En attente de validation</option>
-                            </select>
-                        </div>
-                        
-                        <div class="modal-actions">
-                            <button type="button" class="btn-secondary" onclick="closeModal()">Annuler</button>
-                            <button type="submit" class="btn-primary">Ajouter le franchisé</button>
-                        </div>
-                    </form>
-                </div>
-            `;
-            
-            document.body.appendChild(modal);
-            
-            // Gérer la soumission
-            document.getElementById('add-franchise-form').addEventListener('submit', async function(e) {
-                e.preventDefault();
-                await addFranchise();
-            });
-        }
-
-        // FONCTION D'AJOUT 
-        async function addFranchise() {
-            const formData = new FormData(document.getElementById('add-franchise-form'));
-            const data = Object.fromEntries(formData);
-            
-            const registrationData = {
-                nom: data.nom,
-                prenom: data.prenom,
-                email: data.email,
-                password: data.password,
-                telephone: data.telephone || '',
-                numero_permis: data.numero_permis || '',
-                lieu_installation: data.lieu_installation,
-                motivation: data.motivation,
-                role: 'franchise', 
-                statut: data.statut || 'valide', 
-                admin_create: true 
-            };
-            
-            try {
-                console.log('Données à envoyer:', registrationData);
-                
-                const response = await fetch('../api/users/register.php', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify(registrationData)
-                });
-                
-                const result = await response.json();
-                console.log('Réponse de register.php:', result);
-                
-                if (result.success) {
-                    alert('Franchisé ajouté avec succès !');
-                    closeModal();
-                    loadFranchises();
-                    loadValidation();
-                } else {
-                    alert('Erreur : ' + result.message);
-                }
-                
-            } catch (error) {
-                console.error('Erreur lors de l\'ajout:', error);
-                alert('Erreur réseau lors de l\'ajout');
-            }
-        }
-
-        // MODAL DE MODIFICATION
-        function editFranchise(id) {
-            const franchise = Array.from(document.querySelectorAll('#franchise-table tbody tr')).find(row => {
-                const editBtn = row.querySelector('.btn-action:not(.danger)');
-                return editBtn && editBtn.onclick.toString().includes(id);
-            });
-            
-            if (!franchise) {
-                alert('Franchisé non trouvé');
-                return;
-            }
-            
-            // Récupérer les données de la ligne
-            const cells = franchise.querySelectorAll('td');
-            const nomComplet = cells[0].textContent.trim().split(' ');
-            const nom = nomComplet.pop();
-            const prenom = nomComplet.join(' ');
-            const email = cells[1].textContent.trim();
-            const telephone = cells[2].textContent.trim();
-            const lieu = cells[3].textContent.trim();
-            const statutBadge = cells[4].querySelector('.status-badge');
-            const currentStatut = statutBadge.classList.contains('status-valide') ? 'valide' : 
-                                 statutBadge.classList.contains('status-en_attente') ? 'en_attente' : 'refuse';
-            
-            const modal = document.createElement('div');
-            modal.className = 'modal';
-            modal.innerHTML = `
-                <div class="modal-content">
-                    <h3>Modifier le franchisé #${id}</h3>
-                    <form id="edit-franchise-form">
-                        <input type="hidden" name="id" value="${id}">
-                        
-                        <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                            <div class="form-group">
-                                <label for="edit-nom">Nom *</label>
-                                <input type="text" id="edit-nom" name="nom" value="${nom}" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="edit-prenom">Prénom *</label>
-                                <input type="text" id="edit-prenom" name="prenom" value="${prenom}" required>
-                            </div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="edit-email">Email *</label>
-                            <input type="email" id="edit-email" name="email" value="${email}" required readonly 
-                                   title="L'email ne peut pas être modifié">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="edit-telephone">Téléphone</label>
-                            <input type="tel" id="edit-telephone" name="telephone" 
-                                   value="${telephone !== 'Non renseigné' ? telephone : ''}" 
-                                   placeholder="Ex: 06 12 34 56 78">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="edit-lieu">Lieu d'installation *</label>
-                            <input type="text" id="edit-lieu" name="lieu_installation" 
-                                   value="${lieu !== 'Non renseigné' ? lieu : ''}" required>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="edit-statut">Statut</label>
-                            <select id="edit-statut" name="statut">
-                                <option value="valide" ${currentStatut === 'valide' ? 'selected' : ''}>Validé</option>
-                                <option value="en_attente" ${currentStatut === 'en_attente' ? 'selected' : ''}>En attente</option>
-                                <option value="refuse" ${currentStatut === 'refuse' ? 'selected' : ''}>Refusé</option>
-                            </select>
-                        </div>
-                        
-                        <div class="modal-actions">
-                            <button type="button" class="btn-secondary" onclick="closeModal()">Annuler</button>
-                            <button type="submit" class="btn-primary">Modifier</button>
-                        </div>
-                    </form>
-                </div>
-            `;
-            
-            document.body.appendChild(modal);
-            
-            // Gérer la soumission
-            document.getElementById('edit-franchise-form').addEventListener('submit', async function(e) {
-                e.preventDefault();
-                await updateFranchise();
-            });
-        }
-
-        // FONCTION DE MODIFICATION
-        async function updateFranchise() {
-            const formData = new FormData(document.getElementById('edit-franchise-form'));
-            const data = Object.fromEntries(formData);
-            
-            try {
-                const response = await fetch('../api/users/update.php', {
-                    method: 'PUT',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify(data)
-                });
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    alert('Franchisé modifié avec succès !');
-                    closeModal();
-                    loadFranchises();
-                    loadValidation(); // Actualiser les validations aussi
-                } else {
-                    alert('Erreur : ' + result.message);
-                }
-                
-            } catch (error) {
-                console.error('Erreur lors de la modification:', error);
-                alert('Erreur réseau lors de la modification');
-            }
-        }
-
-        // FONCTION DE SUPPRESSION
-        async function deleteFranchise(id) {
-            if (!confirm('Êtes-vous sûr de vouloir supprimer ce franchisé ?\n\nCette action désactivera le compte plutôt que de le supprimer définitivement.')) {
-                return;
-            }
-            
-            try {
-                const response = await fetch('../api/users/delete.php', {
-                    method: 'DELETE',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({id: id})
-                });
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    alert('Franchisé supprimé avec succès !');
-                    loadFranchises();
-                    loadValidation();
-                } else {
-                    alert('Erreur : ' + result.message);
-                }
-                
-            } catch (error) {
-                console.error('Erreur lors de la suppression:', error);
-                alert('Erreur réseau lors de la suppression');
-            }
-        }
-
-        // FONCTION UTILITAIRE
-        function closeModal() {
-            const modals = document.querySelectorAll('.modal');
-            modals.forEach(modal => modal.remove());
-        }
-
-        // Initialisation au chargement de la page
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('Page chargée, initialisation...');
-            
-            // Vérifier que les éléments existent
-            const tabFranchise = document.getElementById('tab-franchise');
-            const tabValidation = document.getElementById('tab-validation');
-            const tableBody = document.querySelector('#franchise-table tbody');
-            
-            console.log('Éléments trouvés:', {
-                tabFranchise: !!tabFranchise,
-                tabValidation: !!tabValidation,
-                tableBody: !!tableBody
-            });
-            
-            // Charger les données initiales
             loadFranchises();
             loadValidation();
         });
+
+        async function loadFranchises() {
+            try {
+                const franchises = await AdminCommon.utils.apiRequest(franchiseManager.config.endpoints.getAll);
+                franchiseManager.data.franchises = franchises;
+                
+                AdminCommon.utils.createTable({
+                    containerId: 'franchise-table-container',
+                    headers: franchiseManager.config.tables.franchise.headers,
+                    data: franchises,
+                    rowBuilder: (franchise) => {
+                        const row = document.createElement('tr');
+                        const cells = franchiseManager.config.tables.franchise.rowBuilder(franchise);
+                        row.innerHTML = cells.map(cell => `<td>${cell}</td>`).join('');
+                        return row;
+                    },
+                    emptyMessage: 'Aucun franchisé trouvé'
+                });
+                
+            } catch (error) {
+                AdminCommon.utils.showAlert('Erreur lors du chargement des franchisés', 'error');
+            }
+        }
+
+        async function loadValidation() {
+            try {
+                const comptes = await AdminCommon.utils.apiRequest(franchiseManager.config.endpoints.validation);
+                franchiseManager.data.validationQueue = comptes;
+                
+                AdminCommon.utils.createTable({
+                    containerId: 'validation-table-container',
+                    headers: franchiseManager.config.tables.validation.headers,
+                    data: comptes,
+                    rowBuilder: (compte) => {
+                        const row = document.createElement('tr');
+                        const cells = franchiseManager.config.tables.validation.rowBuilder(compte);
+                        row.innerHTML = cells.map(cell => `<td>${cell}</td>`).join('');
+                        return row;
+                    },
+                    emptyMessage: 'Aucun compte en attente'
+                });
+                
+                AdminCommon.utils.updateTabBadge('validation', comptes.length);
+                
+            } catch (error) {
+                AdminCommon.utils.showAlert('Erreur lors du chargement des validations', 'error');
+            }
+        }
+
+        function getStatusLabel(statut) {
+            return franchiseManager.config.statusLabels[statut || 'valide'];
+        }
+
+        function showAddFranchiseModal() {
+            const fields = [
+                ...franchiseManager.config.formFields.base,
+                ...franchiseManager.config.formFields.add,
+                { 
+                    name: 'statut', 
+                    label: 'Statut', 
+                    type: 'select', 
+                    defaultValue: 'valide',
+                    options: Object.entries(franchiseManager.config.statusLabels).map(([value, text]) => ({ value, text }))
+                }
+            ];
+
+            AdminCommon.utils.createFormModal({
+                title: 'Ajouter un nouveau franchisé',
+                fields: fields,
+                onSubmit: async (data, isEdit) => {
+                    data.role = 'franchise';
+                    data.admin_create = true;
+                    
+                    const success = await AdminCommon.utils.saveData(
+                        franchiseManager.config.endpoints.register, 
+                        data
+                    );
+                    
+                    if (success) {
+                        AdminCommon.utils.closeModal();
+                        await loadFranchises();
+                        await loadValidation();
+                    }
+                }
+            });
+        }
+
+        function editFranchise(id) {
+            const franchise = franchiseManager.data.franchises.find(f => f.id == id);
+            if (!franchise) {
+                AdminCommon.utils.showAlert('Franchisé non trouvé', 'error');
+                return;
+            }
+
+            const fields = [
+                ...franchiseManager.config.formFields.base,
+                { 
+                    name: 'statut', 
+                    label: 'Statut', 
+                    type: 'select',
+                    options: Object.entries(franchiseManager.config.statusLabels).map(([value, text]) => ({ value, text }))
+                }
+            ];
+
+            AdminCommon.utils.createFormModal({
+                title: `Modifier le franchisé #${id}`,
+                data: franchise,
+                fields: fields,
+                onSubmit: async (data, isEdit) => {
+                    const success = await AdminCommon.utils.saveData(
+                        franchiseManager.config.endpoints.update, 
+                        data, 
+                        true
+                    );
+                    
+                    if (success) {
+                        AdminCommon.utils.closeModal();
+                        await loadFranchises();
+                    }
+                }
+            });
+        }
+
+        async function validerCompte(userId, action) {
+            if (!confirm(`Êtes-vous sûr de vouloir ${action} ce compte ?`)) return;
+            
+            const success = await AdminCommon.utils.saveData(
+                franchiseManager.config.endpoints.validation,
+                { user_id: userId, action: action }
+            );
+            
+            if (success) {
+                await loadFranchises();
+                await loadValidation();
+            }
+        }
+
+        async function deleteFranchise(id) {
+            const success = await AdminCommon.utils.deleteData(
+                franchiseManager.config.endpoints.delete,
+                { id: id },
+                'Êtes-vous sûr de vouloir supprimer ce franchisé ?\n\nCette action désactivera le compte plutôt que de le supprimer définitivement.'
+            );
+            
+            if (success) {
+                await loadFranchises();
+            }
+        }
+
     </script>
 </body>
 </html>

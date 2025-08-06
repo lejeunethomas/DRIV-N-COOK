@@ -50,7 +50,6 @@ function displayMenus() {
         return;
     }
     
-    // Regrouper par catégorie
     const categories = {
         'plat': 'Plats principaux',
         'boisson': 'Boissons',
@@ -61,7 +60,6 @@ function displayMenus() {
     let currentCategorie = '';
     
     menus.forEach(plat => {
-        // Ajouter séparateur de catégorie
         if (currentCategorie !== plat.categorie) {
             currentCategorie = plat.categorie;
             tbody.innerHTML += `
@@ -201,10 +199,8 @@ function showPlatModal(plat = null) {
     
     document.body.appendChild(modal);
     
-    // Charger les produits disponibles
     loadProduitsForIngredients();
     
-    // Si modification, charger les ingrédients existants
     if (isEdit && plat.id) {
         loadPlatIngredients(plat.id);
     }
@@ -215,7 +211,6 @@ function showPlatModal(plat = null) {
         const formData = new FormData(e.target);
         const data = Object.fromEntries(formData);
         
-        // Récupérer les ingrédients techniques
         data.ingredients_techniques = collectIngredientsTechniques();
         
         if (isEdit) {
@@ -239,7 +234,6 @@ async function loadProduitsForIngredients() {
         selects.forEach(select => {
             select.innerHTML = '<option value="">Sélectionner un produit</option>';
             
-            // Séparer les produits partenaires des autres
             const partenaires = produits.filter(p => p.obligatoire == 1);
             const standard = produits.filter(p => p.obligatoire == 0);
             
@@ -293,7 +287,6 @@ function ajouterIngredient() {
     
     container.appendChild(newItem);
     
-    // Recharger les options de produits
     loadProduitsForIngredients();
 }
 
@@ -515,7 +508,6 @@ function closeModal() {
  * Afficher une alerte
  */
 function showAlert(message, type = 'info') {
-    // Créer l'alerte
     const alert = document.createElement('div');
     alert.className = `alert alert-${type}`;
     alert.style.cssText = `

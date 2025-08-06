@@ -97,7 +97,7 @@ function getCurrentPosition() {
  * Calculer la distance entre deux points
  */
 function calculateDistance(lat1, lon1, lat2, lon2) {
-    const R = 6371; // Rayon de la Terre en km
+    const R = 6371;
     const dLat = deg2rad(lat2 - lat1);
     const dLon = deg2rad(lon2 - lon1);
     const a = 

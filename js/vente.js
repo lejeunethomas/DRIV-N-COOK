@@ -210,15 +210,12 @@ function ajouterProduitVente() {
     const produitId = parseInt(produitSelect.value);
     const produitNom = produitSelect.selectedOptions[0].dataset.nom;
     
-    // Vérifier si le produit est déjà dans la vente
     const existingIndex = venteEnCours.findIndex(item => item.produit_id === produitId);
     
     if (existingIndex >= 0) {
-        // Mettre à jour la quantité
         venteEnCours[existingIndex].quantite += quantite;
         venteEnCours[existingIndex].prix_total = venteEnCours[existingIndex].quantite * prixUnitaire;
     } else {
-        // Ajouter nouveau produit
         venteEnCours.push({
             produit_id: produitId,
             nom: produitNom,
@@ -228,12 +225,10 @@ function ajouterProduitVente() {
         });
     }
     
-    // Réinitialiser les champs
     produitSelect.value = '';
     document.getElementById('quantite-produit').value = 1;
     document.getElementById('prix-unitaire').value = '';
     
-    // Mettre à jour l'affichage
     updateVenteResume();
 }
 
@@ -490,7 +485,6 @@ function closeModal() {
  * Afficher une alerte
  */
 function showAlert(message, type = 'info') {
-    // Créer l'alerte
     const alert = document.createElement('div');
     alert.className = `alert alert-${type}`;
     alert.style.cssText = `
@@ -505,7 +499,6 @@ function showAlert(message, type = 'info') {
         max-width: 400px;
     `;
     
-    // Styles selon le type
     const styles = {
         'success': 'background: #d4edda; color: #155724; border: 1px solid #c3e6cb;',
         'error': 'background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb;',
@@ -518,7 +511,6 @@ function showAlert(message, type = 'info') {
     
     document.body.appendChild(alert);
     
-    // Supprimer après 5 secondes
     setTimeout(() => {
         if (alert.parentNode){
             alert.remove();

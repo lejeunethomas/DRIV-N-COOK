@@ -187,7 +187,6 @@ require_role('client');
 
         // Charger les statistiques
         async function loadStats() {
-            // Statistiques simulées - à adapter selon vos APIs
             document.getElementById('stat-commandes').textContent = '0';
             document.getElementById('stat-points').textContent = '0';
             document.getElementById('stat-economie').textContent = '0€';

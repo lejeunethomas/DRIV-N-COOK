@@ -34,7 +34,6 @@ async function loadProducts() {
  */
 async function loadEntrepots() {
     try {
-        // Essayer d'obtenir la position de l'utilisateur
         let userPosition = null;
         try {
             userPosition = await getCurrentPosition();
@@ -44,12 +43,11 @@ async function loadEntrepots() {
             showAlert('Géolocalisation non disponible, affichage par ordre alphabétique', 'info');
         }
         
-        // Charger les entrepôts avec ou sans géolocalisation
         const url = userPosition ? 
             `../api/entrepots/plus_proches.php?lat=${userPosition.latitude}&lng=${userPosition.longitude}` :
             '../api/entrepots/list.php';
             
-        console.log('URL appelée:', url); // Debug
+        console.log('URL appelée:', url);
         const response = await fetch(url);
         
         if (!response.ok) {
@@ -57,11 +55,10 @@ async function loadEntrepots() {
         }
         
         entrepots = await response.json();
-        console.log('Entrepôts chargés:', entrepots); // Debug
-        
+        console.log('Entrepôts chargés:', entrepots);
+
         displayEntrepots(userPosition !== null);
         
-        // Remplir le select
         const select = document.getElementById('entrepot-select');
         select.innerHTML = '<option value="">Sélectionner un entrepôt</option>';
         
@@ -129,7 +126,6 @@ function updateGlobalStats() {
     stats.totalEntrepots = globalStockData.entrepots.length;
     stats.totalProduits = globalStockData.products.length;
     
-    // Mettre à jour l'affichage si les éléments existent
     updateGlobalStatsDisplay();
 }
 
@@ -228,7 +224,7 @@ function formatQuantity(quantity, unit) {
  */
 function showGlobalStockMatrix() {
     const modal = document.createElement('div');
-    modal.className = 'modal modal-extra-large'; // ✅ Changé de 'modal-large' à 'modal-extra-large'
+    modal.className = 'modal modal-extra-large';
     modal.innerHTML = `
         <div class="modal-content" style="max-width: 95vw; width: 95vw; max-height: 90vh; overflow-y: auto;">
             <h3>Matrice globale des stocks</h3>
@@ -488,7 +484,6 @@ async function geocodeAllEntrepots() {
             const result = await geocodeAddress(fullAddress);
             
             if (result.success) {
-                // Mettre à jour en base
                 const response = await fetch('../api/entrepots/update.php', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
@@ -513,7 +508,6 @@ async function geocodeAllEntrepots() {
             
             processed++;
             
-            // Pause pour éviter de surcharger l'API
             await new Promise(resolve => setTimeout(resolve, 1000));
             
         } catch (error) {
@@ -525,7 +519,6 @@ async function geocodeAllEntrepots() {
     showAlert(`Géolocalisation terminée : ${success}/${processed} entrepôts traités avec succès`, success > 0 ? 'success' : 'error');
     await loadAllStockData();
     
-    // Recharger les affichages si les fonctions existent
     if (typeof displayEntrepots === 'function') displayEntrepots();
     if (typeof displayProducts === 'function') displayProducts();
 }
@@ -573,7 +566,6 @@ function startGlobalMonitoring() {
         await loadStocks();
         updateGlobalStats();
         
-        // Recharger les affichages si les fonctions existent
         if (typeof displayProducts === 'function') displayProducts();
         if (typeof displayEntrepots === 'function') displayEntrepots();
         if (typeof displayStocks === 'function') displayStocks();

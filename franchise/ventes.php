@@ -77,9 +77,7 @@ require_franchise_validated();
     </div>
 
     <script>
-        // Configuration spécifique Franchisé
         document.addEventListener('DOMContentLoaded', function() {
-            // Chargement automatique des données
             loadVentesStats();
             loadVentesAujourdhui();
             loadProduits();
