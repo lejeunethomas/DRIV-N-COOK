@@ -33,8 +33,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $conn->beginTransaction();
         
         $stmt = $conn->prepare("
-            INSERT INTO ventes (user_id, camion_id, montant, type_paiement, date_vente) 
-            VALUES (?, ?, ?, ?, NOW())
+            INSERT INTO ventes (user_id, camion_id, montant, type_paiement, date_vente, statut) 
+            VALUES (?, ?, ?, ?, NOW(), ?)
         ");
         $stmt->execute([
             $_SESSION['user_id'],

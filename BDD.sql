@@ -327,7 +327,8 @@ CREATE TABLE `ventes` (
   `camion_id` int(11) DEFAULT NULL,
   `montant` decimal(10,2) NOT NULL,
   `type_paiement` enum('especes','carte','cheque','virement') DEFAULT 'especes',
-  `date_vente` datetime DEFAULT CURRENT_TIMESTAMP
+  `date_vente` datetime DEFAULT CURRENT_TIMESTAMP,
+  `statut` enum('en_attente','valide') DEFAULT 'en_attente'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --

@@ -367,16 +367,14 @@ require_role('client');
                 }
                 
                 try {
-                    const result = await AdminCommon.utils.apiRequest(this.config.endpoints.passerCommande, {
+                    const result = await fetch('../api/commandes/client_add.php', {
                         method: 'POST',
-                        data: {
-                            camion_id: this.data.currentCamion.id,
-                            plats: this.data.currentCamion.panier
-                        },
-                        showLoader: true
+                        body: JSON.stringify({camion_id: this.data.currentCamion.id, plats: this.data.currentCamion.panier})
                     });
                     
-                    if(result.success) {
+                    const jsonResult = await result.json();
+                    
+                    if(jsonResult.success) {
                         AdminCommon.utils.closeModal();
                         AdminCommon.utils.showAlert(
                             `Commande créée ! Redirection vers le paiement...`, 
@@ -384,11 +382,11 @@ require_role('client');
                         );
                         
                         setTimeout(() => {
-                            window.location.href = `paiement.php?commande_id=${result.commande_id}&total=${result.total}`;
+                            window.location.href = `paiement.php?commande_id=${jsonResult.commande_id}&total=${jsonResult.total}`;
                         }, 1500);
                         
                     } else {
-                        AdminCommon.utils.showAlert('Erreur: ' + result.message, 'error');
+                        AdminCommon.utils.showAlert('Erreur: ' + jsonResult.message, 'error');
                     }
                     
                 } catch (error) {
