@@ -52,7 +52,7 @@
  ✅ Créer la gestion des menus et plats
  ✅ Création d un espace client basique
  ⏳ Développer la gestion des cartes de fidélité en Java
- ⏳ Implémenter une simulation de commande client
+ ✅ Implémenter une simulation de commande client
 
 ✅ Semaine 6 (15 – 21 août) : Mission 2 – Clients
  ⏳ Installer le projet sur un serveur local Linux (VM)
@@ -85,7 +85,6 @@
 🎯 PROCHAINES ÉTAPES PRIORITAIRES :
  📄 Commencer la génération de rapports PDF
  🖥️ Préparer l installation serveur Linux (VM)
- 🔧 Finaliser l optimisation DRY des dernières pages admin
 
 💡 AMÉLIORATIONS RÉCENTES COMPLETÉES :
  ✅ Système d inscription franchisé réaliste et complet
