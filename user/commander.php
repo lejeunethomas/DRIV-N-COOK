@@ -14,6 +14,7 @@ require_role('client');
         <nav class="sidebar client">
             <h2>Mon Tableau de bord</h2>
             <a href="index.php">Accueil</a>
+            <a href="commander.php" class="active">Commander</a>
             <a href="mes_commandes.php">Mes commandes</a>
             <a href="compte.php">Mon profil</a>
             <a href="newsletter.php">Newsletter</a>
@@ -378,15 +379,14 @@ require_role('client');
                     if(result.success) {
                         AdminCommon.utils.closeModal();
                         AdminCommon.utils.showAlert(
-                            `🎉 Commande passée avec succès ! Total: ${AdminCommon.utils.formatPrice ? AdminCommon.utils.formatPrice(result.total) : result.total + '€'}`, 
+                            `Commande créée ! Redirection vers le paiement...`, 
                             'success'
                         );
                         
-                        this.data.currentCamion = { id: null, nom: '', panier: [] };
-                        
                         setTimeout(() => {
-                            window.location.href = 'mes_commandes.php';
-                        }, 2000);
+                            window.location.href = `paiement.php?commande_id=${result.commande_id}&total=${result.total}`;
+                        }, 1500);
+                        
                     } else {
                         AdminCommon.utils.showAlert('Erreur: ' + result.message, 'error');
                     }

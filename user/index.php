@@ -14,6 +14,7 @@ require_role('client');
         <nav class="sidebar client">
             <h2>Mon Tableau de bord</h2>
             <a href="index.php" class="active">Accueil</a>
+            <a href="commander.php">Commander</a>
             <a href="mes_commandes.php">Mes commandes</a>
             <a href="compte.php">Mon profil</a>
             <a href="newsletter.php">Newsletter</a>
