@@ -317,52 +317,41 @@ require_admin();
         }
 
         function showAddEntrepotModal() {
-            console.log('🔄 Ouverture modal ajout entrepôt...');
+            console.log('🔄 Ouverture modal...');
             
-            AdminCommon.utils.createFormModal({
-                title: 'Ajouter un entrepôt',
-                fields: entrepotManager.config.formFields.entrepot,
-                onSubmit: async (data, isEdit) => {
-                    console.log('🎯 BOUTON AJOUTER CLIQUÉ !'); // ✅ Ajouter ce log
-                    console.log('📤 Données reçues:', data);
-                    
-                    // Test simple sans validation
-                    alert('Le bouton fonctionne ! Données: ' + JSON.stringify(data));
-                    
-                    // Validation simple
-                    if (!data.nom || !data.adresse || !data.ville || !data.code_postal) {
-                        AdminCommon.utils.showAlert('❌ Veuillez remplir tous les champs obligatoires', 'error');
-                        return;
-                    }
-                    
-                    // Test sans appel API
-                    AdminCommon.utils.showAlert('✅ Test réussi !', 'success');
-                    AdminCommon.utils.closeModal();
-                }
-            });
+            // Test direct sans AdminCommon
+            const modalHTML = `
+                <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999;">
+                    <div style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 8px;">
+                        <h3>Test Modal</h3>
+                        <input type="text" id="test-nom" placeholder="Nom entrepôt" style="width: 100%; padding: 8px; margin: 8px 0;">
+                        <input type="text" id="test-adresse" placeholder="Adresse" style="width: 100%; padding: 8px; margin: 8px 0;">
+                        <br>
+                        <button onclick="testSubmit()" style="background: #4CAF50; color: white; padding: 8px 16px; border: none; cursor: pointer;">TESTER</button>
+                        <button onclick="closeTestModal()" style="background: #f44336; color: white; padding: 8px 16px; border: none; cursor: pointer; margin-left: 8px;">Fermer</button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
         }
 
-        function editEntrepot(id) {
-            const entrepot = entrepotManager.data.entrepots.find(e => e.id == id);
-            if (!entrepot) {
-                AdminCommon.utils.showAlert('Entrepôt non trouvé', 'error');
-                return;
-            }
+        function testSubmit() {
+            const nom = document.getElementById('test-nom').value;
+            const adresse = document.getElementById('test-adresse').value;
+            
+            console.log('🎯 BOUTON TEST CLIQUÉ !');
+            console.log('Nom:', nom);
+            console.log('Adresse:', adresse);
+            
+            alert('BOUTON FONCTIONNE ! Nom: ' + nom + ', Adresse: ' + adresse);
+            
+            closeTestModal();
+        }
 
-            AdminCommon.utils.createFormModal({
-                title: `Modifier l'entrepôt #${id}`,
-                data: entrepot,
-                fields: entrepotManager.config.formFields.entrepot,
-                onSubmit: async (data, isEdit) => {
-                    const success = await AdminCommon.utils.saveData(entrepotManager.config.endpoints.update, data, true);
-                    if (success) {
-                        AdminCommon.utils.closeModal();
-                        await loadAllStockData();
-                        syncData();
-                        displayEntrepots();
-                    }
-                }
-            });
+        function closeTestModal() {
+            const modal = document.querySelector('div[style*="position: fixed"][style*="z-index: 9999"]');
+            if (modal) modal.remove();
         }
 
         async function deleteEntrepot(id) {
