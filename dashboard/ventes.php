@@ -72,7 +72,7 @@ require_admin();
                     <select id="filter-periode" onchange="loadVentesData()">
                         <option value="">Toutes les périodes</option>
                         <option value="aujourdhui">Aujourd'hui</option>
-                        <option value="semaine">Cette semaine</option>
+                        <option value="semaine">Ce mois</option>
                         <option value="mois">Ce mois</option>
                     </select>
                 </div>
@@ -96,7 +96,7 @@ require_admin();
                 endpoints: {
                     ventes: '../api/ventes/list.php',              
                     camions: '../api/camions/list.php',            
-                    stats: '../api/ventes/stats.php',              
+                    stats: '../api/ventes/stats_admin.php',
                     produits: '../api/ventes/produits_vendus.php', 
                     deleteVente: '../api/ventes/delete_admin.php'  
                 },
@@ -107,15 +107,28 @@ require_admin();
                         rowBuilder: (vente) => [
                             `#${vente.id}`,
                             vente.nom_camion || 'N/A',                    
-                            vente.franchise_nom ? `${vente.franchise_nom} ${vente.franchise_prenom || ''}` : 'N/A', // ✅ Corrigé
+                            vente.franchise_nom ? `${vente.franchise_nom} ${vente.franchise_prenom || ''}` : 'N/A',
                             `${vente.nb_produits || 0} produit(s)`,       
                             `<strong>${AdminCommon.utils.formatPrice(vente.montant)}</strong>`,
                             AdminCommon.utils.formatDate(vente.date_vente, true),
                             `<button class="btn-action" onclick="viewVenteDetails(${vente.id})">Détails</button>
                              <button class="btn-action danger" onclick="deleteVenteAdmin(${vente.id})">Supprimer</button>`
                         ]
+                    },
+                    produits: {
+                        headers: ['Produit', 'Unité', 'Quantité vendue', 'CA généré', 'Nb ventes'],
+                        rowBuilder: (produit) => [
+                            `<strong>${produit.nom}</strong>`,
+                            produit.unite || 'N/A',
+                            `${produit.quantite_totale || 0}`,
+                            `<strong>${AdminCommon.utils.formatPrice(produit.ca_total || 0)}</strong>`,
+                            produit.nb_ventes || 0
+                        ]
                     }
                 }
+            },
+            data: {
+                ventes: []
             }
         };
 
@@ -184,27 +197,20 @@ require_admin();
             }
         }
 
-        // ✅ CORRIGER LE CHARGEMENT DES STATS
         async function loadStats() {
             try {
-                const response = await fetch(ventesAdminManager.config.endpoints.stats + '?periode=mois');
-                const statsArray = await response.json();
+                const response = await fetch(ventesAdminManager.config.endpoints.stats);
+                const stats = await response.json();
                 
-                let total = 0, aujourdhui = 0, semaine = 0, mois = 0;
-                
-                if (Array.isArray(statsArray)) {
-                    statsArray.forEach(stat => {
-                        total += parseFloat(stat.total_ca || 0);
-                    });
-                    
-                    // Calculer les autres stats selon la période
-                    // Ou faire plusieurs appels avec différentes périodes
+                if (stats.error) {
+                    console.error('Erreur stats:', stats.error);
+                    return;
                 }
                 
-                updateStatElement('total-ventes', AdminCommon.utils.formatPrice(total));
-                updateStatElement('ventes-jour', AdminCommon.utils.formatPrice(aujourdhui));
-                updateStatElement('ventes-semaine', AdminCommon.utils.formatPrice(semaine));
-                updateStatElement('ventes-mois', AdminCommon.utils.formatPrice(mois));
+                updateStatElement('total-ventes', AdminCommon.utils.formatPrice(stats.total || 0));
+                updateStatElement('ventes-jour', AdminCommon.utils.formatPrice(stats.aujourdhui || 0));
+                updateStatElement('ventes-semaine', AdminCommon.utils.formatPrice(stats.semaine || 0));
+                updateStatElement('ventes-mois', AdminCommon.utils.formatPrice(stats.mois || 0));
                 
             } catch (error) {
                 console.error('Erreur lors du chargement des statistiques:', error);
@@ -237,7 +243,7 @@ require_admin();
         // FONCTION GÉNÉRIQUE POUR VOIR LES DÉTAILS
         async function viewVenteDetails(venteId) {
             try {
-                const response = await fetch(`../api/ventes/details.php?id=${venteId}`);
+                const response = await fetch(`../api/ventes/details_admin.php?id=${venteId}`);
                 const vente = await response.json();
                 
                 if (vente.error) {
@@ -252,8 +258,12 @@ require_admin();
                             <div><strong>Date:</strong> ${AdminCommon.utils.formatDate(vente.date_vente, true)}</div>
                         </div>
                         <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                            <div><strong>Camion:</strong> ${vente.camion_nom || 'N/A'}</div>
-                            <div><strong>Franchisé:</strong> ${vente.franchisé_nom || 'N/A'}</div>
+                            <div><strong>Camion:</strong> ${vente.nom_camion || 'N/A'}</div>
+                            <div><strong>Franchisé:</strong> ${vente.franchisé_nom ? vente.franchisé_nom + ' ' + (vente.franchisé_prenom || '') : 'N/A'}</div>
+                        </div>
+                        <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div><strong>Statut:</strong> <span class="badge badge-${vente.statut || 'info'}">${vente.statut || 'N/A'}</span></div>
+                            <div><strong>Type paiement:</strong> ${vente.type_paiement || 'N/A'}</div>
                         </div>
                     </div>
                     
@@ -310,6 +320,12 @@ require_admin();
             }
         }
 
+        function updateStatElement(id, value) {
+            const element = document.getElementById(id);
+            if (element) {
+                element.textContent = value;
+            }
+        }
     </script>
 </body>
 </html>
