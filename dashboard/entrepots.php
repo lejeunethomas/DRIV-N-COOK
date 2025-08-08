@@ -173,8 +173,8 @@ require_admin();
                         { name: 'ville', label: 'Ville', type: 'text', required: true },
                         { name: 'code_postal', label: 'Code postal', type: 'text', required: true, attributes: 'pattern="[0-9]{5}" title="Code postal français (5 chiffres)"' },
                         { name: 'telephone', label: 'Téléphone', type: 'tel', attributes: 'placeholder="01 23 45 67 89"' },
-                        { name: 'email', label: 'Email', type: 'email', attributes: 'placeholder="entrepot@drivncook.com"' },
-                        { name: 'responsable', label: 'Responsable', type: 'text', attributes: 'placeholder="Jean Dupont"' }
+                        { name: 'email', label: 'Email', type: 'email', attributes: 'placeholder="contact@entrepot.com"' },
+                        { name: 'responsable', label: 'Responsable', type: 'text', attributes: 'placeholder="Nom du responsable"' }
                     ],
                     
                     stock: [
@@ -260,21 +260,35 @@ require_admin();
                 title: 'Ajouter un entrepôt',
                 fields: entrepotManager.config.formFields.entrepot,
                 onSubmit: async (data, isEdit) => {
-                    const fullAddress = `${data.adresse}, ${data.code_postal} ${data.ville}, France`;
-                    const geoResult = await geocodeAddress(fullAddress);
-                    
-                    if (geoResult.success) {
-                        data.latitude = geoResult.latitude;
-                        data.longitude = geoResult.longitude;
-                        AdminCommon.utils.showAlert(`Adresse géolocalisée avec succès`, 'info');
-                    }
-                    
-                    const success = await AdminCommon.utils.saveData(entrepotManager.config.endpoints.add, data);
-                    if (success) {
-                        AdminCommon.utils.closeModal();
-                        await loadAllStockData();
-                        syncData();
-                        displayEntrepots();
+                    try {
+                        const fullAddress = `${data.adresse}, ${data.code_postal} ${data.ville}, France`;
+                        
+                        try {
+                            const geoResult = await geocodeAddress(fullAddress);
+                            
+                            if (geoResult.success) {
+                                data.latitude = geoResult.latitude;
+                                data.longitude = geoResult.longitude;
+                                AdminCommon.utils.showAlert(`✅ Adresse géolocalisée : ${geoResult.display_name}`, 'success');
+                            } else {
+                                AdminCommon.utils.showAlert(`⚠️ Géolocalisation échouée : ${geoResult.message}. L'entrepôt sera créé sans coordonnées.`, 'warning');
+                            }
+                        } catch (geoError) {
+                            console.error('Erreur géolocalisation:', geoError);
+                            AdminCommon.utils.showAlert('⚠️ Géolocalisation non disponible. L\'entrepôt sera créé sans coordonnées.', 'warning');
+                        }
+                        
+                        const success = await AdminCommon.utils.saveData(entrepotManager.config.endpoints.add, data);
+                        if (success) {
+                            AdminCommon.utils.closeModal();
+                            await loadAllStockData();
+                            syncData();
+                            displayEntrepots();
+                        }
+                        
+                    } catch (error) {
+                        console.error('Erreur lors de l\'ajout:', error);
+                        AdminCommon.utils.showAlert('Erreur lors de l\'ajout de l\'entrepôt', 'error');
                     }
                 }
             });
