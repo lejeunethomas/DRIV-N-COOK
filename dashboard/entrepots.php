@@ -203,8 +203,6 @@ require_admin();
         }
 
         function startGlobalMonitoring() {
-            console.log('🎯 Monitoring global démarré');
-            // Fonction simple pour commencer
             updateGlobalStats();
         }
 
@@ -262,16 +260,9 @@ require_admin();
         });
 
         function syncData() {
-            console.log('🔄 Synchronisation des données...');
-            console.log('Entrepôts globaux:', globalStockData.entrepots);
-            console.log('Stocks globaux:', globalStockData.stocks);
-            console.log('Produits globaux:', globalStockData.products);
-            
             entrepotManager.data.entrepots = Array.isArray(globalStockData.entrepots) ? globalStockData.entrepots : [];
             entrepotManager.data.stocks = Array.isArray(globalStockData.stocks) ? globalStockData.stocks : [];
             entrepotManager.data.produits = Array.isArray(globalStockData.products) ? globalStockData.products : [];
-            
-            console.log('✅ Données synchronisées:', entrepotManager.data);
         }
 
         function populateEntrepotFilter() {
@@ -317,82 +308,108 @@ require_admin();
         }
 
         function showAddEntrepotModal() {
-            console.log('🔄 Ouverture modal AdminCommon...');
-            
-            // Vérifier que AdminCommon est disponible
             if (typeof AdminCommon?.utils?.createFormModal !== 'function') {
-                console.error('❌ AdminCommon.utils.createFormModal non disponible');
                 alert('Erreur: Système AdminCommon non disponible');
                 return;
             }
             
             try {
-                AdminCommon.utils.createFormModal({
-                    title: 'Ajouter un entrepôt',
-                    fields: entrepotManager.config.formFields.entrepot,
-                    onSubmit: async (data, isEdit) => {
-                        console.log('🎯 BUTTON SUBMIT CLIQUÉ !');
-                        console.log('📤 Données reçues:', data);
-                        
-                        try {
-                            // Validation simple
-                            if (!data.nom || !data.adresse || !data.ville || !data.code_postal) {
-                                console.log('❌ Validation échouée');
-                                AdminCommon.utils.showAlert('❌ Veuillez remplir tous les champs obligatoires', 'error');
-                                return;
-                            }
+                const modal = document.createElement('div');
+                modal.className = 'modal';
+                modal.innerHTML = `
+                    <div class="modal-content">
+                        <h3>Ajouter un entrepôt</h3>
+                        <form id="entrepot-form">
+                            <div class="form-group">
+                                <label for="nom">Nom de l'entrepôt *</label>
+                                <input type="text" id="nom" name="nom" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="adresse">Adresse complète *</label>
+                                <input type="text" id="adresse" name="adresse" required placeholder="123 Rue de la Logistique">
+                            </div>
+                            <div class="form-group">
+                                <label for="ville">Ville *</label>
+                                <input type="text" id="ville" name="ville" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="code_postal">Code postal *</label>
+                                <input type="text" id="code_postal" name="code_postal" required pattern="[0-9]{5}" title="Code postal français (5 chiffres)">
+                            </div>
+                            <div class="form-group">
+                                <label for="telephone">Téléphone</label>
+                                <input type="tel" id="telephone" name="telephone" placeholder="01 23 45 67 89">
+                            </div>
+                            <div class="form-group">
+                                <label for="email">Email</label>
+                                <input type="email" id="email" name="email" placeholder="entrepot@drivncook.com">
+                            </div>
+                            <div class="form-group">
+                                <label for="responsable">Responsable</label>
+                                <input type="text" id="responsable" name="responsable" placeholder="Jean Dupont">
+                            </div>
+                            <div class="modal-actions">
+                                <button type="button" class="btn-secondary" onclick="closeEntrepotModal()">Annuler</button>
+                                <button type="submit" class="btn-primary">Ajouter</button>
+                            </div>
+                        </form>
+                    </div>
+                `;
+
+                document.body.appendChild(modal);
+
+                // Gérer la soumission du formulaire
+                document.getElementById('entrepot-form').addEventListener('submit', async function(e) {
+                    e.preventDefault();
+    
+                    const formData = new FormData(this);
+                    const data = Object.fromEntries(formData);
+    
+                    if (!data.nom || !data.adresse || !data.ville || !data.code_postal) {
+                        alert('❌ Veuillez remplir tous les champs obligatoires');
+                        return;
+                    }
+    
+                    try {
+                        const response = await fetch('../api/entrepots/add.php', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json'
+                            },
+                            body: JSON.stringify(data)
+                        });
+    
+                        const result = await response.json();
+    
+                        if (result.success) {
+                            alert('✅ Entrepôt ajouté avec succès !');
+                            closeEntrepotModal();
                             
-                            console.log('✅ Validation OK, envoi vers API...');
-                            console.log('📡 URL API:', entrepotManager.config.endpoints.add);
+                            await loadAllStockData();
+                            syncData();
+                            displayEntrepots();
+                            populateEntrepotFilter();
+                            updateGlobalStats();
                             
-                            // Appel API
-                            const response = await fetch(entrepotManager.config.endpoints.add, {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'Accept': 'application/json'
-                                },
-                                body: JSON.stringify(data)
-                            });
-                            
-                            console.log('📊 Status HTTP:', response.status);
-                            
-                            if (!response.ok) {
-                                throw new Error(`Erreur HTTP ${response.status}: ${response.statusText}`);
-                            }
-                            
-                            const result = await response.json();
-                            console.log('📋 Résultat API:', result);
-                            
-                            if (result.success) {
-                                AdminCommon.utils.showAlert('✅ Entrepôt ajouté avec succès !', 'success');
-                                AdminCommon.utils.closeModal();
-                                
-                                console.log('🔄 Rechargement des données...');
-                                await loadAllStockData();
-                                syncData();
-                                displayEntrepots();
-                                populateEntrepotFilter();
-                                updateGlobalStats();
-                                console.log('✅ Données rechargées');
-                                
-                            } else {
-                                AdminCommon.utils.showAlert('❌ Erreur API: ' + (result.message || 'Erreur inconnue'), 'error');
-                            }
-                            
-                        } catch (error) {
-                            console.error('❌ Erreur dans onSubmit:', error);
-                            AdminCommon.utils.showAlert('❌ Erreur: ' + error.message, 'error');
+                        } else {
+                            alert('❌ Erreur: ' + result.message);
                         }
+    
+                    } catch (error) {
+                        alert('❌ Erreur réseau: ' + error.message);
                     }
                 });
-                
-                console.log('✅ Modal AdminCommon créé avec succès');
-                
+
             } catch (error) {
-                console.error('❌ Erreur lors de la création du modal AdminCommon:', error);
                 alert('Erreur lors de l\'ouverture du formulaire: ' + error.message);
             }
+        }
+
+        // ✅ Fonction pour fermer le modal manuel
+        function closeEntrepotModal() {
+            const modals = document.querySelectorAll('.modal');
+            modals.forEach(modal => modal.remove());
         }
 
         async function deleteEntrepot(id) {
@@ -566,6 +583,48 @@ require_admin();
             ];
         }
 
+        async function editEntrepot(id) {
+            const entrepot = entrepotManager.data.entrepots.find(e => e.id == id);
+            if (!entrepot) {
+                AdminCommon.utils.showAlert('Entrepôt non trouvé', 'error');
+                return;
+            }
+
+            AdminCommon.utils.createFormModal({
+                title: `Modifier l'entrepôt #${id}`,
+                data: entrepot,
+                fields: entrepotManager.config.formFields.entrepot,
+                onSubmit: async (data, isEdit) => {
+                    try {
+                        data.id = id;
+                        
+                        const response = await fetch(entrepotManager.config.endpoints.update, {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify(data)
+                        });
+                        
+                        const result = await response.json();
+                        
+                        if (result.success) {
+                            AdminCommon.utils.showAlert('Entrepôt modifié avec succès !', 'success');
+                            AdminCommon.utils.closeModal();
+                            
+                            await loadAllStockData();
+                            syncData();
+                            displayEntrepots();
+                            updateGlobalStats();
+                        } else {
+                            AdminCommon.utils.showAlert('Erreur : ' + result.message, 'error');
+                        }
+                        
+                    } catch (error) {
+                        console.error('Erreur lors de la modification:', error);
+                        AdminCommon.utils.showAlert('Erreur réseau lors de la modification', 'error');
+                    }
+                }
+            });
+        }
     </script>
 </body>
 </html>

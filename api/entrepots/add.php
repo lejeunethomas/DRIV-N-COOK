@@ -34,9 +34,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $data['adresse'],
             $data['ville'],
             $data['code_postal'],
-            $data['telephone'] ?? null,
-            $data['email'] ?? null,
-            $data['responsable'] ?? null,
+            isset($data['telephone']) ? $data['telephone'] : null,
+            isset($data['email']) ? $data['email'] : null,
+            isset($data['responsable']) ? $data['responsable'] : null,
             $latitude,
             $longitude
         ]);
