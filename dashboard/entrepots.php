@@ -192,6 +192,67 @@ require_admin();
             }
         };
 
+        function getEntrepotName(entrepotId) {
+            const entrepot = entrepotManager.data.entrepots.find(e => e.id == entrepotId);
+            return entrepot ? entrepot.nom : 'Entrepôt inconnu';
+        }
+
+        function getProduitName(produitId) {
+            const produit = entrepotManager.data.produits.find(p => p.id == produitId);
+            return produit ? produit.nom : 'Produit inconnu';
+        }
+
+        function startGlobalMonitoring() {
+            console.log('🎯 Monitoring global démarré');
+            // Fonction simple pour commencer
+            updateGlobalStats();
+        }
+
+        function updateGlobalStats() {
+            try {
+                const nbEntrepots = entrepotManager.data.entrepots.length;
+                const nbProduits = entrepotManager.data.produits.length;
+                const stocks = entrepotManager.data.stocks;
+                
+                const ruptures = stocks.filter(s => s.quantite == 0).length;
+                const alertes = stocks.filter(s => s.quantite > 0 && s.alerte == 1).length;
+                const stocksOk = stocks.filter(s => s.quantite > 0 && s.alerte != 1).length;
+                
+                if (document.getElementById('global-entrepots')) document.getElementById('global-entrepots').textContent = nbEntrepots;
+                if (document.getElementById('global-produits')) document.getElementById('global-produits').textContent = nbProduits;
+                if (document.getElementById('global-ruptures')) document.getElementById('global-ruptures').textContent = ruptures;
+                if (document.getElementById('global-alertes')) document.getElementById('global-alertes').textContent = alertes;
+                if (document.getElementById('global-stocks-ok')) document.getElementById('global-stocks-ok').textContent = stocksOk;
+            } catch (error) {
+                console.error('Erreur mise à jour stats:', error);
+            }
+        }
+
+        function showGlobalStockMatrix() {
+            // Utiliser la fonction de stock-management.js mais adapter les données
+            const tempGlobalData = globalStockData;
+            globalStockData.products = entrepotManager.data.produits;
+            globalStockData.entrepots = entrepotManager.data.entrepots;
+            globalStockData.stocks = entrepotManager.data.stocks;
+            
+            // Appeler la fonction de stock-management.js
+            if (typeof window.showGlobalStockMatrix === 'function') {
+                window.showGlobalStockMatrix();
+            } else {
+                alert('Matrice des stocks en développement');
+            }
+            
+            globalStockData = tempGlobalData;
+        }
+
+        function showStockAlerts() {
+            alert('Alertes de stock en développement');
+        }
+
+        function geocodeAllEntrepots() {
+            alert('Géolocalisation automatique en développement');
+        }
+
         document.addEventListener('DOMContentLoaded', async function() {
             await loadAllStockData();
             syncData();
