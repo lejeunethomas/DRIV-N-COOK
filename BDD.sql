@@ -1,3 +1,29 @@
+-- Suppression de la base de données si elle existe et recréation
+DROP DATABASE IF EXISTS `drivncook`;
+CREATE DATABASE `drivncook` CHARACTER SET utf8 COLLATE utf8_general_ci;
+USE `drivncook`;
+
+-- Désactiver les vérifications de clés étrangères pour éviter les erreurs lors de la suppression
+SET FOREIGN_KEY_CHECKS = 0;
+
+-- Supprimer toutes les tables si elles existent
+DROP TABLE IF EXISTS `vente_details`;
+DROP TABLE IF EXISTS `ventes`;
+DROP TABLE IF EXISTS `menu_produits`;
+DROP TABLE IF EXISTS `menus`;
+DROP TABLE IF EXISTS `stocks`;
+DROP TABLE IF EXISTS `commande_details`;
+DROP TABLE IF EXISTS `commandes`;
+DROP TABLE IF EXISTS `demandes_camion`;
+DROP TABLE IF EXISTS `camions`;
+DROP TABLE IF EXISTS `entrepots`;
+DROP TABLE IF EXISTS `produits`;
+DROP TABLE IF EXISTS `users`;
+DROP TABLE IF EXISTS `clients`;
+
+-- Réactiver les vérifications de clés étrangères
+SET FOREIGN_KEY_CHECKS = 1;
+
 -- phpMyAdmin SQL Dump
 -- version 5.1.2
 -- https://www.phpmyadmin.net/
