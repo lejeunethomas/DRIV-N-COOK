@@ -96,8 +96,12 @@ require_admin();
     <script src="../js/admin/stock-management.js"></script>
 
     <script>
+let globalStockData = {
+    entrepots: [],
+    stocks: [],
+    products: []
+};
 
-// Variables globales
 const entrepotManager = {
     data: { entrepots: [], stocks: [], produits: [] },
     
@@ -107,9 +111,8 @@ const entrepotManager = {
             add: '../api/entrepots/add.php',
             update: '../api/entrepots/update.php',
             delete: '../api/entrepots/delete.php',
-            stockAdd: '../api/stocks/add.php',
-            stockUpdate: '../api/stocks/update.php',
-            stockDelete: '../api/stocks/delete.php'
+            products: '../api/produits/list.php',
+            stocks: '../api/stocks/list.php'
         },
         
         tables: {
@@ -142,29 +145,6 @@ const entrepotManager = {
                          <button class="btn-action danger" onclick="deleteEntrepot(${entrepot.id})">Supprimer</button>`
                     ];
                 }
-            },
-            
-            stocks: {
-                headers: ['Entrepôt', 'Produit', 'Type', 'Quantité', 'Unité', 'Seuil d\'alerte', 'État', 'Dernière MAJ', 'Actions'],
-                rowBuilder: (stock) => {
-                    const etat = stock.quantite == 0 ? 'Rupture' :
-                               stock.alerte == 1 ? 'Alerte' : 'OK';
-                    const classeEtat = stock.quantite == 0 ? 'badge-danger' :
-                                     stock.alerte == 1 ? 'badge-warning' : 'badge-success';
-                    
-                    return [
-                        `<strong>${getEntrepotName(stock.entrepot_id)}</strong>`,
-                        getProduitName(stock.produit_id),
-                        `<span class="type-badge type-${stock.produit_type}">${stock.produit_type}</span>`,
-                        `<strong>${parseFloat(stock.quantite).toFixed(2)}</strong>`,
-                        stock.unite,
-                        parseFloat(stock.seuil_alerte).toFixed(2),
-                        `<span class="${classeEtat}" style="padding: 0.3rem 0.6rem; border-radius: 12px; font-size: 0.8rem; font-weight: bold;">${etat}</span>`,
-                        `${AdminCommon.utils.formatDate(stock.derniere_maj)} ${new Date(stock.derniere_maj).toLocaleTimeString('fr-FR')}`,
-                        `<button class="btn-action" onclick="editStock(${stock.entrepot_id}, ${stock.produit_id})">Modifier</button>
-                         <button class="btn-action danger" onclick="deleteStock(${stock.entrepot_id}, ${stock.produit_id})">Supprimer</button>`
-                    ];
-                }
             }
         },
         
@@ -177,23 +157,12 @@ const entrepotManager = {
                 { name: 'telephone', label: 'Téléphone', type: 'tel', attributes: 'placeholder="01 23 45 67 89"' },
                 { name: 'email', label: 'Email', type: 'email', attributes: 'placeholder="contact@entrepot.com"' },
                 { name: 'responsable', label: 'Responsable', type: 'text', attributes: 'placeholder="Nom du responsable"' }
-            ],
-            
-            stock: [
-                { name: 'entrepot_id', label: 'Entrepôt', type: 'select', required: true, options: 'getEntrepotOptions' },
-                { name: 'produit_id', label: 'Produit', type: 'select', required: true, options: 'getProduitOptions' },
-                { name: 'quantite', label: 'Quantité', type: 'number', required: true, attributes: 'step="0.01" min="0" placeholder="0.00"' },
-                { name: 'unite', label: 'Unité', type: 'select', required: true, options: [
-                    { value: 'kg', text: 'Kilogrammes' },
-                    { value: 'litres', text: 'Litres' },
-                    { value: 'unites', text: 'Unités' }
-                ]},
-                { name: 'seuil_alerte', label: 'Seuil d\'alerte', type: 'number', attributes: 'step="0.01" min="0" placeholder="5.00"' }
             ]
         }
     }
 };
 
+// ✅ FONCTIONS UTILITAIRES
 function getEntrepotName(entrepotId) {
     const entrepot = entrepotManager.data.entrepots.find(e => e.id == entrepotId);
     return entrepot ? entrepot.nom : 'Entrepôt inconnu';
@@ -221,6 +190,58 @@ function getProduitOptions() {
         { value: '', text: 'Sélectionner un produit' },
         ...entrepotManager.data.produits.map(p => ({ value: p.id, text: `${p.nom} (${p.type})` }))
     ];
+}
+
+async function loadAllStockData() {
+    console.log('🔄 Chargement de toutes les données...');
+    
+    try {
+        // Charger les entrepôts
+        const entrepotsResponse = await fetch(entrepotManager.config.endpoints.entrepots);
+        if (entrepotsResponse.ok) {
+            globalStockData.entrepots = await entrepotsResponse.json();
+            console.log('✅ Entrepôts chargés:', globalStockData.entrepots.length);
+        } else {
+            console.error('❌ Erreur chargement entrepôts:', entrepotsResponse.status);
+            globalStockData.entrepots = [];
+        }
+        
+        // Charger les produits
+        try {
+            const produitsResponse = await fetch(entrepotManager.config.endpoints.products);
+            if (produitsResponse.ok) {
+                globalStockData.products = await produitsResponse.json();
+                console.log('✅ Produits chargés:', globalStockData.products.length);
+            } else {
+                console.error('❌ Erreur chargement produits:', produitsResponse.status);
+                globalStockData.products = [];
+            }
+        } catch (error) {
+            console.error('❌ Erreur produits:', error);
+            globalStockData.products = [];
+        }
+        
+        // Charger les stocks
+        try {
+            const stocksResponse = await fetch(entrepotManager.config.endpoints.stocks);
+            if (stocksResponse.ok) {
+                globalStockData.stocks = await stocksResponse.json();
+                console.log('✅ Stocks chargés:', globalStockData.stocks.length);
+            } else {
+                console.error('❌ Erreur chargement stocks:', stocksResponse.status);
+                globalStockData.stocks = [];
+            }
+        } catch (error) {
+            console.error('❌ Erreur stocks:', error);
+            globalStockData.stocks = [];
+        }
+        
+        return true;
+        
+    } catch (error) {
+        console.error('❌ Erreur globale chargement données:', error);
+        return false;
+    }
 }
 
 function showAddEntrepotModal() {
@@ -257,6 +278,7 @@ function showAddEntrepotModal() {
     }
 }
 
+// ✅ FONCTION SÉPARÉE POUR SOUMETTRE
 async function submitEntrepot(data, isEdit) {
     // Validation des données
     if (!data.nom || !data.adresse || !data.ville || !data.code_postal) {
@@ -278,7 +300,6 @@ async function submitEntrepot(data, isEdit) {
         });
         
         console.log('📊 Status HTTP:', response.status);
-        console.log('📊 Headers:', Object.fromEntries(response.headers.entries()));
         
         if (!response.ok) {
             throw new Error(`Erreur HTTP ${response.status}: ${response.statusText}`);
@@ -343,16 +364,87 @@ function displayEntrepots() {
     });
 }
 
+function populateEntrepotFilter() {
+    const select = document.getElementById('filter-entrepot');
+    if (select) {
+        select.innerHTML = '<option value="">Tous les entrepôts</option>';
+        entrepotManager.data.entrepots.forEach(entrepot => {
+            select.innerHTML += `<option value="${entrepot.id}">${entrepot.nom}</option>`;
+        });
+    }
+}
+
+function startGlobalMonitoring() {
+    console.log('🎯 Monitoring global démarré');
+    // Fonction simple pour commencer
+    updateGlobalStats();
+}
+
+function updateGlobalStats() {
+    try {
+        const nbEntrepots = entrepotManager.data.entrepots.length;
+        const nbProduits = entrepotManager.data.produits.length;
+        const stocks = entrepotManager.data.stocks;
+        
+        const ruptures = stocks.filter(s => s.quantite == 0).length;
+        const alertes = stocks.filter(s => s.quantite > 0 && s.alerte == 1).length;
+        const stocksOk = stocks.filter(s => s.quantite > 0 && s.alerte != 1).length;
+        
+        document.getElementById('global-entrepots').textContent = nbEntrepots;
+        document.getElementById('global-produits').textContent = nbProduits;
+        document.getElementById('global-ruptures').textContent = ruptures;
+        document.getElementById('global-alertes').textContent = alertes;
+        document.getElementById('global-stocks-ok').textContent = stocksOk;
+    } catch (error) {
+        console.error('Erreur mise à jour stats:', error);
+    }
+}
+
+function showGlobalStockMatrix() {
+    alert('Fonctionnalité en développement');
+}
+
+function showStockAlerts() {
+    alert('Fonctionnalité en développement');
+}
+
+function geocodeAllEntrepots() {
+    alert('Fonctionnalité en développement');
+}
+
+function loadStocksTab() {
+    alert('Onglet stocks en développement');
+}
+
+function editEntrepot(id) {
+    alert('Modification entrepôt #' + id + ' en développement');
+}
+
+function viewEntrepotStocks(id) {
+    alert('Stocks entrepôt #' + id + ' en développement');
+}
+
+function deleteEntrepot(id) {
+    if (confirm('Supprimer cet entrepôt ?')) {
+        alert('Suppression entrepôt #' + id + ' en développement');
+    }
+}
+
 document.addEventListener('DOMContentLoaded', async function() {
     console.log('🚀 Initialisation de la page entrepôts...');
     
     try {
-        await loadAllStockData();
-        syncData();
-        displayEntrepots();
-        populateEntrepotFilter();
-        startGlobalMonitoring();
-        console.log('✅ Initialisation terminée');
+        const success = await loadAllStockData();
+        if (success) {
+            syncData();
+            displayEntrepots();
+            populateEntrepotFilter();
+            startGlobalMonitoring();
+            console.log('✅ Initialisation terminée avec succès');
+        } else {
+            console.error('❌ Erreur lors du chargement des données');
+            AdminCommon.utils.showAlert('Erreur lors du chargement des données', 'error');
+        }
     } catch (error) {
         console.error('❌ Erreur lors de l\'initialisation:', error);
         AdminCommon.utils.showAlert('Erreur lors de l\'initialisation de la page', 'error');
