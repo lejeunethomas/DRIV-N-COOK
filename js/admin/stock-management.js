@@ -408,21 +408,37 @@ function viewProductStocks(productId) {
  */
 async function geocodeAddress(address) {
     try {
-        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`);
-        const data = await response.json();
+        console.log('🌍 Géolocalisation de:', address);
         
-        if (data.length > 0) {
+        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`);
+        
+        if (!response.ok) {
+            throw new Error(`Erreur HTTP: ${response.status}`);
+        }
+        
+        const results = await response.json();
+        
+        if (results && results.length > 0) {
+            const result = results[0];
             return {
-                latitude: parseFloat(data[0].lat),
-                longitude: parseFloat(data[0].lon),
-                success: true
+                success: true,
+                latitude: parseFloat(result.lat),
+                longitude: parseFloat(result.lon),
+                display_name: result.display_name
             };
         } else {
-            return { success: false, error: 'Adresse non trouvée' };
+            return {
+                success: false,
+                message: 'Adresse non trouvée'
+            };
         }
+        
     } catch (error) {
-        console.error('Erreur de géocodage:', error);
-        return { success: false, error: 'Erreur de géocodage' };
+        console.error('Erreur géolocalisation:', error);
+        return {
+            success: false,
+            message: error.message
+        };
     }
 }
 
