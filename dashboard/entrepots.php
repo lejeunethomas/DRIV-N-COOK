@@ -192,19 +192,92 @@ require_admin();
             }
         };
 
-        
-        function getEntrepotName(entrepotId) {
-            const entrepot = entrepotManager.data.entrepots.find(e => e.id == entrepotId);
-            return entrepot ? entrepot.nom : 'Entrepôt inconnu';
+        document.addEventListener('DOMContentLoaded', async function() {
+            await loadAllStockData();
+            syncData();
+            displayEntrepots();
+            populateEntrepotFilter();
+            startGlobalMonitoring();
+        });
+
+        function syncData() {
+            console.log('🔄 Synchronisation des données...');
+            console.log('Entrepôts globaux:', globalStockData.entrepots);
+            console.log('Stocks globaux:', globalStockData.stocks);
+            console.log('Produits globaux:', globalStockData.products);
+            
+            entrepotManager.data.entrepots = Array.isArray(globalStockData.entrepots) ? globalStockData.entrepots : [];
+            entrepotManager.data.stocks = Array.isArray(globalStockData.stocks) ? globalStockData.stocks : [];
+            entrepotManager.data.produits = Array.isArray(globalStockData.products) ? globalStockData.products : [];
+            
+            console.log('✅ Données synchronisées:', entrepotManager.data);
         }
 
-        function getProduitName(produitId) {
-            const produit = entrepotManager.data.produits.find(p => p.id == produitId);
-            return produit ? produit.nom : 'Produit inconnu';
+        function populateEntrepotFilter() {
+            const filterSelect = document.getElementById('filter-entrepot');
+            filterSelect.innerHTML = `<option value="">Tous les entrepôts</option>`;
+            entrepotManager.data.entrepots.forEach(e => {
+                filterSelect.innerHTML += `<option value="${e.id}">${e.nom}</option>`;
+            });
+        }
+
+        function displayEntrepots() {
+            AdminCommon.utils.createTable({
+                containerId: 'entrepots-table-container',
+                headers: entrepotManager.config.tables.entrepots.headers,
+                data: entrepotManager.data.entrepots,
+                rowBuilder: (entrepot) => {
+                    const row = document.createElement('tr');
+                    const cells = entrepotManager.config.tables.entrepots.rowBuilder(entrepot);
+                    row.innerHTML = cells.map(cell => `<td>${cell}</td>`).join('');
+                    return row;
+                },
+                emptyMessage: 'Aucun entrepôt trouvé'
+            });
         }
 
         function loadStocksTab() {
             displayStocks();
+        }
+
+        function displayStocks() {
+            AdminCommon.utils.createTable({
+                containerId: 'stocks-table-container',
+                headers: entrepotManager.config.tables.stocks.headers,
+                data: entrepotManager.data.stocks,
+                rowBuilder: (stock) => {
+                    const row = document.createElement('tr');
+                    const cells = entrepotManager.config.tables.stocks.rowBuilder(stock);
+                    row.innerHTML = cells.map(cell => `<td>${cell}</td>`).join('');
+                    return row;
+                },
+                emptyMessage: 'Aucun stock trouvé'
+            });
+        }
+
+        function showAddEntrepotModal() {
+            AdminCommon.utils.createFormModal({
+                title: 'Ajouter un entrepôt',
+                fields: entrepotManager.config.formFields.entrepot,
+                onSubmit: async (data, isEdit) => {
+                    const fullAddress = `${data.adresse}, ${data.code_postal} ${data.ville}, France`;
+                    const geoResult = await geocodeAddress(fullAddress);
+                    
+                    if (geoResult.success) {
+                        data.latitude = geoResult.latitude;
+                        data.longitude = geoResult.longitude;
+                        AdminCommon.utils.showAlert(`Adresse géolocalisée avec succès`, 'info');
+                    }
+                    
+                    const success = await AdminCommon.utils.saveData(entrepotManager.config.endpoints.add, data);
+                    if (success) {
+                        AdminCommon.utils.closeModal();
+                        await loadAllStockData();
+                        syncData();
+                        displayEntrepots();
+                    }
+                }
+            });
         }
 
         function editEntrepot(id) {
@@ -230,48 +303,6 @@ require_admin();
             });
         }
 
-        function viewEntrepotStocks(entrepotId) {
-            const entrepot = entrepotManager.data.entrepots.find(e => e.id == entrepotId);
-            const entrepotStocks = entrepotManager.data.stocks.filter(s => s.entrepot_id == entrepotId);
-            
-            const stocksTableHTML = entrepotStocks.length === 0 ? 
-                '<p style="text-align: center; color: #f44336; font-weight: bold; margin: 2rem 0;">Aucun stock défini pour cet entrepôt</p>' :
-                `<table style="margin: 0;">
-                    <thead>
-                        <tr><th>Produit</th><th>Type</th><th>Quantité</th><th>Seuil</th><th>État</th><th>Dernière MAJ</th></tr>
-                    </thead>
-                    <tbody>
-                        ${entrepotStocks.map(stock => {
-                            const etat = stock.quantite == 0 ? 'Rupture' : stock.alerte == 1 ? 'Alerte' : 'OK';
-                            const classeEtat = stock.quantite == 0 ? 'badge-danger' : stock.alerte == 1 ? 'badge-warning' : 'badge-success';
-                            
-                            return `
-                                <tr>
-                                    <td><strong>${getProduitName(stock.produit_id)}</strong></td>
-                                    <td><span class="type-badge type-${stock.produit_type}">${stock.produit_type}</span></td>
-                                    <td><strong>${parseFloat(stock.quantite).toFixed(2)} ${stock.unite}</strong></td>
-                                    <td>${parseFloat(stock.seuil_alerte).toFixed(2)} ${stock.unite}</td>
-                                    <td><span class="${classeEtat}" style="padding: 0.3rem 0.6rem; border-radius: 12px; font-size: 0.8rem;">${etat}</span></td>
-                                    <td>${AdminCommon.utils.formatDate(stock.derniere_maj)}</td>
-                                </tr>
-                            `;
-                        }).join('')}
-                    </tbody>
-                </table>`;
-
-            const actions = [
-                { text: 'Fermer', type: 'secondary', onclick: 'AdminCommon.utils.closeModal()' },
-                { text: 'Gérer les stocks', type: 'primary', onclick: `AdminCommon.utils.closeModal(); AdminCommon.utils.switchTab('stocks', loadStocksTab); document.getElementById('filter-entrepot').value='${entrepotId}'; loadStocksFiltered();` }
-            ];
-
-            AdminCommon.utils.createModal({
-                title: `Stocks de l'entrepôt "${entrepot.nom}"`,
-                content: stocksTableHTML,
-                size: 'large',
-                actions: actions
-            });
-        }
-
         async function deleteEntrepot(id) {
             const success = await AdminCommon.utils.deleteData(
                 entrepotManager.config.endpoints.delete,
@@ -284,40 +315,6 @@ require_admin();
                 syncData();
                 displayEntrepots();
             }
-        }
-
-        function showAddEntrepotModal() {
-            console.log('🔄 Ouverture modal ajout entrepôt...');
-            
-            AdminCommon.utils.createFormModal({
-                title: 'Ajouter un entrepôt',
-                fields: entrepotManager.config.formFields.entrepot,
-                onSubmit: async (data, isEdit) => {
-                    console.log('📤 Soumission du formulaire:', data);
-                    
-                    // Validation simple
-                    if (!data.nom || !data.adresse || !data.ville || !data.code_postal) {
-                        AdminCommon.utils.showAlert('❌ Veuillez remplir tous les champs obligatoires', 'error');
-                        return;
-                    }
-                    
-                    try {
-                        console.log('📡 Envoi vers API...');
-                        
-                        const success = await AdminCommon.utils.saveData(entrepotManager.config.endpoints.add, data);
-                        if (success) {
-                            AdminCommon.utils.closeModal();
-                            await loadAllStockData();
-                            syncData();
-                            displayEntrepots();
-                        }
-                        
-                    } catch (error) {
-                        console.error('❌ Erreur:', error);
-                        AdminCommon.utils.showAlert('❌ Erreur lors de l\'ajout de l\'entrepôt', 'error');
-                    }
-                }
-            });
         }
 
         function showAddStockModal() {
@@ -344,6 +341,7 @@ require_admin();
         }
 
         async function editStock(entrepotId, produitId) {
+            // Chercher le stock dans les données déjà chargées
             const stock = entrepotManager.data.stocks.find(s => 
                 s.entrepot_id == entrepotId && s.produit_id == produitId
             );
@@ -420,6 +418,48 @@ require_admin();
             }
         }
 
+        function viewEntrepotStocks(entrepotId) {
+            const entrepot = entrepotManager.data.entrepots.find(e => e.id == entrepotId);
+            const entrepotStocks = entrepotManager.data.stocks.filter(s => s.entrepot_id == entrepotId);
+            
+            const stocksTableHTML = entrepotStocks.length === 0 ? 
+                '<p style="text-align: center; color: #f44336; font-weight: bold; margin: 2rem 0;">Aucun stock défini pour cet entrepôt</p>' :
+                `<table style="margin: 0;">
+                    <thead>
+                        <tr><th>Produit</th><th>Type</th><th>Quantité</th><th>Seuil</th><th>État</th><th>Dernière MAJ</th></tr>
+                    </thead>
+                    <tbody>
+                        ${entrepotStocks.map(stock => {
+                            const etat = stock.quantite == 0 ? 'Rupture' : stock.alerte == 1 ? 'Alerte' : 'OK';
+                            const classeEtat = stock.quantite == 0 ? 'badge-danger' : stock.alerte == 1 ? 'badge-warning' : 'badge-success';
+                            
+                            return `
+                                <tr>
+                                    <td><strong>${getProduitName(stock.produit_id)}</strong></td>
+                                    <td><span class="type-badge type-${stock.produit_type}">${stock.produit_type}</span></td>
+                                    <td><strong>${parseFloat(stock.quantite).toFixed(2)} ${stock.unite}</strong></td>
+                                    <td>${parseFloat(stock.seuil_alerte).toFixed(2)} ${stock.unite}</td>
+                                    <td><span class="${classeEtat}" style="padding: 0.3rem 0.6rem; border-radius: 12px; font-size: 0.8rem;">${etat}</span></td>
+                                    <td>${AdminCommon.utils.formatDate(stock.derniere_maj)}</td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>`;
+
+            const actions = [
+                { text: 'Fermer', type: 'secondary', onclick: 'AdminCommon.utils.closeModal()' },
+                { text: 'Gérer les stocks', type: 'primary', onclick: `AdminCommon.utils.closeModal(); AdminCommon.utils.switchTab('stocks', loadStocksTab); document.getElementById('filter-entrepot').value='${entrepotId}'; loadStocksFiltered();` }
+            ];
+
+            AdminCommon.utils.createModal({
+                title: `Stocks de l'entrepôt "${entrepot.nom}"`,
+                content: stocksTableHTML,
+                size: 'large',
+                actions: actions
+            });
+        }
+
         function getEntrepotOptions() {
             return [
                 { value: '', text: 'Sélectionner un entrepôt' },
@@ -434,21 +474,6 @@ require_admin();
             ];
         }
 
-        document.addEventListener('DOMContentLoaded', async function() {
-            console.log('🚀 Initialisation de la page entrepôts...');
-            
-            try {
-                await loadAllStockData();
-                syncData();
-                displayEntrepots();
-                populateEntrepotFilter();
-                startGlobalMonitoring();
-                console.log('✅ Initialisation terminée');
-            } catch (error) {
-                console.error('❌ Erreur lors de l\'initialisation:', error);
-                AdminCommon.utils.showAlert('Erreur lors de l\'initialisation de la page', 'error');
-            }
-        });
     </script>
 </body>
 </html>
