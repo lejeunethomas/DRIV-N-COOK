@@ -8,7 +8,6 @@ require_admin();
     <meta charset="UTF-8">
     <title>Gestion des entrepôts - Admin</title>
     <link rel="stylesheet" href="../css/style.css">
-    <script src="../js/admin/stock-management.js"></script>
     <style>
         .stock-alerte { color: #f44336; font-weight: bold; }
         .stock-ok { color: #4caf50; }
@@ -108,8 +107,7 @@ require_admin();
                     delete: '../api/entrepots/delete.php',
                     stockAdd: '../api/stocks/add.php',
                     stockUpdate: '../api/stocks/update.php',
-                    stockDelete: '../api/stocks/delete.php',
-                    stockGet: '../api/stocks/get.php'
+                    stockDelete: '../api/stocks/delete.php'
                 },
                 
                 tables: {
@@ -336,46 +334,46 @@ require_admin();
         }
 
         async function editStock(entrepotId, produitId) {
-            try {
-                const stock = await AdminCommon.utils.apiRequest(`${entrepotManager.config.endpoints.stockGet}?entrepot_id=${entrepotId}&produit_id=${produitId}`);
-                
-                if (!stock.success) {
-                    AdminCommon.utils.showAlert('Stock non trouvé', 'error');
-                    return;
-                }
-
-                AdminCommon.utils.createFormModal({
-                    title: 'Modifier le stock',
-                    data: {
-                        entrepot_id: entrepotId,
-                        produit_id: produitId,
-                        ...stock.data
-                    },
-                    fields: [
-                        { name: 'entrepot_id', type: 'hidden' },
-                        { name: 'produit_id', type: 'hidden' },
-                        { name: 'quantite', label: 'Quantité', type: 'number', required: true, attributes: 'step="0.01" min="0"' },
-                        { name: 'unite', label: 'Unité', type: 'select', required: true, options: [
-                            { value: 'kg', text: 'Kilogrammes' },
-                            { value: 'litres', text: 'Litres' },
-                            { value: 'unites', text: 'Unités' }
-                        ]},
-                        { name: 'seuil_alerte', label: 'Seuil d\'alerte', type: 'number', attributes: 'step="0.01" min="0"' }
-                    ],
-                    onSubmit: async (data, isEdit) => {
-                        const success = await AdminCommon.utils.saveData(entrepotManager.config.endpoints.stockUpdate, data, true);
-                        if (success) {
-                            AdminCommon.utils.closeModal();
-                            await loadAllStockData();
-                            syncData();
-                            displayStocks();
-                        }
-                    }
-                });
-
-            } catch (error) {
-                AdminCommon.utils.showAlert('Erreur lors du chargement du stock', 'error');
+            // Chercher le stock dans les données déjà chargées
+            const stock = entrepotManager.data.stocks.find(s => 
+                s.entrepot_id == entrepotId && s.produit_id == produitId
+            );
+            
+            if (!stock) {
+                AdminCommon.utils.showAlert('Stock non trouvé', 'error');
+                return;
             }
+
+            AdminCommon.utils.createFormModal({
+                title: 'Modifier le stock',
+                data: {
+                    entrepot_id: entrepotId,
+                    produit_id: produitId,
+                    quantite: stock.quantite,
+                    unite: stock.unite,
+                    seuil_alerte: stock.seuil_alerte
+                },
+                fields: [
+                    { name: 'entrepot_id', type: 'hidden' },
+                    { name: 'produit_id', type: 'hidden' },
+                    { name: 'quantite', label: 'Quantité', type: 'number', required: true, attributes: 'step="0.01" min="0"' },
+                    { name: 'unite', label: 'Unité', type: 'select', required: true, options: [
+                        { value: 'kg', text: 'Kilogrammes' },
+                        { value: 'litres', text: 'Litres' },
+                        { value: 'unites', text: 'Unités' }
+                    ]},
+                    { name: 'seuil_alerte', label: 'Seuil d\'alerte', type: 'number', attributes: 'step="0.01" min="0"' }
+                ],
+                onSubmit: async (data, isEdit) => {
+                    const success = await AdminCommon.utils.saveData(entrepotManager.config.endpoints.stockUpdate, data, true);
+                    if (success) {
+                        AdminCommon.utils.closeModal();
+                        await loadAllStockData();  
+                        syncData();                
+                        displayStocks();           
+                    }
+                }
+            });
         }
 
         async function deleteStock(entrepotId, produitId) {
