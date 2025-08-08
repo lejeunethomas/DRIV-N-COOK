@@ -38,7 +38,7 @@ require_admin();
             <div class="quick-nav">
                 <a href="produits.php" class="btn-nav">Produits</a>
                 <a href="#" class="btn-nav current">Entrepôts</a>
-                <button onclick="showGlobalStockMatrix()" class="btn-nav">Vue globale</button>
+                <button onclick="openGlobalMatrix()" class="btn-nav">Vue globale</button>
                 <button onclick="showStockAlerts()" class="btn-nav">Alertes</button>
                 <button onclick="geocodeAllEntrepots()" class="btn-nav">Géolocaliser tous</button>
             </div>
@@ -94,7 +94,6 @@ require_admin();
 
     <script src="../js/admin/common.js"></script>
     <script src="../js/admin/stock-management.js"></script>
-
     <script>
         const entrepotManager = {
             data: { entrepots: [], stocks: [], produits: [] },
@@ -226,13 +225,19 @@ require_admin();
             }
         }
 
-        function showGlobalStockMatrix() {
-            // Utiliser la fonction de stock-management.js mais adapter les données
-            const tempGlobalData = globalStockData;
-            globalStockData.products = entrepotManager.data.produits;
-            globalStockData.entrepots = entrepotManager.data.entrepots;
-            globalStockData.stocks = entrepotManager.data.stocks;
-            
+        function openGlobalMatrix() {
+            const backup = window.globalStockData;
+            window.globalStockData = {
+                products: (entrepotManager?.data?.produits) || [],
+                entrepots: (entrepotManager?.data?.entrepots) || [],
+                stocks:   (entrepotManager?.data?.stocks)   || [],
+                globalStats: backup?.globalStats || {
+                    ruptures: 0,
+                    alertes: 0,
+                    stocksOk: 0
+                }
+            };
+
             // Appeler la fonction de stock-management.js
             if (typeof window.showGlobalStockMatrix === 'function') {
                 window.showGlobalStockMatrix();
@@ -240,7 +245,7 @@ require_admin();
                 alert('Matrice des stocks en développement');
             }
             
-            globalStockData = tempGlobalData;
+            window.globalStockData = backup;
         }
 
         function showStockAlerts() {
