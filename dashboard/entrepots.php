@@ -256,39 +256,40 @@ require_admin();
         }
 
         function showAddEntrepotModal() {
+            console.log('🔄 Ouverture modal ajout entrepôt...');
+            
             AdminCommon.utils.createFormModal({
                 title: 'Ajouter un entrepôt',
                 fields: entrepotManager.config.formFields.entrepot,
                 onSubmit: async (data, isEdit) => {
+                    console.log('📤 Données du formulaire:', data);
+                    
                     try {
-                        const fullAddress = `${data.adresse}, ${data.code_postal} ${data.ville}, France`;
+                        // Test de l'API directement
+                        const response = await fetch(entrepotManager.config.endpoints.add, {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify(data)
+                        });
                         
-                        try {
-                            const geoResult = await geocodeAddress(fullAddress);
-                            
-                            if (geoResult.success) {
-                                data.latitude = geoResult.latitude;
-                                data.longitude = geoResult.longitude;
-                                AdminCommon.utils.showAlert(`✅ Adresse géolocalisée : ${geoResult.display_name}`, 'success');
-                            } else {
-                                AdminCommon.utils.showAlert(`⚠️ Géolocalisation échouée : ${geoResult.message}. L'entrepôt sera créé sans coordonnées.`, 'warning');
-                            }
-                        } catch (geoError) {
-                            console.error('Erreur géolocalisation:', geoError);
-                            AdminCommon.utils.showAlert('⚠️ Géolocalisation non disponible. L\'entrepôt sera créé sans coordonnées.', 'warning');
-                        }
+                        console.log('📡 Réponse API:', response.status);
                         
-                        const success = await AdminCommon.utils.saveData(entrepotManager.config.endpoints.add, data);
-                        if (success) {
+                        const result = await response.json();
+                        console.log('📋 Résultat:', result);
+                        
+                        if (result.success) {
+                            AdminCommon.utils.showAlert('✅ Entrepôt ajouté avec succès !', 'success');
                             AdminCommon.utils.closeModal();
                             await loadAllStockData();
                             syncData();
                             displayEntrepots();
+                        } else {
+                            AdminCommon.utils.showAlert('❌ Erreur: ' + result.message, 'error');
                         }
                         
                     } catch (error) {
-                        console.error('Erreur lors de l\'ajout:', error);
-                        AdminCommon.utils.showAlert('Erreur lors de l\'ajout de l\'entrepôt', 'error');
+                        console.error('❌ Erreur complète:', error);
+                        AdminCommon.utils.showAlert('Erreur réseau: ' + error.message, 'error');
                     }
                 }
             });
