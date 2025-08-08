@@ -96,12 +96,6 @@ require_admin();
     <script src="../js/admin/stock-management.js"></script>
 
     <script>
-let globalStockData = {
-    entrepots: [],
-    stocks: [],
-    products: []
-};
-
 const entrepotManager = {
     data: { entrepots: [], stocks: [], produits: [] },
     
@@ -244,40 +238,6 @@ async function loadAllStockData() {
     }
 }
 
-function showAddEntrepotModal() {
-    console.log('🔄 Tentative d\'ouverture du modal...');
-    
-    // Vérifier que AdminCommon est disponible
-    if (typeof AdminCommon === 'undefined' || !AdminCommon.utils) {
-        console.error('❌ AdminCommon non disponible');
-        alert('Erreur: Système non initialisé. Veuillez recharger la page.');
-        return;
-    }
-    
-    // Vérifier que createFormModal existe
-    if (typeof AdminCommon.utils.createFormModal !== 'function') {
-        console.error('❌ createFormModal non disponible');
-        alert('Erreur: Fonction de modal non disponible.');
-        return;
-    }
-    
-    console.log('✅ AdminCommon disponible, création du modal...');
-    
-    try {
-        AdminCommon.utils.createFormModal({
-            title: 'Ajouter un entrepôt',
-            fields: entrepotManager.config.formFields.entrepot,
-            onSubmit: async (data, isEdit) => {
-                console.log('📤 Soumission du formulaire:', data);
-                await submitEntrepot(data, isEdit);
-            }
-        });
-    } catch (error) {
-        console.error('❌ Erreur lors de la création du modal:', error);
-        alert('Erreur lors de l\'ouverture du formulaire: ' + error.message);
-    }
-}
-
 // ✅ FONCTION SÉPARÉE POUR SOUMETTRE
 async function submitEntrepot(data, isEdit) {
     // Validation des données
@@ -312,11 +272,9 @@ async function submitEntrepot(data, isEdit) {
             AdminCommon.utils.showAlert('✅ Entrepôt ajouté avec succès !', 'success');
             AdminCommon.utils.closeModal();
             
-            // Recharger les données
             await loadAllStockData();
             syncData();
             displayEntrepots();
-            populateEntrepotFilter();
             
         } else {
             AdminCommon.utils.showAlert('❌ Erreur API: ' + (result.message || 'Erreur inconnue'), 'error');
@@ -364,87 +322,16 @@ function displayEntrepots() {
     });
 }
 
-function populateEntrepotFilter() {
-    const select = document.getElementById('filter-entrepot');
-    if (select) {
-        select.innerHTML = '<option value="">Tous les entrepôts</option>';
-        entrepotManager.data.entrepots.forEach(entrepot => {
-            select.innerHTML += `<option value="${entrepot.id}">${entrepot.nom}</option>`;
-        });
-    }
-}
-
-function startGlobalMonitoring() {
-    console.log('🎯 Monitoring global démarré');
-    // Fonction simple pour commencer
-    updateGlobalStats();
-}
-
-function updateGlobalStats() {
-    try {
-        const nbEntrepots = entrepotManager.data.entrepots.length;
-        const nbProduits = entrepotManager.data.produits.length;
-        const stocks = entrepotManager.data.stocks;
-        
-        const ruptures = stocks.filter(s => s.quantite == 0).length;
-        const alertes = stocks.filter(s => s.quantite > 0 && s.alerte == 1).length;
-        const stocksOk = stocks.filter(s => s.quantite > 0 && s.alerte != 1).length;
-        
-        document.getElementById('global-entrepots').textContent = nbEntrepots;
-        document.getElementById('global-produits').textContent = nbProduits;
-        document.getElementById('global-ruptures').textContent = ruptures;
-        document.getElementById('global-alertes').textContent = alertes;
-        document.getElementById('global-stocks-ok').textContent = stocksOk;
-    } catch (error) {
-        console.error('Erreur mise à jour stats:', error);
-    }
-}
-
-function showGlobalStockMatrix() {
-    alert('Fonctionnalité en développement');
-}
-
-function showStockAlerts() {
-    alert('Fonctionnalité en développement');
-}
-
-function geocodeAllEntrepots() {
-    alert('Fonctionnalité en développement');
-}
-
-function loadStocksTab() {
-    alert('Onglet stocks en développement');
-}
-
-function editEntrepot(id) {
-    alert('Modification entrepôt #' + id + ' en développement');
-}
-
-function viewEntrepotStocks(id) {
-    alert('Stocks entrepôt #' + id + ' en développement');
-}
-
-function deleteEntrepot(id) {
-    if (confirm('Supprimer cet entrepôt ?')) {
-        alert('Suppression entrepôt #' + id + ' en développement');
-    }
-}
-
 document.addEventListener('DOMContentLoaded', async function() {
     console.log('🚀 Initialisation de la page entrepôts...');
     
     try {
-        const success = await loadAllStockData();
-        if (success) {
-            syncData();
-            displayEntrepots();
-            populateEntrepotFilter();
-            startGlobalMonitoring();
-            console.log('✅ Initialisation terminée avec succès');
-        } else {
-            console.error('❌ Erreur lors du chargement des données');
-            AdminCommon.utils.showAlert('Erreur lors du chargement des données', 'error');
-        }
+        await loadAllStockData();
+        syncData();
+        displayEntrepots();
+        
+        console.log('✅ Initialisation terminée avec succès');
+        
     } catch (error) {
         console.error('❌ Erreur lors de l\'initialisation:', error);
         AdminCommon.utils.showAlert('Erreur lors de l\'initialisation de la page', 'error');
