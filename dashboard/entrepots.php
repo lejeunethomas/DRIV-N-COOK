@@ -317,41 +317,82 @@ require_admin();
         }
 
         function showAddEntrepotModal() {
-            console.log('🔄 Ouverture modal...');
+            console.log('🔄 Ouverture modal AdminCommon...');
             
-            // Test direct sans AdminCommon
-            const modalHTML = `
-                <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999;">
-                    <div style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 8px;">
-                        <h3>Test Modal</h3>
-                        <input type="text" id="test-nom" placeholder="Nom entrepôt" style="width: 100%; padding: 8px; margin: 8px 0;">
-                        <input type="text" id="test-adresse" placeholder="Adresse" style="width: 100%; padding: 8px; margin: 8px 0;">
-                        <br>
-                        <button onclick="testSubmit()" style="background: #4CAF50; color: white; padding: 8px 16px; border: none; cursor: pointer;">TESTER</button>
-                        <button onclick="closeTestModal()" style="background: #f44336; color: white; padding: 8px 16px; border: none; cursor: pointer; margin-left: 8px;">Fermer</button>
-                    </div>
-                </div>
-            `;
+            // Vérifier que AdminCommon est disponible
+            if (typeof AdminCommon?.utils?.createFormModal !== 'function') {
+                console.error('❌ AdminCommon.utils.createFormModal non disponible');
+                alert('Erreur: Système AdminCommon non disponible');
+                return;
+            }
             
-            document.body.insertAdjacentHTML('beforeend', modalHTML);
-        }
-
-        function testSubmit() {
-            const nom = document.getElementById('test-nom').value;
-            const adresse = document.getElementById('test-adresse').value;
-            
-            console.log('🎯 BOUTON TEST CLIQUÉ !');
-            console.log('Nom:', nom);
-            console.log('Adresse:', adresse);
-            
-            alert('BOUTON FONCTIONNE ! Nom: ' + nom + ', Adresse: ' + adresse);
-            
-            closeTestModal();
-        }
-
-        function closeTestModal() {
-            const modal = document.querySelector('div[style*="position: fixed"][style*="z-index: 9999"]');
-            if (modal) modal.remove();
+            try {
+                AdminCommon.utils.createFormModal({
+                    title: 'Ajouter un entrepôt',
+                    fields: entrepotManager.config.formFields.entrepot,
+                    onSubmit: async (data, isEdit) => {
+                        console.log('🎯 BUTTON SUBMIT CLIQUÉ !');
+                        console.log('📤 Données reçues:', data);
+                        
+                        try {
+                            // Validation simple
+                            if (!data.nom || !data.adresse || !data.ville || !data.code_postal) {
+                                console.log('❌ Validation échouée');
+                                AdminCommon.utils.showAlert('❌ Veuillez remplir tous les champs obligatoires', 'error');
+                                return;
+                            }
+                            
+                            console.log('✅ Validation OK, envoi vers API...');
+                            console.log('📡 URL API:', entrepotManager.config.endpoints.add);
+                            
+                            // Appel API
+                            const response = await fetch(entrepotManager.config.endpoints.add, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Accept': 'application/json'
+                                },
+                                body: JSON.stringify(data)
+                            });
+                            
+                            console.log('📊 Status HTTP:', response.status);
+                            
+                            if (!response.ok) {
+                                throw new Error(`Erreur HTTP ${response.status}: ${response.statusText}`);
+                            }
+                            
+                            const result = await response.json();
+                            console.log('📋 Résultat API:', result);
+                            
+                            if (result.success) {
+                                AdminCommon.utils.showAlert('✅ Entrepôt ajouté avec succès !', 'success');
+                                AdminCommon.utils.closeModal();
+                                
+                                console.log('🔄 Rechargement des données...');
+                                await loadAllStockData();
+                                syncData();
+                                displayEntrepots();
+                                populateEntrepotFilter();
+                                updateGlobalStats();
+                                console.log('✅ Données rechargées');
+                                
+                            } else {
+                                AdminCommon.utils.showAlert('❌ Erreur API: ' + (result.message || 'Erreur inconnue'), 'error');
+                            }
+                            
+                        } catch (error) {
+                            console.error('❌ Erreur dans onSubmit:', error);
+                            AdminCommon.utils.showAlert('❌ Erreur: ' + error.message, 'error');
+                        }
+                    }
+                });
+                
+                console.log('✅ Modal AdminCommon créé avec succès');
+                
+            } catch (error) {
+                console.error('❌ Erreur lors de la création du modal AdminCommon:', error);
+                alert('Erreur lors de l\'ouverture du formulaire: ' + error.message);
+            }
         }
 
         async function deleteEntrepot(id) {
