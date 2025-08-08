@@ -1,7 +1,7 @@
 <?php
 require_once '../../includes/db.php';
 require_once '../../includes/auth.php';
-require_role('admin');
+require_admin();
 
 header('Content-Type: application/json');
 
@@ -16,7 +16,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         $conn = Database::getInstance()->getConnection();
         
-        // Géocodage automatique de l'adresse
         $latitude = null;
         $longitude = null;
         
@@ -25,10 +24,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $longitude = floatval($data['longitude']);
         }
         
-        $stmt = $conn->prepare("INSERT INTO entrepots (nom, adresse, ville, code_postal, latitude, longitude) VALUES (?, ?, ?, ?, ?, ?)");
-        $stmt->execute([$data['nom'], $data['adresse'], $data['ville'], $data['code_postal'], $latitude, $longitude]);
+        $stmt = $conn->prepare("
+            INSERT INTO entrepots (nom, adresse, ville, code_postal, telephone, email, responsable, latitude, longitude, actif) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
+        ");
         
-        echo json_encode(['success' => true, 'message' => 'Entrepôt créé avec succès']);
+        $stmt->execute([
+            $data['nom'],
+            $data['adresse'],
+            $data['ville'],
+            $data['code_postal'],
+            $data['telephone'] ?? null,
+            $data['email'] ?? null,
+            $data['responsable'] ?? null,
+            $latitude,
+            $longitude
+        ]);
+        
+        echo json_encode([
+            'success' => true, 
+            'message' => 'Entrepôt créé avec succès',
+            'id' => $conn->lastInsertId()
+        ]);
+        
     } catch (Exception $e) {
         echo json_encode(['success' => false, 'message' => 'Erreur serveur : ' . $e->getMessage()]);
     }
