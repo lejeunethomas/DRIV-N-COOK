@@ -256,26 +256,27 @@ require_admin();
         }
 
         function showAddEntrepotModal() {
+            console.log('🔄 Ouverture modal ajout entrepôt...');
+            
             AdminCommon.utils.createFormModal({
                 title: 'Ajouter un entrepôt',
                 fields: entrepotManager.config.formFields.entrepot,
                 onSubmit: async (data, isEdit) => {
-                    const fullAddress = `${data.adresse}, ${data.code_postal} ${data.ville}, France`;
-                    const geoResult = await geocodeAddress(fullAddress);
+                    console.log('🎯 BOUTON AJOUTER CLIQUÉ !'); // ✅ Ajouter ce log
+                    console.log('📤 Données reçues:', data);
                     
-                    if (geoResult.success) {
-                        data.latitude = geoResult.latitude;
-                        data.longitude = geoResult.longitude;
-                        AdminCommon.utils.showAlert(`Adresse géolocalisée avec succès`, 'info');
+                    // Test simple sans validation
+                    alert('Le bouton fonctionne ! Données: ' + JSON.stringify(data));
+                    
+                    // Validation simple
+                    if (!data.nom || !data.adresse || !data.ville || !data.code_postal) {
+                        AdminCommon.utils.showAlert('❌ Veuillez remplir tous les champs obligatoires', 'error');
+                        return;
                     }
                     
-                    const success = await AdminCommon.utils.saveData(entrepotManager.config.endpoints.add, data);
-                    if (success) {
-                        AdminCommon.utils.closeModal();
-                        await loadAllStockData();
-                        syncData();
-                        displayEntrepots();
-                    }
+                    // Test sans appel API
+                    AdminCommon.utils.showAlert('✅ Test réussi !', 'success');
+                    AdminCommon.utils.closeModal();
                 }
             });
         }
