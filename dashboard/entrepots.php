@@ -489,6 +489,21 @@ require_admin();
             ];
         }
 
+        function getEntrepotName(entrepotId) {
+            const entrepot = entrepotManager.data.entrepots.find(e => e.id == entrepotId);
+            return entrepot ? entrepot.nom : 'Entrepôt inconnu';
+        }
+
+        function getProduitName(produitId) {
+            const produit = entrepotManager.data.produits.find(p => p.id == produitId);
+            return produit ? produit.nom : 'Produit inconnu';
+        }
+
+        function getProduitType(produitId) {
+            const produit = entrepotManager.data.produits.find(p => p.id == produitId);
+            return produit ? produit.type : 'unknown';
+        }
+
     </script>
 </body>
 </html>
