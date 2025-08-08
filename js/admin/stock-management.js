@@ -34,53 +34,21 @@ async function loadProducts() {
  */
 async function loadEntrepots() {
     try {
-        let userPosition = null;
-        try {
-            userPosition = await getCurrentPosition();
-            showAlert('Position détectée, tri par proximité activé', 'success');
-        } catch (error) {
-            console.log('Géolocalisation non disponible:', error.message);
-            showAlert('Géolocalisation non disponible, affichage par ordre alphabétique', 'info');
-        }
-        
-        const url = userPosition ? 
-            `../api/entrepots/plus_proches.php?lat=${userPosition.latitude}&lng=${userPosition.longitude}` :
-            '../api/entrepots/list.php';
-            
-        console.log('URL appelée:', url);
-        const response = await fetch(url);
+        const response = await fetch('../api/entrepots/list.php');
         
         if (!response.ok) {
             throw new Error(`Erreur HTTP: ${response.status}`);
         }
         
-        entrepots = await response.json();
-        console.log('Entrepôts chargés:', entrepots);
-
-        displayEntrepots(userPosition !== null);
+        globalStockData.entrepots = await response.json();
         
-        const select = document.getElementById('entrepot-select');
-        select.innerHTML = '<option value="">Sélectionner un entrepôt</option>';
-        
-        if (Array.isArray(entrepots) && entrepots.length > 0) {
-            entrepots.forEach((entrepot, index) => {
-                const distanceText = entrepot.distance_km ? 
-                    ` (${formatDistance(entrepot.distance_km)})` : '';
-                const recommendationBadge = index === 0 && entrepot.distance_km ? ' 🌟' : '';
-                
-                select.innerHTML += `
-                    <option value="${entrepot.id}">
-                        ${entrepot.nom} - ${entrepot.ville}${distanceText}${recommendationBadge}
-                    </option>
-                `;
-            });
-        } else {
-            showAlert('Aucun entrepôt disponible', 'warning');
-        }
+        console.log('Entrepôts chargés:', globalStockData.entrepots);
+        return globalStockData.entrepots;
         
     } catch (error) {
-        console.error('Erreur complète:', error);
-        showAlert('Erreur lors du chargement des entrepôts: ' + error.message, 'error');
+        console.error('Erreur lors du chargement des entrepôts:', error);
+        globalStockData.entrepots = []; 
+        return [];
     }
 }
 

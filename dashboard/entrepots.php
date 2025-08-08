@@ -201,9 +201,16 @@ require_admin();
         });
 
         function syncData() {
-            entrepotManager.data.entrepots = globalStockData.entrepots;
-            entrepotManager.data.stocks = globalStockData.stocks;
-            entrepotManager.data.produits = globalStockData.products;
+            console.log('🔄 Synchronisation des données...');
+            console.log('Entrepôts globaux:', globalStockData.entrepots);
+            console.log('Stocks globaux:', globalStockData.stocks);
+            console.log('Produits globaux:', globalStockData.products);
+            
+            entrepotManager.data.entrepots = Array.isArray(globalStockData.entrepots) ? globalStockData.entrepots : [];
+            entrepotManager.data.stocks = Array.isArray(globalStockData.stocks) ? globalStockData.stocks : [];
+            entrepotManager.data.produits = Array.isArray(globalStockData.products) ? globalStockData.products : [];
+            
+            console.log('✅ Données synchronisées:', entrepotManager.data);
         }
 
         function populateEntrepotFilter() {
