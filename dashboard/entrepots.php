@@ -38,9 +38,9 @@ require_admin();
             <div class="quick-nav">
                 <a href="produits.php" class="btn-nav">Produits</a>
                 <a href="#" class="btn-nav current">Entrepôts</a>
-                <button onclick="openGlobalMatrix()" class="btn-nav">Vue globale</button>
-                <button onclick="showStockAlerts()" class="btn-nav">Alertes</button>
-                <button onclick="geocodeAllEntrepots()" class="btn-nav">Géolocaliser tous</button>
+                <button onclick="openGlobalMatrixView()" class="btn-nav">Vue globale</button>
+                <button onclick="showStockAlertsView()" class="btn-nav">Alertes</button>
+                <button onclick="geocodeAllEntrepotsView()" class="btn-nav">Géolocaliser tous</button>
             </div>
             
             <div class="global-overview">
@@ -94,7 +94,37 @@ require_admin();
 
     <script src="../js/admin/common.js"></script>
     <script src="../js/admin/stock-management.js"></script>
+    <script src="../js/admin/geolocation.js"></script>
     <script>
+        function runStockModule(methodName) {
+            const backup = window.globalStockData;
+            window.globalStockData = {
+                products: (entrepotManager?.data?.produits) || [],
+                entrepots: (entrepotManager?.data?.entrepots) || [],
+                stocks:   (entrepotManager?.data?.stocks)   || [],
+                globalStats: backup?.globalStats || { ruptures: 0, alertes: 0, stocksOk: 0, totalEntrepots: 0, totalProduits: 0 }
+            };
+            try {
+                const fn = window[methodName];
+                if (typeof fn === 'function') fn();
+                else alert(`Fonction indisponible: ${methodName}`);
+            } finally {
+                window.globalStockData = backup;
+            }
+        }
+
+        function openGlobalMatrixView() {
+            runStockModule('showGlobalStockMatrix');
+        }
+
+        function showStockAlertsView() {
+            runStockModule('showStockAlerts');
+        }
+
+        function geocodeAllEntrepotsView() {
+            runStockModule('geocodeAllEntrepots');
+        }
+        //
         const entrepotManager = {
             data: { entrepots: [], stocks: [], produits: [] },
             
@@ -225,32 +255,6 @@ require_admin();
             }
         }
 
-        function openGlobalMatrix() {
-            const backup = window.globalStockData;
-            window.globalStockData = {
-                products: (entrepotManager?.data?.produits) || [],
-                entrepots: (entrepotManager?.data?.entrepots) || [],
-                stocks:   (entrepotManager?.data?.stocks)   || [],
-                globalStats: backup?.globalStats || {
-                    ruptures: 0,
-                    alertes: 0,
-                    stocksOk: 0
-                }
-            };
-
-            // Appeler la fonction de stock-management.js
-            if (typeof window.showGlobalStockMatrix === 'function') {
-                window.showGlobalStockMatrix();
-            } else {
-                alert('Matrice des stocks en développement');
-            }
-            
-            window.globalStockData = backup;
-        }
-
-        function showStockAlerts() {
-            alert('Alertes de stock en développement');
-        }
 
         function geocodeAllEntrepots() {
             alert('Géolocalisation automatique en développement');
@@ -411,7 +415,7 @@ require_admin();
             }
         }
 
-        // ✅ Fonction pour fermer le modal manuel
+        // Fonction pour fermer le modal manuel
         function closeEntrepotModal() {
             const modals = document.querySelectorAll('.modal');
             modals.forEach(modal => modal.remove());

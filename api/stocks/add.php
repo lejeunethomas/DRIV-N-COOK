@@ -32,9 +32,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->execute([
             $data['entrepot_id'],
             $data['produit_id'],
-            $data['quantite'] ?? 0,
-            $data['unite'] ?? 'unité',
-            $data['seuil_alerte'] ?? 10
+            isset($data['quantite']) ? $data['quantite'] : 0,
+            isset($data['unite']) ? $data['unite'] : 'unité',
+            isset($data['seuil_alerte']) ? $data['seuil_alerte'] : 10
         ]);
         
         echo json_encode(['success' => true, 'message' => 'Stock créé avec succès']);
