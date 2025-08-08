@@ -96,414 +96,268 @@ require_admin();
     <script src="../js/admin/stock-management.js"></script>
 
     <script>
-        const entrepotManager = {
-            data: { entrepots: [], stocks: [], produits: [] },
+
+// Variables globales
+const entrepotManager = {
+    data: { entrepots: [], stocks: [], produits: [] },
+    
+    config: {
+        endpoints: {
+            entrepots: '../api/entrepots/list.php',
+            add: '../api/entrepots/add.php',
+            update: '../api/entrepots/update.php',
+            delete: '../api/entrepots/delete.php',
+            stockAdd: '../api/stocks/add.php',
+            stockUpdate: '../api/stocks/update.php',
+            stockDelete: '../api/stocks/delete.php'
+        },
+        
+        tables: {
+            entrepots: {
+                headers: ['ID', 'Nom', 'Adresse', 'Ville', 'Responsable', 'Nb produits', 'Alertes stock', 'Géolocalisation', 'Actions'],
+                rowBuilder: (entrepot) => {
+                    const entrepotStocks = entrepotManager.data.stocks.filter(s => s.entrepot_id == entrepot.id);
+                    const nbProduits = entrepotStocks.length;
+                    const alertes = entrepotStocks.filter(s => s.quantite == 0 || s.alerte == 1).length;
+                    
+                    const coordonnees = entrepot.latitude && entrepot.longitude ? 
+                        `<span style="color: #4caf50;">📍 Géolocalisé</span>` : 
+                        `<span style="color: #f44336;">❌ Non géolocalisé</span>`;
+                    
+                    const alertesBadge = alertes > 0 ? 
+                        `<span class="badge-danger">${alertes} alerte(s)</span>` :
+                        `<span class="badge-success">Aucune alerte</span>`;
+                    
+                    return [
+                        entrepot.id,
+                        `<strong>${entrepot.nom}</strong><br><small style="color: #666;">${entrepot.responsable || 'Aucun responsable'}</small>`,
+                        entrepot.adresse,
+                        `${entrepot.ville}<br><small style="color: #666;">${entrepot.code_postal}</small>`,
+                        entrepot.responsable || '-',
+                        `${nbProduits} produit(s)`,
+                        alertesBadge,
+                        coordonnees,
+                        `<button class="btn-action" onclick="editEntrepot(${entrepot.id})">Modifier</button>
+                         <button class="btn-action" onclick="viewEntrepotStocks(${entrepot.id})">Stocks</button>
+                         <button class="btn-action danger" onclick="deleteEntrepot(${entrepot.id})">Supprimer</button>`
+                    ];
+                }
+            },
             
-            config: {
-                endpoints: {
-                    entrepots: '../api/entrepots/list.php',
-                    add: '../api/entrepots/add.php',
-                    update: '../api/entrepots/update.php',
-                    delete: '../api/entrepots/delete.php',
-                    stockAdd: '../api/stocks/add.php',
-                    stockUpdate: '../api/stocks/update.php',
-                    stockDelete: '../api/stocks/delete.php'
-                },
-                
-                tables: {
-                    entrepots: {
-                        headers: ['ID', 'Nom', 'Adresse', 'Ville', 'Responsable', 'Nb produits', 'Alertes stock', 'Géolocalisation', 'Actions'],
-                        rowBuilder: (entrepot) => {
-                            const entrepotStocks = entrepotManager.data.stocks.filter(s => s.entrepot_id == entrepot.id);
-                            const nbProduits = entrepotStocks.length;
-                            const alertes = entrepotStocks.filter(s => s.quantite == 0 || s.alerte == 1).length;
-                            
-                            const coordonnees = entrepot.latitude && entrepot.longitude ? 
-                                `<span style="color: #4caf50;">📍 Géolocalisé</span>` : 
-                                `<span style="color: #f44336;">❌ Non géolocalisé</span>`;
-                            
-                            const alertesBadge = alertes > 0 ? 
-                                `<span class="badge-danger">${alertes} alerte(s)</span>` :
-                                `<span class="badge-success">Aucune alerte</span>`;
-                            
-                            return [
-                                entrepot.id,
-                                `<strong>${entrepot.nom}</strong><br><small style="color: #666;">${entrepot.responsable || 'Aucun responsable'}</small>`,
-                                entrepot.adresse,
-                                `${entrepot.ville}<br><small style="color: #666;">${entrepot.code_postal}</small>`,
-                                entrepot.responsable || '-',
-                                `${nbProduits} produit(s)`,
-                                alertesBadge,
-                                coordonnees,
-                                `<button class="btn-action" onclick="editEntrepot(${entrepot.id})">Modifier</button>
-                                 <button class="btn-action" onclick="viewEntrepotStocks(${entrepot.id})">Stocks</button>
-                                 <button class="btn-action danger" onclick="deleteEntrepot(${entrepot.id})">Supprimer</button>`
-                            ];
-                        }
-                    },
+            stocks: {
+                headers: ['Entrepôt', 'Produit', 'Type', 'Quantité', 'Unité', 'Seuil d\'alerte', 'État', 'Dernière MAJ', 'Actions'],
+                rowBuilder: (stock) => {
+                    const etat = stock.quantite == 0 ? 'Rupture' :
+                               stock.alerte == 1 ? 'Alerte' : 'OK';
+                    const classeEtat = stock.quantite == 0 ? 'badge-danger' :
+                                     stock.alerte == 1 ? 'badge-warning' : 'badge-success';
                     
-                    stocks: {
-                        headers: ['Entrepôt', 'Produit', 'Type', 'Quantité', 'Unité', 'Seuil d\'alerte', 'État', 'Dernière MAJ', 'Actions'],
-                        rowBuilder: (stock) => {
-                            const etat = stock.quantite == 0 ? 'Rupture' :
-                                       stock.alerte == 1 ? 'Alerte' : 'OK';
-                            const classeEtat = stock.quantite == 0 ? 'badge-danger' :
-                                             stock.alerte == 1 ? 'badge-warning' : 'badge-success';
-                            
-                            return [
-                                `<strong>${getEntrepotName(stock.entrepot_id)}</strong>`,
-                                getProduitName(stock.produit_id),
-                                `<span class="type-badge type-${stock.produit_type}">${stock.produit_type}</span>`,
-                                `<strong>${parseFloat(stock.quantite).toFixed(2)}</strong>`,
-                                stock.unite,
-                                parseFloat(stock.seuil_alerte).toFixed(2),
-                                `<span class="${classeEtat}" style="padding: 0.3rem 0.6rem; border-radius: 12px; font-size: 0.8rem; font-weight: bold;">${etat}</span>`,
-                                `${AdminCommon.utils.formatDate(stock.derniere_maj)} ${new Date(stock.derniere_maj).toLocaleTimeString('fr-FR')}`,
-                                `<button class="btn-action" onclick="editStock(${stock.entrepot_id}, ${stock.produit_id})">Modifier</button>
-                                 <button class="btn-action danger" onclick="deleteStock(${stock.entrepot_id}, ${stock.produit_id})">Supprimer</button>`
-                            ];
-                        }
-                    }
-                },
-                
-                formFields: {
-                    entrepot: [
-                        { name: 'nom', label: 'Nom de l\'entrepôt', type: 'text', required: true },
-                        { name: 'adresse', label: 'Adresse complète', type: 'text', required: true, attributes: 'placeholder="123 Rue de la Logistique"' },
-                        { name: 'ville', label: 'Ville', type: 'text', required: true },
-                        { name: 'code_postal', label: 'Code postal', type: 'text', required: true, attributes: 'pattern="[0-9]{5}" title="Code postal français (5 chiffres)"' },
-                        { name: 'telephone', label: 'Téléphone', type: 'tel', attributes: 'placeholder="01 23 45 67 89"' },
-                        { name: 'email', label: 'Email', type: 'email', attributes: 'placeholder="contact@entrepot.com"' },
-                        { name: 'responsable', label: 'Responsable', type: 'text', attributes: 'placeholder="Nom du responsable"' }
-                    ],
-                    
-                    stock: [
-                        { name: 'entrepot_id', label: 'Entrepôt', type: 'select', required: true, options: 'getEntrepotOptions' },
-                        { name: 'produit_id', label: 'Produit', type: 'select', required: true, options: 'getProduitOptions' },
-                        { name: 'quantite', label: 'Quantité', type: 'number', required: true, attributes: 'step="0.01" min="0" placeholder="0.00"' },
-                        { name: 'unite', label: 'Unité', type: 'select', required: true, options: [
-                            { value: 'kg', text: 'Kilogrammes' },
-                            { value: 'litres', text: 'Litres' },
-                            { value: 'unites', text: 'Unités' }
-                        ]},
-                        { name: 'seuil_alerte', label: 'Seuil d\'alerte', type: 'number', attributes: 'step="0.01" min="0" placeholder="5.00"' }
-                    ]
+                    return [
+                        `<strong>${getEntrepotName(stock.entrepot_id)}</strong>`,
+                        getProduitName(stock.produit_id),
+                        `<span class="type-badge type-${stock.produit_type}">${stock.produit_type}</span>`,
+                        `<strong>${parseFloat(stock.quantite).toFixed(2)}</strong>`,
+                        stock.unite,
+                        parseFloat(stock.seuil_alerte).toFixed(2),
+                        `<span class="${classeEtat}" style="padding: 0.3rem 0.6rem; border-radius: 12px; font-size: 0.8rem; font-weight: bold;">${etat}</span>`,
+                        `${AdminCommon.utils.formatDate(stock.derniere_maj)} ${new Date(stock.derniere_maj).toLocaleTimeString('fr-FR')}`,
+                        `<button class="btn-action" onclick="editStock(${stock.entrepot_id}, ${stock.produit_id})">Modifier</button>
+                         <button class="btn-action danger" onclick="deleteStock(${stock.entrepot_id}, ${stock.produit_id})">Supprimer</button>`
+                    ];
                 }
             }
-        };
+        },
+        
+        formFields: {
+            entrepot: [
+                { name: 'nom', label: 'Nom de l\'entrepôt', type: 'text', required: true },
+                { name: 'adresse', label: 'Adresse complète', type: 'text', required: true, attributes: 'placeholder="123 Rue de la Logistique"' },
+                { name: 'ville', label: 'Ville', type: 'text', required: true },
+                { name: 'code_postal', label: 'Code postal', type: 'text', required: true, attributes: 'pattern="[0-9]{5}" title="Code postal français (5 chiffres)"' },
+                { name: 'telephone', label: 'Téléphone', type: 'tel', attributes: 'placeholder="01 23 45 67 89"' },
+                { name: 'email', label: 'Email', type: 'email', attributes: 'placeholder="contact@entrepot.com"' },
+                { name: 'responsable', label: 'Responsable', type: 'text', attributes: 'placeholder="Nom du responsable"' }
+            ],
+            
+            stock: [
+                { name: 'entrepot_id', label: 'Entrepôt', type: 'select', required: true, options: 'getEntrepotOptions' },
+                { name: 'produit_id', label: 'Produit', type: 'select', required: true, options: 'getProduitOptions' },
+                { name: 'quantite', label: 'Quantité', type: 'number', required: true, attributes: 'step="0.01" min="0" placeholder="0.00"' },
+                { name: 'unite', label: 'Unité', type: 'select', required: true, options: [
+                    { value: 'kg', text: 'Kilogrammes' },
+                    { value: 'litres', text: 'Litres' },
+                    { value: 'unites', text: 'Unités' }
+                ]},
+                { name: 'seuil_alerte', label: 'Seuil d\'alerte', type: 'number', attributes: 'step="0.01" min="0" placeholder="5.00"' }
+            ]
+        }
+    }
+};
 
-        document.addEventListener('DOMContentLoaded', async function() {
+function getEntrepotName(entrepotId) {
+    const entrepot = entrepotManager.data.entrepots.find(e => e.id == entrepotId);
+    return entrepot ? entrepot.nom : 'Entrepôt inconnu';
+}
+
+function getProduitName(produitId) {
+    const produit = entrepotManager.data.produits.find(p => p.id == produitId);
+    return produit ? produit.nom : 'Produit inconnu';
+}
+
+function getProduitType(produitId) {
+    const produit = entrepotManager.data.produits.find(p => p.id == produitId);
+    return produit ? produit.type : 'unknown';
+}
+
+function getEntrepotOptions() {
+    return [
+        { value: '', text: 'Sélectionner un entrepôt' },
+        ...entrepotManager.data.entrepots.map(e => ({ value: e.id, text: e.nom }))
+    ];
+}
+
+function getProduitOptions() {
+    return [
+        { value: '', text: 'Sélectionner un produit' },
+        ...entrepotManager.data.produits.map(p => ({ value: p.id, text: `${p.nom} (${p.type})` }))
+    ];
+}
+
+function showAddEntrepotModal() {
+    console.log('🔄 Tentative d\'ouverture du modal...');
+    
+    // Vérifier que AdminCommon est disponible
+    if (typeof AdminCommon === 'undefined' || !AdminCommon.utils) {
+        console.error('❌ AdminCommon non disponible');
+        alert('Erreur: Système non initialisé. Veuillez recharger la page.');
+        return;
+    }
+    
+    // Vérifier que createFormModal existe
+    if (typeof AdminCommon.utils.createFormModal !== 'function') {
+        console.error('❌ createFormModal non disponible');
+        alert('Erreur: Fonction de modal non disponible.');
+        return;
+    }
+    
+    console.log('✅ AdminCommon disponible, création du modal...');
+    
+    try {
+        AdminCommon.utils.createFormModal({
+            title: 'Ajouter un entrepôt',
+            fields: entrepotManager.config.formFields.entrepot,
+            onSubmit: async (data, isEdit) => {
+                console.log('📤 Soumission du formulaire:', data);
+                await submitEntrepot(data, isEdit);
+            }
+        });
+    } catch (error) {
+        console.error('❌ Erreur lors de la création du modal:', error);
+        alert('Erreur lors de l\'ouverture du formulaire: ' + error.message);
+    }
+}
+
+async function submitEntrepot(data, isEdit) {
+    // Validation des données
+    if (!data.nom || !data.adresse || !data.ville || !data.code_postal) {
+        AdminCommon.utils.showAlert('❌ Veuillez remplir tous les champs obligatoires', 'error');
+        return;
+    }
+    
+    try {
+        console.log('📡 Envoi vers API:', entrepotManager.config.endpoints.add);
+        console.log('📋 Données envoyées:', data);
+        
+        const response = await fetch(entrepotManager.config.endpoints.add, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+        
+        console.log('📊 Status HTTP:', response.status);
+        console.log('📊 Headers:', Object.fromEntries(response.headers.entries()));
+        
+        if (!response.ok) {
+            throw new Error(`Erreur HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const result = await response.json();
+        console.log('📋 Résultat API:', result);
+        
+        if (result.success) {
+            AdminCommon.utils.showAlert('✅ Entrepôt ajouté avec succès !', 'success');
+            AdminCommon.utils.closeModal();
+            
+            // Recharger les données
             await loadAllStockData();
             syncData();
             displayEntrepots();
             populateEntrepotFilter();
-            startGlobalMonitoring();
-        });
-
-        function syncData() {
-            console.log('🔄 Synchronisation des données...');
-            console.log('Entrepôts globaux:', globalStockData.entrepots);
-            console.log('Stocks globaux:', globalStockData.stocks);
-            console.log('Produits globaux:', globalStockData.products);
             
-            entrepotManager.data.entrepots = Array.isArray(globalStockData.entrepots) ? globalStockData.entrepots : [];
-            entrepotManager.data.stocks = Array.isArray(globalStockData.stocks) ? globalStockData.stocks : [];
-            entrepotManager.data.produits = Array.isArray(globalStockData.products) ? globalStockData.products : [];
-            
-            console.log('✅ Données synchronisées:', entrepotManager.data);
+        } else {
+            AdminCommon.utils.showAlert('❌ Erreur API: ' + (result.message || 'Erreur inconnue'), 'error');
         }
+        
+    } catch (error) {
+        console.error('❌ Erreur complète:', error);
+        AdminCommon.utils.showAlert('❌ Erreur réseau: ' + error.message, 'error');
+    }
+}
 
-        function populateEntrepotFilter() {
-            const filterSelect = document.getElementById('filter-entrepot');
-            filterSelect.innerHTML = `<option value="">Tous les entrepôts</option>`;
-            entrepotManager.data.entrepots.forEach(e => {
-                filterSelect.innerHTML += `<option value="${e.id}">${e.nom}</option>`;
-            });
-        }
+function syncData() {
+    console.log('🔄 Synchronisation des données...');
+    entrepotManager.data.entrepots = Array.isArray(globalStockData.entrepots) ? globalStockData.entrepots : [];
+    entrepotManager.data.stocks = Array.isArray(globalStockData.stocks) ? globalStockData.stocks : [];
+    entrepotManager.data.produits = Array.isArray(globalStockData.products) ? globalStockData.products : [];
+    console.log('✅ Données synchronisées:', entrepotManager.data);
+}
 
-        function displayEntrepots() {
-            AdminCommon.utils.createTable({
-                containerId: 'entrepots-table-container',
-                headers: entrepotManager.config.tables.entrepots.headers,
-                data: entrepotManager.data.entrepots,
-                rowBuilder: (entrepot) => {
-                    const row = document.createElement('tr');
-                    const cells = entrepotManager.config.tables.entrepots.rowBuilder(entrepot);
-                    row.innerHTML = cells.map(cell => `<td>${cell}</td>`).join('');
-                    return row;
-                },
-                emptyMessage: 'Aucun entrepôt trouvé'
-            });
-        }
+function displayEntrepots() {
+    console.log('🖼️ Affichage des entrepôts:', entrepotManager.data.entrepots);
+    
+    if (!Array.isArray(entrepotManager.data.entrepots) || entrepotManager.data.entrepots.length === 0) {
+        document.getElementById('entrepots-table-container').innerHTML = `
+            <div style="text-align: center; padding: 2rem; background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 6px;">
+                <h3>🚨 Aucun entrepôt trouvé</h3>
+                <p>Nombre d'entrepôts: ${entrepotManager.data.entrepots ? entrepotManager.data.entrepots.length : 'undefined'}</p>
+                <button onclick="location.reload()" class="btn-primary">Recharger la page</button>
+            </div>
+        `;
+        return;
+    }
+    
+    AdminCommon.utils.createTable({
+        containerId: 'entrepots-table-container',
+        headers: entrepotManager.config.tables.entrepots.headers,
+        data: entrepotManager.data.entrepots,
+        rowBuilder: (entrepot) => {
+            const row = document.createElement('tr');
+            const cells = entrepotManager.config.tables.entrepots.rowBuilder(entrepot);
+            row.innerHTML = cells.map(cell => `<td>${cell}</td>`).join('');
+            return row;
+        },
+        emptyMessage: 'Aucun entrepôt trouvé'
+    });
+}
 
-        function loadStocksTab() {
-            displayStocks();
-        }
-
-        function displayStocks() {
-            AdminCommon.utils.createTable({
-                containerId: 'stocks-table-container',
-                headers: entrepotManager.config.tables.stocks.headers,
-                data: entrepotManager.data.stocks,
-                rowBuilder: (stock) => {
-                    const row = document.createElement('tr');
-                    const cells = entrepotManager.config.tables.stocks.rowBuilder(stock);
-                    row.innerHTML = cells.map(cell => `<td>${cell}</td>`).join('');
-                    return row;
-                },
-                emptyMessage: 'Aucun stock trouvé'
-            });
-        }
-
-        function showAddEntrepotModal() {
-            console.log('🔄 Ouverture modal ajout entrepôt...');
-            
-            AdminCommon.utils.createFormModal({
-                title: 'Ajouter un entrepôt',
-                fields: entrepotManager.config.formFields.entrepot,
-                onSubmit: async (data, isEdit) => {
-                    console.log('📤 Données du formulaire:', data);
-                    
-                    try {
-                        // Test de l'API directement
-                        const response = await fetch(entrepotManager.config.endpoints.add, {
-                            method: 'POST',
-                            headers: {'Content-Type': 'application/json'},
-                            body: JSON.stringify(data)
-                        });
-                        
-                        console.log('📡 Réponse API:', response.status);
-                        
-                        const result = await response.json();
-                        console.log('📋 Résultat:', result);
-                        
-                        if (result.success) {
-                            AdminCommon.utils.showAlert('✅ Entrepôt ajouté avec succès !', 'success');
-                            AdminCommon.utils.closeModal();
-                            await loadAllStockData();
-                            syncData();
-                            displayEntrepots();
-                        } else {
-                            AdminCommon.utils.showAlert('❌ Erreur: ' + result.message, 'error');
-                        }
-                        
-                    } catch (error) {
-                        console.error('❌ Erreur complète:', error);
-                        AdminCommon.utils.showAlert('Erreur réseau: ' + error.message, 'error');
-                    }
-                }
-            });
-        }
-
-        function editEntrepot(id) {
-            const entrepot = entrepotManager.data.entrepots.find(e => e.id == id);
-            if (!entrepot) {
-                AdminCommon.utils.showAlert('Entrepôt non trouvé', 'error');
-                return;
-            }
-
-            AdminCommon.utils.createFormModal({
-                title: `Modifier l'entrepôt #${id}`,
-                data: entrepot,
-                fields: entrepotManager.config.formFields.entrepot,
-                onSubmit: async (data, isEdit) => {
-                    const success = await AdminCommon.utils.saveData(entrepotManager.config.endpoints.update, data, true);
-                    if (success) {
-                        AdminCommon.utils.closeModal();
-                        await loadAllStockData();
-                        syncData();
-                        displayEntrepots();
-                    }
-                }
-            });
-        }
-
-        async function deleteEntrepot(id) {
-            const success = await AdminCommon.utils.deleteData(
-                entrepotManager.config.endpoints.delete,
-                { id: id },
-                'Êtes-vous sûr de vouloir supprimer cet entrepôt ?\nTous les stocks associés seront également supprimés.'
-            );
-            
-            if (success) {
-                await loadAllStockData();
-                syncData();
-                displayEntrepots();
-            }
-        }
-
-        function showAddStockModal() {
-            AdminCommon.utils.createFormModal({
-                title: 'Ajouter/Modifier un stock',
-                fields: entrepotManager.config.formFields.stock.map(field => {
-                    if (field.options === 'getEntrepotOptions') {
-                        field.options = getEntrepotOptions();
-                    } else if (field.options === 'getProduitOptions') {
-                        field.options = getProduitOptions();
-                    }
-                    return field;
-                }),
-                onSubmit: async (data, isEdit) => {
-                    const success = await AdminCommon.utils.saveData(entrepotManager.config.endpoints.stockAdd, data);
-                    if (success) {
-                        AdminCommon.utils.closeModal();
-                        await loadAllStockData();
-                        syncData();
-                        displayStocks();
-                    }
-                }
-            });
-        }
-
-        async function editStock(entrepotId, produitId) {
-            // Chercher le stock dans les données déjà chargées
-            const stock = entrepotManager.data.stocks.find(s => 
-                s.entrepot_id == entrepotId && s.produit_id == produitId
-            );
-            
-            if (!stock) {
-                AdminCommon.utils.showAlert('Stock non trouvé', 'error');
-                return;
-            }
-
-            AdminCommon.utils.createFormModal({
-                title: 'Modifier le stock',
-                data: {
-                    entrepot_id: entrepotId,
-                    produit_id: produitId,
-                    quantite: stock.quantite,
-                    unite: stock.unite,
-                    seuil_alerte: stock.seuil_alerte
-                },
-                fields: [
-                    { name: 'entrepot_id', type: 'hidden' },
-                    { name: 'produit_id', type: 'hidden' },
-                    { name: 'quantite', label: 'Quantité', type: 'number', required: true, attributes: 'step="0.01" min="0"' },
-                    { name: 'unite', label: 'Unité', type: 'select', required: true, options: [
-                        { value: 'kg', text: 'Kilogrammes' },
-                        { value: 'litres', text: 'Litres' },
-                        { value: 'unites', text: 'Unités' }
-                    ]},
-                    { name: 'seuil_alerte', label: 'Seuil d\'alerte', type: 'number', attributes: 'step="0.01" min="0"' }
-                ],
-                onSubmit: async (data, isEdit) => {
-                    const success = await AdminCommon.utils.saveData(entrepotManager.config.endpoints.stockUpdate, data, true);
-                    if (success) {
-                        AdminCommon.utils.closeModal();
-                        await loadAllStockData();  
-                        syncData();                
-                        displayStocks();           
-                    }
-                }
-            });
-        }
-
-        async function deleteStock(entrepotId, produitId) {
-            const entrepotNom = getEntrepotName(entrepotId);
-            const produitNom = getProduitName(produitId);
-            
-            const success = await AdminCommon.utils.deleteData(
-                entrepotManager.config.endpoints.stockDelete,
-                { entrepot_id: entrepotId, produit_id: produitId },
-                `Êtes-vous sûr de vouloir supprimer le stock de "${produitNom}" dans l'entrepôt "${entrepotNom}" ?`
-            );
-            
-            if (success) {
-                await loadAllStockData();
-                syncData();
-                displayStocks();
-            }
-        }
-
-        async function loadStocksFiltered() {
-            const entrepotId = document.getElementById('filter-entrepot').value;
-            
-            try {
-                const url = entrepotId ? 
-                    `../api/stocks/list.php?entrepot_id=${entrepotId}` :
-                    '../api/stocks/list.php';
-                const stocks = await AdminCommon.utils.apiRequest(url);
-                
-                entrepotManager.data.stocks = stocks;
-                displayStocks();
-                updateGlobalStats();
-                
-            } catch (error) {
-                AdminCommon.utils.showAlert('Erreur lors du chargement des stocks', 'error');
-            }
-        }
-
-        function viewEntrepotStocks(entrepotId) {
-            const entrepot = entrepotManager.data.entrepots.find(e => e.id == entrepotId);
-            const entrepotStocks = entrepotManager.data.stocks.filter(s => s.entrepot_id == entrepotId);
-            
-            const stocksTableHTML = entrepotStocks.length === 0 ? 
-                '<p style="text-align: center; color: #f44336; font-weight: bold; margin: 2rem 0;">Aucun stock défini pour cet entrepôt</p>' :
-                `<table style="margin: 0;">
-                    <thead>
-                        <tr><th>Produit</th><th>Type</th><th>Quantité</th><th>Seuil</th><th>État</th><th>Dernière MAJ</th></tr>
-                    </thead>
-                    <tbody>
-                        ${entrepotStocks.map(stock => {
-                            const etat = stock.quantite == 0 ? 'Rupture' : stock.alerte == 1 ? 'Alerte' : 'OK';
-                            const classeEtat = stock.quantite == 0 ? 'badge-danger' : stock.alerte == 1 ? 'badge-warning' : 'badge-success';
-                            
-                            return `
-                                <tr>
-                                    <td><strong>${getProduitName(stock.produit_id)}</strong></td>
-                                    <td><span class="type-badge type-${stock.produit_type}">${stock.produit_type}</span></td>
-                                    <td><strong>${parseFloat(stock.quantite).toFixed(2)} ${stock.unite}</strong></td>
-                                    <td>${parseFloat(stock.seuil_alerte).toFixed(2)} ${stock.unite}</td>
-                                    <td><span class="${classeEtat}" style="padding: 0.3rem 0.6rem; border-radius: 12px; font-size: 0.8rem;">${etat}</span></td>
-                                    <td>${AdminCommon.utils.formatDate(stock.derniere_maj)}</td>
-                                </tr>
-                            `;
-                        }).join('')}
-                    </tbody>
-                </table>`;
-
-            const actions = [
-                { text: 'Fermer', type: 'secondary', onclick: 'AdminCommon.utils.closeModal()' },
-                { text: 'Gérer les stocks', type: 'primary', onclick: `AdminCommon.utils.closeModal(); AdminCommon.utils.switchTab('stocks', loadStocksTab); document.getElementById('filter-entrepot').value='${entrepotId}'; loadStocksFiltered();` }
-            ];
-
-            AdminCommon.utils.createModal({
-                title: `Stocks de l'entrepôt "${entrepot.nom}"`,
-                content: stocksTableHTML,
-                size: 'large',
-                actions: actions
-            });
-        }
-
-        function getEntrepotOptions() {
-            return [
-                { value: '', text: 'Sélectionner un entrepôt' },
-                ...entrepotManager.data.entrepots.map(e => ({ value: e.id, text: e.nom }))
-            ];
-        }
-
-        function getProduitOptions() {
-            return [
-                { value: '', text: 'Sélectionner un produit' },
-                ...entrepotManager.data.produits.map(p => ({ value: p.id, text: `${p.nom} (${p.type})` }))
-            ];
-        }
-
-        function getEntrepotName(entrepotId) {
-            const entrepot = entrepotManager.data.entrepots.find(e => e.id == entrepotId);
-            return entrepot ? entrepot.nom : 'Entrepôt inconnu';
-        }
-
-        function getProduitName(produitId) {
-            const produit = entrepotManager.data.produits.find(p => p.id == produitId);
-            return produit ? produit.nom : 'Produit inconnu';
-        }
-
-        function getProduitType(produitId) {
-            const produit = entrepotManager.data.produits.find(p => p.id == produitId);
-            return produit ? produit.type : 'unknown';
-        }
-
+document.addEventListener('DOMContentLoaded', async function() {
+    console.log('🚀 Initialisation de la page entrepôts...');
+    
+    try {
+        await loadAllStockData();
+        syncData();
+        displayEntrepots();
+        populateEntrepotFilter();
+        startGlobalMonitoring();
+        console.log('✅ Initialisation terminée');
+    } catch (error) {
+        console.error('❌ Erreur lors de l\'initialisation:', error);
+        AdminCommon.utils.showAlert('Erreur lors de l\'initialisation de la page', 'error');
+    }
+});
     </script>
 </body>
 </html>
