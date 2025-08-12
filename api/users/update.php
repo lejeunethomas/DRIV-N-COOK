@@ -1,4 +1,5 @@
 <?php
+// filepath: c:\MAMP\htdocs\DRIV-N-COOK\api\users\update.php
 require_once '../../includes/db.php';
 require_once '../../includes/auth.php';
 require_role('admin');
@@ -15,24 +16,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
     
     try {
         $conn = Database::getInstance()->getConnection();
+        $conn->beginTransaction();
         
         $stmt = $conn->prepare("
             UPDATE users 
-            SET nom = ?, prenom = ?, email = ?, telephone = ?, lieu_installation = ?, statut = ?
+            SET nom = ?, prenom = ?, email = ?, telephone = ?, 
+                numero_permis = ?, lieu_installation = ?, statut = ?
             WHERE id = ?
         ");
         $stmt->execute([
-            $data['nom'],
-            $data['prenom'], 
-            $data['email'],
+            isset($data['nom']) ? $data['nom'] : '',
+            isset($data['prenom']) ? $data['prenom'] : '',
+            isset($data['email']) ? $data['email'] : '',
             isset($data['telephone']) ? $data['telephone'] : null,
-            isset($data['lieu_installation']) ? $data['lieu_installation'] : null,
-            isset($data['statut']) ? $data['statut'] : 'en_attente',
+            isset($data['numero_permis']) ? $data['numero_permis'] : null,
+            isset($data['lieu_installation']) ? $data['lieu_installation'] : '',
+            isset($data['statut']) ? $data['statut'] : 'valide',
             $data['id']
         ]);
         
-        echo json_encode(['success' => true, 'message' => 'Utilisateur mis à jour avec succès']);
+        if (!empty($data['lieu_installation'])) {
+            $stmt = $conn->prepare("
+                UPDATE camions 
+                SET emplacement = ?
+                WHERE user_id = ?
+            ");
+            $stmt->execute([$data['lieu_installation'], $data['id']]);
+        }
+        
+        $conn->commit();
+        echo json_encode(['success' => true, 'message' => 'Franchisé mis à jour avec succès (emplacement synchronisé)']);
+        
     } catch (Exception $e) {
+        $conn->rollback();
         echo json_encode(['success' => false, 'message' => 'Erreur serveur : ' . $e->getMessage()]);
     }
 } else {

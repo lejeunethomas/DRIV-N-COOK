@@ -84,6 +84,7 @@ require_admin();
                                 getMaintenanceBadge(camion.demande_maintenance),
                                 getLivraisonInfo(camion.date_livraison),
                                 `<button class="btn-action" onclick="editCamion(${camion.id})">Modifier</button>
+                                 <button class="btn-action warning" onclick="synchroniserEmplacement(${camion.id})">Sync lieu</button>
                                  <button class="btn-action warning" onclick="planifierMaintenance(${camion.id})">Maintenance</button>`,
                                 urgence
                             ];
@@ -187,6 +188,14 @@ require_admin();
                     const cellsData = camionManager.config.tables.camions.rowBuilder(camion);
                     const rowClass = cellsData[cellsData.length - 1];
                     const cells = cellsData.slice(0, -1);
+                    
+                    // ✅ AJOUTER bouton synchronisation
+                    const actionsIndex = cells.length - 1;
+                    cells[actionsIndex] = `
+                        <button class="btn-action" onclick="editCamion(${camion.id})">Modifier</button>
+                        <button class="btn-action warning" onclick="synchroniserEmplacement(${camion.id})">Sync lieu</button>
+                        <button class="btn-action warning" onclick="planifierMaintenance(${camion.id})">Maintenance</button>
+                    `;
                     
                     if (rowClass) row.className = rowClass;
                     row.innerHTML = cells.map(cell => `<td>${cell}</td>`).join('');
@@ -646,6 +655,93 @@ require_admin();
 
         function planifierMaintenance(camionId) {
             AdminCommon.utils.showAlert(`Planification de maintenance pour le camion #${camionId} - Fonctionnalité à développer`, 'info');
+        }
+
+        function synchroniserEmplacement(camionId) {
+            const camion = camionManager.data.camions.find(c => c.id == camionId);
+            if (!camion) {
+                alert('Camion non trouvé');
+                return;
+            }
+
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <h3>Synchroniser l'emplacement</h3>
+                    
+                    <div style="background: #f8f9fa; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
+                        <strong>Camion :</strong> ${camion.nom_camion}<br>
+                        <strong>Franchisé :</strong> ${camion.franchise_nom}<br>
+                        <strong>Emplacement actuel du camion :</strong> ${camion.emplacement || 'Non défini'}<br>
+                        <strong>Lieu d'installation du franchisé :</strong> ${camion.lieu_installation || 'Non défini'}
+                    </div>
+                    
+                    <form id="sync-emplacement-form">
+                        <div class="form-group">
+                            <label for="sync-emplacement">Nouvel emplacement unifié *</label>
+                            <input type="text" id="sync-emplacement" name="emplacement" 
+                                   value="${camion.emplacement || camion.lieu_installation || ''}" 
+                                   required placeholder="Ex: Place de la République, Paris">
+                            <small style="color:#666;">Cet emplacement sera appliqué au camion ET au franchisé</small>
+                        </div>
+                        <div class="modal-actions">
+                            <button type="button" class="btn-secondary" onclick="closeSyncEmplacementModal()">Annuler</button>
+                            <button type="submit" class="btn-primary">Synchroniser</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+
+            document.getElementById('sync-emplacement-form').addEventListener('submit', async function(e) {
+                e.preventDefault();
+
+                const formData = new FormData(this);
+                const data = Object.fromEntries(formData);
+
+                if (!data.emplacement) {
+                    alert('❌ Veuillez saisir un emplacement');
+                    return;
+                }
+
+                try {
+                    const response = await fetch('../api/camions/sync_emplacement.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            camion_id: camionId,
+                            emplacement: data.emplacement
+                        })
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        alert('✅ Emplacement synchronisé avec succès !');
+                        closeSyncEmplacementModal();
+                        await Promise.all([
+                            loadCamionsTab(),
+                            loadFranchises()
+                        ]);
+                    } else {
+                        alert('❌ Erreur: ' + result.message);
+                    }
+
+                } catch (error) {
+                    console.error('❌ Erreur synchronisation:', error);
+                    alert('❌ Erreur réseau: ' + error.message);
+                }
+            });
+        }
+
+        function closeSyncEmplacementModal() {
+            const modal = document.querySelector('.modal');
+            if (modal) modal.remove();
         }
 
     </script>

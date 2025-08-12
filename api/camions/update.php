@@ -1,4 +1,5 @@
 <?php
+// filepath: c:\MAMP\htdocs\DRIV-N-COOK\api\camions\update.php
 require_once '../../includes/db.php';
 require_once '../../includes/auth.php';
 require_role('admin');
@@ -15,6 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
     
     try {
         $conn = Database::getInstance()->getConnection();
+        $conn->beginTransaction();
         
         $stmt = $conn->prepare("
             UPDATE camions 
@@ -22,17 +24,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
             WHERE id = ?
         ");
         $stmt->execute([
-            $data['nom_camion'] ?? '',
-            $data['etat'] ?? 'en_preparation',
-            $data['emplacement'] ?? '',
-            $data['menu'] ?? '',
-            $data['jours'] ?? '',
-            $data['date_livraison'] ?? null,
+            isset($data['nom_camion']) ? $data['nom_camion'] : '',
+            isset($data['etat']) ? $data['etat'] : 'en_preparation',
+            isset($data['emplacement']) ? $data['emplacement'] : '',
+            isset($data['menu']) ? $data['menu'] : '',
+            isset($data['jours']) ? $data['jours'] : '',
+            array_key_exists('date_livraison', $data) ? $data['date_livraison'] : null,
             $data['id']
         ]);
         
-        echo json_encode(['success' => true, 'message' => 'Camion mis à jour avec succès']);
+        if (!empty($data['emplacement'])) {
+            $stmt = $conn->prepare("
+                UPDATE users 
+                SET lieu_installation = ?
+                WHERE id = (SELECT user_id FROM camions WHERE id = ?)
+            ");
+            $stmt->execute([$data['emplacement'], $data['id']]);
+        }
+        
+        $conn->commit();
+        echo json_encode(['success' => true, 'message' => 'Camion mis à jour avec succès (emplacement synchronisé)']);
+        
     } catch (Exception $e) {
+        $conn->rollback();
         echo json_encode(['success' => false, 'message' => 'Erreur serveur : ' . $e->getMessage()]);
     }
 } else {
