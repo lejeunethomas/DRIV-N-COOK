@@ -225,87 +225,6 @@ function createModal(config) {
 }
 
 /**
- * Créer une modal de formulaire
- */
-function createFormModal(config) {
-    const {
-        title,
-        fields,
-        data = null,
-        onSubmit,
-        size = 'normal'
-    } = config;
-    
-    const isEdit = data !== null;
-    
-    const fieldsHTML = fields.map(field => {
-        const value = data?.[field.name] || field.defaultValue || '';
-        const required = field.required ? 'required' : '';
-        const attributes = field.attributes || '';
-        const fieldId = `field-${generateId()}`;
-        
-        let inputHTML = '';
-        
-        switch (field.type) {
-            case 'select':
-                const optionsHTML = field.options.map(option => 
-                    `<option value="${option.value}" ${value === option.value ? 'selected' : ''}>${option.text}</option>`
-                ).join('');
-                inputHTML = `<select id="${fieldId}" name="${field.name}" ${required} ${attributes}>${optionsHTML}</select>`;
-                break;
-                
-            case 'textarea':
-                inputHTML = `<textarea id="${fieldId}" name="${field.name}" ${required} ${attributes} rows="${field.rows || 3}">${value}</textarea>`;
-                break;
-                
-            case 'checkbox':
-                inputHTML = `<input type="checkbox" id="${fieldId}" name="${field.name}" ${value ? 'checked' : ''} ${attributes}>`;
-                break;
-                
-            default:
-                inputHTML = `<input type="${field.type}" id="${fieldId}" name="${field.name}" value="${value}" ${required} ${attributes}>`;
-        }
-        
-        return `
-            <div class="form-group">
-                <label for="${fieldId}">${field.label} ${field.required ? '*' : ''}</label>
-                ${inputHTML}
-                ${field.help ? `<small style="color: #666;">${field.help}</small>` : ''}
-            </div>
-        `;
-    }).join('');
-    
-    const formHTML = `
-        <form id="modal-form-${generateId()}">
-            ${isEdit && data?.id ? `<input type="hidden" name="id" value="${data.id}">` : ''}
-            ${fieldsHTML}
-        </form>
-    `;
-    
-    const actions = [
-        { text: 'Annuler', type: 'secondary', onclick: 'closeModal()' },
-        { text: isEdit ? 'Modifier' : 'Ajouter', type: 'primary', buttonType: 'submit', onclick: 'document.querySelector("#modal-form-" + this.closest(".modal").id.split("-")[1]).requestSubmit()' }
-    ];
-    
-    const modalId = createModal({
-        title,
-        content: formHTML,
-        size,
-        actions
-    });
-    
-    const form = document.querySelector(`#modal-${modalId} form`);
-    form.onsubmit = async function(e) {
-        e.preventDefault();
-        const formData = new FormData(e.target);
-        const submitData = Object.fromEntries(formData);
-        await onSubmit(submitData, isEdit);
-    };
-    
-    return modalId;
-}
-
-/**
  * Fermer toutes les modals ou une modal spécifique
  */
 function closeModal(modalId = null) {
@@ -602,7 +521,6 @@ if (typeof module !== 'undefined' && module.exports) {
         closeAlert,
         
         createModal,
-        createFormModal,
         closeModal,
         
         apiRequest,
@@ -628,7 +546,6 @@ window.AdminCommon.utils = {
     showAlert,
     closeAlert,
     createModal,
-    createFormModal,
     closeModal,
     apiRequest,
     saveData,

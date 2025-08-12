@@ -642,7 +642,6 @@ require_admin();
                 return;
             }
 
-            // ✅ MODAL MANUEL (comme pour l'ajout)
             const modal = document.createElement('div');
             modal.className = 'modal';
             modal.innerHTML = `
@@ -687,7 +686,6 @@ require_admin();
 
             document.body.appendChild(modal);
 
-            // ✅ GESTION FORMULAIRE AVEC DEBUG COMPLET
             document.getElementById('edit-entrepot-form').addEventListener('submit', async function(e) {
                 e.preventDefault();
 
@@ -717,7 +715,6 @@ require_admin();
                     console.log('📊 Status HTTP:', response.status);
                     console.log('📊 Headers response:', [...response.headers.entries()]);
 
-                    // ✅ LECTURE RAW POUR DEBUG
                     const rawResponse = await response.text();
                     console.log('📋 Réponse brute (longueur ' + rawResponse.length + '):', rawResponse);
 
@@ -726,7 +723,6 @@ require_admin();
                         return;
                     }
 
-                    // ✅ VÉRIFICATION CONTENT-TYPE
                     const contentType = response.headers.get('content-type') || 'non défini';
                     console.log('📋 Content-Type reçu:', contentType);
 
@@ -735,7 +731,6 @@ require_admin();
                         return;
                     }
 
-                    // ✅ PARSING JSON SÉCURISÉ
                     let result;
                     try {
                         result = JSON.parse(rawResponse);
@@ -767,7 +762,6 @@ require_admin();
             });
         }
 
-        // ✅ FONCTION POUR FERMER LE MODAL DE MODIFICATION
         function closeEditEntrepotModal() {
             const modal = document.querySelector('.modal');
             if (modal) modal.remove();
