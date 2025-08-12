@@ -4,41 +4,88 @@ require_once '../../includes/auth.php';
 
 header('Content-Type: application/json');
 
-if (!isset($_SESSION['user_id']) || !isset($_SESSION['role'])) {
+if (!isset($_SESSION['user_id'])) {
     echo json_encode(['success' => false, 'message' => 'Non authentifié']);
     exit;
 }
 
-try {
-    $conn = Database::getInstance()->getConnection();
+$method = $_SERVER['REQUEST_METHOD'];
+$userId = $_SESSION['user_id'];
+$isAdmin = (isset($_SESSION['role']) ? $_SESSION['role'] : '') === 'admin';
+
+switch ($method) {
+    case 'GET':
+        handleGetProfile($userId, $isAdmin);
+        break;
+        
+    case 'PUT':
+        handleUpdateProfile($userId, $isAdmin);
+        break;
+        
+    default:
+        echo json_encode(['success' => false, 'message' => 'Méthode non autorisée']);
+}
+
+function handleGetProfile($userId, $isAdmin) {
+    try {
+        $conn = Database::getInstance()->getConnection();
+        
+        // Profil demandé (admin peut voir autres profils)
+        $targetUserId = $isAdmin && isset($_GET['user_id']) ? $_GET['user_id'] : $userId;
+        
+        $stmt = $conn->prepare("
+            SELECT id, nom, prenom, email, telephone, numero_permis, lieu_installation, 
+                   role, statut, date_inscription 
+            FROM users WHERE id = ?
+        ");
+        $stmt->execute([$targetUserId]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if (!$user) {
+            echo json_encode(['success' => false, 'message' => 'Utilisateur non trouvé']);
+            return;
+        }
+        
+        echo json_encode(['success' => true, 'user' => $user]);
+        
+    } catch (Exception $e) {
+        echo json_encode(['success' => false, 'message' => 'Erreur serveur : ' . $e->getMessage()]);
+    }
+}
+
+function handleUpdateProfile($userId, $isAdmin) {
+    $data = json_decode(file_get_contents('php://input'), true);
     
-    // Déterminer la table selon le rôle
-    if ($_SESSION['role'] === 'client') {
-        $stmt = $conn->prepare("
-            SELECT id, nom, prenom, email, telephone, 
-                   created_at as date_inscription 
-            FROM clients 
-            WHERE id = ?
-        ");
-    } else {
-        $stmt = $conn->prepare("
-            SELECT id, nom, prenom, email, telephone, lieu_installation, 
-                   motivation, statut, date_inscription 
-            FROM users 
-            WHERE id = ?
-        ");
+    if (!$data) {
+        echo json_encode(['success' => false, 'message' => 'Données manquantes']);
+        exit;
     }
     
-    $stmt->execute([$_SESSION['user_id']]);
-    $profile = $stmt->fetch(PDO::FETCH_ASSOC);
-    
-    if ($profile) {
-        echo json_encode(['success' => true, 'profile' => $profile]);
-    } else {
-        echo json_encode(['success' => false, 'message' => 'Profil non trouvé']);
+    try {
+        $conn = Database::getInstance()->getConnection();
+        
+        // Utilisateur cible (admin peut modifier autres profils)
+        $targetUserId = $isAdmin && isset($data['user_id']) ? $data['user_id'] : $userId;
+        
+        $stmt = $conn->prepare("
+            UPDATE users 
+            SET nom = ?, prenom = ?, telephone = ?, numero_permis = ?, lieu_installation = ?
+            WHERE id = ?
+        ");
+        
+        $stmt->execute([
+            isset($data['nom']) ? $data['nom'] : '',
+            isset($data['prenom']) ? $data['prenom'] : '',
+            isset($data['telephone']) ? $data['telephone'] : null,
+            isset($data['numero_permis']) ? $data['numero_permis'] : null,
+            isset($data['lieu_installation']) ? $data['lieu_installation'] : '',
+            $targetUserId
+        ]);
+        
+        echo json_encode(['success' => true, 'message' => 'Profil mis à jour avec succès']);
+        
+    } catch (Exception $e) {
+        echo json_encode(['success' => false, 'message' => 'Erreur serveur : ' . $e->getMessage()]);
     }
-    
-} catch (Exception $e) {
-    echo json_encode(['success' => false, 'message' => 'Erreur serveur : ' . $e->getMessage()]);
 }
 ?>

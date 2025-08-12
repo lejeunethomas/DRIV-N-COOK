@@ -164,12 +164,14 @@ require_franchise_validated();
                 document.getElementById('stat-commandes').textContent = commandesEnCours;
 
                 try {
-                    const ventesRes = await fetch('../api/ventes/stats_by_user.php');
+                    const ventesRes = await fetch('../api/ventes/stats.php');
                     const ventes = await ventesRes.json();
-                    const ventesTotal = ventes.total_mois || 0;
-                    document.getElementById('stat-ventes').textContent = AdminCommon.utils.formatPrice(ventesTotal);
+                    
+                    if (ventes.success) {
+                        document.getElementById('stat-ventes').textContent = ventes.total_mois + '€';
+                    }
                 } catch (error) {
-                    document.getElementById('stat-ventes').textContent = 'N/A';
+                    console.error('Erreur ventes:', error);
                 }
                 
             } catch (error) {
