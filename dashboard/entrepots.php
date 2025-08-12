@@ -422,16 +422,39 @@ require_admin();
         }
 
         async function deleteEntrepot(id) {
-            const success = await AdminCommon.utils.deleteData(
-                entrepotManager.config.endpoints.delete,
-                { id: id },
-                'Êtes-vous sûr de vouloir supprimer cet entrepôt ?\nTous les stocks associés seront également supprimés.'
-            );
-            
-            if (success) {
-                await loadAllStockData();
-                syncData();
-                displayEntrepots();
+            const entrepot = entrepotManager.data.entrepots.find(e => e.id == id);
+            if (!entrepot) {
+                alert('Entrepôt introuvable');
+                return;
+            }
+            if (!confirm(`Supprimer l'entrepôt "${entrepot.nom}" ?\n(S'il contient des stocks il sera désactivé)`)) return;
+
+            console.log('[DELETE] entrepot', id);
+
+            try {
+                const resp = await fetch('../api/entrepots/delete.php', {
+                    method: 'DELETE',
+                    headers: {'Content-Type':'application/json','Accept':'application/json'},
+                    body: JSON.stringify({ id: parseInt(id,10) })
+                });
+
+                const raw = await resp.text();
+                console.log('[DELETE] raw response:', raw);
+                let result;
+                try { result = JSON.parse(raw); } catch { result = { success:false, message:'Réponse invalide', raw }; }
+
+                if (result.success) {
+                    alert('✅ ' + (result.message || 'Entrepôt supprimé'));
+                    await loadAllStockData();
+                    syncData();
+                    displayEntrepots();
+                    updateGlobalStats();
+                } else {
+                    alert('❌ ' + (result.message || 'Échec suppression'));
+                }
+            } catch (e) {
+                console.error(e);
+                alert('❌ Erreur réseau suppression');
             }
         }
 

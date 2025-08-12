@@ -55,7 +55,10 @@ try {
     
     // Trier par score de recommandation (distance + disponibilité)
     usort($entrepots, function($a, $b) {
-        return $b['score_recommandation'] <=> $a['score_recommandation'];
+        if ($b['score_recommandation'] == $a['score_recommandation']) {
+            return 0;
+        }
+        return ($b['score_recommandation'] > $a['score_recommandation']) ? 1 : -1;
     });
     
     echo json_encode($entrepots);

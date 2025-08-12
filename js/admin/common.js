@@ -343,9 +343,15 @@ async function apiRequest(endpoint, options = {}) {
         }
     };
     
-    if (data && (method === 'POST' || method === 'PUT')) {
-        requestOptions.body = JSON.stringify(data);
-    }
+    if (data && ['POST','PUT','DELETE','PATCH'].includes(method)) {
+    try { requestOptions.body = JSON.stringify(data); }
+    catch(e){ console.warn('Serialize fail', e); }
+    };
+
+    if (method === 'DELETE' && !requestOptions.body && data && typeof data === 'object') {
+        const qs = new URLSearchParams(data).toString();
+        endpoint += (endpoint.includes('?') ? '&' : '?') + qs;
+    };
     
     if (showLoader) showAlert('Chargement...', 'info', 1000);
     
@@ -363,7 +369,7 @@ async function apiRequest(endpoint, options = {}) {
         console.error('Erreur API:', error);
         showAlert(`${errorMessage}: ${error.message}`, 'error');
         throw error;
-    }
+    };
 }
 
 /**
