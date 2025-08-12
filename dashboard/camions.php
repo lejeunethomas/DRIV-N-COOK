@@ -29,10 +29,10 @@ require_admin();
             <h1 class="admin">Gestion des camions</h1>
             
             <div class="tabs">
-                <button class="tab-btn active" onclick="AdminCommon.utils.switchTab('camions', loadCamionsTab)">
+                <button class="tab-btn active" onclick="AdminCommon.utils.switchTab('camions', CamionManager.loadCamionsTab)">
                     Parc de camions
                 </button>
-                <button class="tab-btn" onclick="AdminCommon.utils.switchTab('demandes', loadDemandesTab)">
+                <button class="tab-btn" onclick="AdminCommon.utils.switchTab('demandes', CamionManager.loadDemandesTab)">
                     Demandes à traiter <span class="badge" id="badge-demandes" style="display:none;">0</span>
                 </button>
             </div>
@@ -40,7 +40,7 @@ require_admin();
             <div id="tab-camions" class="tab-content active">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                     <h2 style="margin: 0;">Parc de camions</h2>
-                    <button class="add-btn" onclick="showAddCamionModal()">+ Ajouter un camion</button>
+                    <button class="add-btn" onclick="CamionManager.showAddModal()">+ Ajouter un camion</button>
                 </div>
                 
                 <div id="camions-table-container"></div>
@@ -56,9 +56,16 @@ require_admin();
     <script src="../js/admin/common.js"></script>
 
     <script>
-        const camionManager = {
-            data: { camions: [], demandes: [], franchises: [] },
-            
+        // GESTIONNAIRE PRINCIPAL UNIFIÉ - DRY
+        const CamionManager = {
+            // ===== DONNÉES =====
+            data: {
+                camions: [],
+                demandes: [],
+                franchises: []
+            },
+
+            // ===== CONFIGURATION CENTRALISÉE =====
             config: {
                 endpoints: {
                     camions: '../api/camions/list.php',
@@ -66,45 +73,13 @@ require_admin();
                     franchises: '../api/users/get_all.php',
                     add: '../api/camions/add.php',
                     update: '../api/camions/update.php',
-                    validate: '../api/camions/validate_demande.php'
+                    validate: '../api/camions/validate_demande.php',
+                    syncEmplacement: '../api/camions/sync_emplacement.php'
                 },
                 
-                tables: {
-                    camions: {
-                        headers: ['Camion #', 'Franchisé', 'État', 'Emplacement', 'Prochaine maintenance', 'Demande maintenance', 'Date livraison', 'Actions'],
-                        rowBuilder: (camion) => {
-                            const urgence = camion.demande_maintenance ? 'camion-urgence' : '';
-                            
-                            return [
-                                camion.id || '-',
-                                camion.franchise_nom || 'Non assigné',
-                                `<span class="etat-badge etat-${camion.etat}">${getEtatLabel(camion.etat)}</span>`,
-                                camion.emplacement || 'Non renseigné',
-                                camion.prochaine_maintenance || '-',
-                                getMaintenanceBadge(camion.demande_maintenance),
-                                getLivraisonInfo(camion.date_livraison),
-                                `<button class="btn-action" onclick="editCamion(${camion.id})">Modifier</button>
-                                 <button class="btn-action warning" onclick="synchroniserEmplacement(${camion.id})">Sync lieu</button>
-                                 <button class="btn-action warning" onclick="planifierMaintenance(${camion.id})">Maintenance</button>`,
-                                urgence
-                            ];
-                        }
-                    },
-                    
-                    demandes: {
-                        headers: ['Franchisé', 'Nom du camion', 'N° Permis', 'Emplacement', 'Menu', 'Jours d\'ouverture', 'Date de demande', 'Actions'],
-                        rowBuilder: (demande) => [
-                            `<strong>${demande.franchise_nom || ''} ${demande.franchise_prenom || ''}</strong><br><small>${demande.franchise_email || ''}</small>`,
-                            `<strong>${demande.nom_camion || ''}</strong>`,
-                            demande.numero_permis || 'Non renseigné',
-                            demande.emplacement || 'Non renseigné',
-                            `<span title="${demande.menu || ''}">${AdminCommon.utils.truncateText(demande.menu, 30)}</span>`,
-                            demande.jours || 'Non renseigné',
-                            AdminCommon.utils.formatDate(demande.date_demande),
-                            `<button class="btn-action success" onclick="validerDemande(${demande.id})">Valider</button>
-                             <button class="btn-action danger" onclick="refuserDemande(${demande.id})">Refuser</button>`
-                        ]
-                    }
+                headers: {
+                    camions: ['Camion #', 'Franchisé', 'État', 'Emplacement', 'Prochaine maintenance', 'Demande maintenance', 'Date livraison', 'Actions'],
+                    demandes: ['Franchisé', 'Nom du camion', 'N° Permis', 'Emplacement', 'Menu', 'Jours d\'ouverture', 'Date de demande', 'Actions']
                 },
                 
                 etatsLabels: {
@@ -116,339 +91,366 @@ require_admin();
                 },
                 
                 formFields: {
-                    camionAdd: [
-                        { name: 'user_id', label: 'Franchisé', type: 'select', required: true, options: 'getFranchiseOptions' },
-                        { name: 'nom_camion', label: 'Nom du camion', type: 'text', required: true, attributes: 'placeholder="Ex: Le Gourmand, Food Express"' },
+                    add: [
+                        { name: 'user_id', label: 'Franchisé *', type: 'select', required: true, options: 'getFranchiseOptions' },
+                        { name: 'nom_camion', label: 'Nom du camion *', type: 'text', required: true, placeholder: 'Ex: Le Gourmand, Food Express' },
                         { name: 'etat', label: 'État', type: 'select', defaultValue: 'en_preparation', options: 'getEtatOptions' },
-                        { name: 'date_livraison', label: 'Date de livraison', type: 'date', attributes: `min="${new Date().toISOString().split('T')[0]}"` },
-                        { name: 'emplacement', label: 'Emplacement', type: 'text', attributes: 'placeholder="Ex: Place de la République, Paris"' },
-                        { name: 'menu', label: 'Menu', type: 'textarea', attributes: 'rows="3" placeholder="Description du menu proposé..."' },
-                        { name: 'jours', label: 'Jours d\'ouverture', type: 'text', attributes: 'placeholder="Ex: Lundi au Vendredi, Week-ends uniquement"' }
+                        { name: 'date_livraison', label: 'Date de livraison', type: 'date', min: 'today' },
+                        { name: 'emplacement', label: 'Emplacement', type: 'text', placeholder: 'Ex: Place de la République, Paris' },
+                        { name: 'menu', label: 'Menu', type: 'textarea', rows: '3', placeholder: 'Description du menu proposé...' },
+                        { name: 'jours', label: 'Jours d\'ouverture', type: 'text', placeholder: 'Ex: Lundi au Vendredi, Week-ends uniquement' }
                     ],
-                    
-                    camionEdit: [
-                        { name: 'nom_camion', label: 'Nom du camion', type: 'text', required: true },
+                    edit: [
+                        { name: 'nom_camion', label: 'Nom du camion *', type: 'text', required: true },
                         { name: 'etat', label: 'État', type: 'select', options: 'getEtatOptions' },
                         { name: 'date_livraison', label: 'Date de livraison', type: 'date' },
                         { name: 'emplacement', label: 'Emplacement', type: 'text' },
-                        { name: 'menu', label: 'Menu', type: 'textarea', attributes: 'rows="3"' },
+                        { name: 'menu', label: 'Menu', type: 'textarea', rows: '3' },
                         { name: 'jours', label: 'Jours d\'ouverture', type: 'text' }
                     ]
                 }
-            }
-        };
+            },
 
-        document.addEventListener('DOMContentLoaded', function() {
-            loadAllData();
-        });
+            // ===== INITIALISATION =====
+            async init() {
+                await this.loadAllData();
+                this.updateBadges();
+            },
 
-        async function loadAllData() {
-            await Promise.all([
-                loadCamionsTab(),
-                loadFranchises(),
-                loadDemandesTab()
-            ]);
-            updateBadges();
-        }
+            async loadAllData() {
+                await Promise.all([
+                    this.loadCamionsTab(),
+                    this.loadFranchises(),
+                    this.loadDemandesTab()
+                ]);
+            },
 
-        async function loadCamionsTab() {
-            try {
-                camionManager.data.camions = await AdminCommon.utils.apiRequest(camionManager.config.endpoints.camions);
-                displayCamions();
-            } catch (error) {
-                AdminCommon.utils.showAlert('Erreur lors du chargement des camions', 'error');
-            }
-        }
+            // ===== CHARGEMENT DONNÉES =====
+            async loadCamionsTab() {
+                try {
+                    this.data.camions = await AdminCommon.utils.apiRequest(this.config.endpoints.camions);
+                    console.log('✅ Camions chargés:', this.data.camions);
+                    this.displayCamions();
+                } catch (error) {
+                    console.error('❌ Erreur chargement camions:', error);
+                    AdminCommon.utils.showAlert('Erreur lors du chargement des camions', 'error');
+                }
+            },
 
-        async function loadDemandesTab() {
-            try {
-                camionManager.data.demandes = await AdminCommon.utils.apiRequest(camionManager.config.endpoints.demandes);
-                displayDemandes();
-                AdminCommon.utils.updateTabBadge('demandes', camionManager.data.demandes.length);
-            } catch (error) {
-                AdminCommon.utils.showAlert('Erreur lors du chargement des demandes', 'error');
-            }
-        }
+            async loadDemandesTab() {
+                try {
+                    this.data.demandes = await AdminCommon.utils.apiRequest(this.config.endpoints.demandes);
+                    console.log('✅ Demandes chargées:', this.data.demandes);
+                    this.displayDemandes();
+                    AdminCommon.utils.updateTabBadge('demandes', this.data.demandes.length);
+                } catch (error) {
+                    console.error('❌ Erreur chargement demandes:', error);
+                    AdminCommon.utils.showAlert('Erreur lors du chargement des demandes', 'error');
+                }
+            },
 
-        async function loadFranchises() {
-            try {
-                camionManager.data.franchises = await AdminCommon.utils.apiRequest(camionManager.config.endpoints.franchises);
-            } catch (error) {
-                console.error('Erreur lors du chargement des franchisés');
-            }
-        }
+            async loadFranchises() {
+                try {
+                    this.data.franchises = await AdminCommon.utils.apiRequest(this.config.endpoints.franchises);
+                    console.log('✅ Franchises chargées:', this.data.franchises);
+                } catch (error) {
+                    console.error('❌ Erreur chargement franchises:', error);
+                }
+            },
 
-        function displayCamions() {
-            AdminCommon.utils.createTable({
-                containerId: 'camions-table-container',
-                headers: camionManager.config.tables.camions.headers,
-                data: camionManager.data.camions,
-                rowBuilder: (camion) => {
-                    const row = document.createElement('tr');
-                    const cellsData = camionManager.config.tables.camions.rowBuilder(camion);
-                    const rowClass = cellsData[cellsData.length - 1];
-                    const cells = cellsData.slice(0, -1);
-                    
-                    // ✅ AJOUTER bouton synchronisation
-                    const actionsIndex = cells.length - 1;
-                    cells[actionsIndex] = `
-                        <button class="btn-action" onclick="editCamion(${camion.id})">Modifier</button>
-                        <button class="btn-action warning" onclick="synchroniserEmplacement(${camion.id})">Sync lieu</button>
-                        <button class="btn-action warning" onclick="planifierMaintenance(${camion.id})">Maintenance</button>
-                    `;
-                    
-                    if (rowClass) row.className = rowClass;
-                    row.innerHTML = cells.map(cell => `<td>${cell}</td>`).join('');
-                    return row;
-                },
-                emptyMessage: 'Aucun camion trouvé'
-            });
-        }
+            // ===== AFFICHAGE =====
+            displayCamions() {
+                console.log('📊 Affichage camions:', this.data.camions);
 
-        function displayDemandes() {
-            AdminCommon.utils.createTable({
-                containerId: 'demandes-table-container',
-                headers: camionManager.config.tables.demandes.headers,
-                data: camionManager.data.demandes,
-                rowBuilder: (demande) => {
-                    const row = document.createElement('tr');
-                    const cells = camionManager.config.tables.demandes.rowBuilder(demande);
-                    row.innerHTML = cells.map(cell => `<td>${cell}</td>`).join('');
-                    return row;
-                },
-                emptyMessage: 'Aucune demande en attente'
-            });
-        }
-
-        function getEtatLabel(etat) {
-            return camionManager.config.etatsLabels[etat] || etat;
-        }
-
-        function getMaintenanceBadge(demandeMaintenance) {
-            return demandeMaintenance ? 
-                '<span class="badge-danger">À traiter</span>' : 
-                '<span class="badge-success">OK</span>';
-        }
-
-        function getLivraisonInfo(dateLivraison) {
-            return dateLivraison ? 
-                `<span class="date-livraison">${AdminCommon.utils.formatDate(dateLivraison)}</span>` : 
-                '-';
-        }
-
-        function showAddCamionModal() {
-            const modal = document.createElement('div');
-            modal.className = 'modal';
-            modal.innerHTML = `
-                <div class="modal-content">
-                    <h3>Ajouter un camion manuellement</h3>
-                    <form id="add-camion-form">
-                        <div class="form-group">
-                            <label for="add-user-id">Franchisé *</label>
-                            <select id="add-user-id" name="user_id" required>
-                                <option value="">Sélectionner un franchisé</option>
-                                ${getFranchiseOptions().map(opt => 
-                                    `<option value="${opt.value}">${opt.text}</option>`
-                                ).join('')}
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="add-nom-camion">Nom du camion *</label>
-                            <input type="text" id="add-nom-camion" name="nom_camion" required placeholder="Ex: Le Gourmand, Food Express">
-                        </div>
-                        <div class="form-group">
-                            <label for="add-etat">État</label>
-                            <select id="add-etat" name="etat">
-                                ${getEtatOptions().map(opt => 
-                                    `<option value="${opt.value}" ${opt.value === 'en_preparation' ? 'selected' : ''}>${opt.text}</option>`
-                                ).join('')}
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="add-date-livraison">Date de livraison</label>
-                            <input type="date" id="add-date-livraison" name="date_livraison" min="${new Date().toISOString().split('T')[0]}">
-                        </div>
-                        <div class="form-group">
-                            <label for="add-emplacement">Emplacement</label>
-                            <input type="text" id="add-emplacement" name="emplacement" placeholder="Ex: Place de la République, Paris">
-                        </div>
-                        <div class="form-group">
-                            <label for="add-menu">Menu</label>
-                            <textarea id="add-menu" name="menu" rows="3" placeholder="Description du menu proposé..."></textarea>
-                        </div>
-                        <div class="form-group">
-                            <label for="add-jours">Jours d'ouverture</label>
-                            <input type="text" id="add-jours" name="jours" placeholder="Ex: Lundi au Vendredi, Week-ends uniquement">
-                        </div>
-                        <div class="modal-actions">
-                            <button type="button" class="btn-secondary" onclick="closeAddCamionModal()">Annuler</button>
-                            <button type="submit" class="btn-primary">Ajouter</button>
-                        </div>
-                    </form>
-                </div>
-            `;
-
-            document.body.appendChild(modal);
-
-            document.getElementById('add-camion-form').addEventListener('submit', async function(e) {
-                e.preventDefault();
-
-                const formData = new FormData(this);
-                const data = Object.fromEntries(formData);
-
-                console.log('🚛 AJOUT CAMION - Données à envoyer:', data);
-
-                if (!data.user_id || !data.nom_camion) {
-                    alert('❌ Veuillez remplir tous les champs obligatoires');
-                    return;
+                if (!Array.isArray(this.data.camions)) {
+                    console.warn('⚠️ Camions n\'est pas un tableau:', this.data.camions);
+                    this.data.camions = [];
                 }
 
+                AdminCommon.utils.createTable({
+                    containerId: 'camions-table-container',
+                    headers: this.config.headers.camions,
+                    data: this.data.camions,
+                    rowBuilder: (camion) => {
+                        const row = document.createElement('tr');
+                        const cells = this.buildCamionRow(camion);
+                        
+                        if (camion.demande_maintenance) {
+                            row.className = 'camion-urgence';
+                        }
+                        
+                        row.innerHTML = cells.map(cell => `<td>${cell}</td>`).join('');
+                        return row;
+                    },
+                    emptyMessage: 'Aucun camion trouvé'
+                });
+            },
+
+            displayDemandes() {
+                console.log('📊 Affichage demandes:', this.data.demandes);
+                
+                if (!Array.isArray(this.data.demandes)) {
+                    console.warn('⚠️ Demandes n\'est pas un tableau:', this.data.demandes);
+                    this.data.demandes = [];
+                }
+
+                AdminCommon.utils.createTable({
+                    containerId: 'demandes-table-container',
+                    headers: this.config.headers.demandes,
+                    data: this.data.demandes,
+                    rowBuilder: (demande) => {
+                        const row = document.createElement('tr');
+                        const cells = this.buildDemandeRow(demande);
+                        row.innerHTML = cells.map(cell => `<td>${cell}</td>`).join('');
+                        return row;
+                    },
+                    emptyMessage: 'Aucune demande en attente'
+                });
+            },
+
+            // ===== CONSTRUCTEURS DE LIGNES =====
+            buildCamionRow(camion) {
+                const franchiseNom = camion.franchise_nom && camion.franchise_prenom ? 
+                    `${camion.franchise_nom} ${camion.franchise_prenom}` : 
+                    'Non assigné';
+
+                return [
+                    camion.id || '-',
+                    franchiseNom,
+                    `<span class="etat-badge etat-${camion.etat}">${this.getEtatLabel(camion.etat)}</span>`,
+                    camion.emplacement || 'Non renseigné',
+                    camion.prochaine_maintenance || '-',
+                    this.getMaintenanceBadge(camion.demande_maintenance),
+                    this.getLivraisonInfo(camion.date_livraison),
+                    `<button class="btn-action" onclick="CamionManager.edit(${camion.id})">Modifier</button>
+                     <button class="btn-action warning" onclick="CamionManager.synchroniserEmplacement(${camion.id})">Sync lieu</button>
+                     <button class="btn-action warning" onclick="CamionManager.planifierMaintenance(${camion.id})">Maintenance</button>`
+                ];
+            },
+
+            buildDemandeRow(demande) {
+                return [
+                    `<strong>${demande.franchise_nom || ''} ${demande.franchise_prenom || ''}</strong><br><small>${demande.franchise_email || ''}</small>`,
+                    `<strong>${demande.nom_camion || ''}</strong>`,
+                    demande.numero_permis || 'Non renseigné',
+                    demande.emplacement || 'Non renseigné',
+                    `<span title="${demande.menu || ''}">${AdminCommon.utils.truncateText(demande.menu, 30)}</span>`,
+                    demande.jours || 'Non renseigné',
+                    AdminCommon.utils.formatDate(demande.date_demande),
+                    `<button class="btn-action success" onclick="CamionManager.validerDemande(${demande.id})">Valider</button>
+                     <button class="btn-action danger" onclick="CamionManager.refuserDemande(${demande.id})">Refuser</button>`
+                ];
+            },
+
+            // ===== MODALS MANUELLES =====
+            showAddModal() {
+                this.createCamionModal('Ajouter un camion manuellement', null, this.handleAdd.bind(this));
+            },
+
+            edit(camionId) {
+                const camion = this.data.camions.find(c => c.id == camionId);
+                if (!camion) {
+                    alert('Camion non trouvé');
+                    return;
+                }
+                
+                console.log('🔧 Modification du camion:', camion);
+                this.createCamionModal(`Modifier le camion #${camion.id}`, camion, this.handleEdit.bind(this, camionId));
+            },
+
+            createCamionModal(title, data, onSubmit) {
+                const isEdit = !!data;
+                const fields = isEdit ? this.config.formFields.edit : this.config.formFields.add;
+                
+                const modal = document.createElement('div');
+                modal.className = 'modal';
+                
+                const fieldsHTML = fields.map(field => this.buildFormField(field, data)).join('');
+
+                modal.innerHTML = `
+                    <div class="modal-content">
+                        <h3>${title}</h3>
+                        ${isEdit ? `<div style="background: #f8f9fa; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
+                            <strong>Camion :</strong> ${data.nom_camion}<br>
+                            <strong>Franchisé :</strong> ${data.franchise_nom || ''} ${data.franchise_prenom || ''}<br>
+                            <strong>Immatriculation :</strong> ${data.immatriculation || 'N/A'}
+                        </div>` : ''}
+                        <form id="camion-modal-form">
+                            ${fieldsHTML}
+                            <div class="modal-actions">
+                                <button type="button" class="btn-secondary" onclick="CamionManager.closeModal()">Annuler</button>
+                                <button type="submit" class="btn-primary">${isEdit ? 'Modifier' : 'Ajouter'}</button>
+                            </div>
+                        </form>
+                    </div>
+                `;
+
+                document.body.appendChild(modal);
+                document.getElementById('camion-modal-form').addEventListener('submit', onSubmit);
+            },
+
+            buildFormField(field, data) {
+                const value = data ? (data[field.name] || '') : (field.defaultValue || '');
+                const id = `camion-${field.name}`;
+                
+                console.log(`🏗️ Field ${field.name}:`, { value, data: data?.[field.name] });
+                
+                const attributes = [];
+                if (field.required) attributes.push('required');
+                if (field.placeholder) attributes.push(`placeholder="${field.placeholder}"`);
+                if (field.min === 'today') attributes.push(`min="${new Date().toISOString().split('T')[0]}"`);
+                if (field.rows) attributes.push(`rows="${field.rows}"`);
+                
+                if (field.type === 'select') {
+                    const options = this.getSelectOptions(field.options);
+                    const optionsHTML = options.map(opt => 
+                        `<option value="${opt.value}" ${value == opt.value ? 'selected' : ''}>${opt.text}</option>`
+                    ).join('');
+                    
+                    return `
+                        <div class="form-group">
+                            <label for="${id}">${field.label}</label>
+                            <select id="${id}" name="${field.name}" ${attributes.join(' ')}>
+                                ${optionsHTML}
+                            </select>
+                        </div>
+                    `;
+                } else if (field.type === 'textarea') {
+                    return `
+                        <div class="form-group">
+                            <label for="${id}">${field.label}</label>
+                            <textarea id="${id}" name="${field.name}" ${attributes.join(' ')}>${value}</textarea>
+                        </div>
+                    `;
+                } else {
+                    return `
+                        <div class="form-group">
+                            <label for="${id}">${field.label}</label>
+                            <input type="${field.type}" id="${id}" name="${field.name}" value="${value}" ${attributes.join(' ')}>
+                        </div>
+                    `;
+                }
+            },
+
+            // ===== HANDLERS =====
+            async handleAdd(e) {
+                e.preventDefault();
+                const data = Object.fromEntries(new FormData(e.target));
+                
+                console.log('➕ Données ajout camion:', data);
+                
+                if (!this.validateCamionData(data)) return;
+
                 try {
-                    const response = await fetch('../api/camions/add.php', {
+                    const response = await fetch(this.config.endpoints.add, {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json'
-                        },
+                        headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(data)
                     });
 
                     const result = await response.json();
-                    console.log('📋 Résultat API ajout camion:', result);
+                    console.log('📋 Résultat ajout:', result);
 
                     if (result.success) {
                         const message = `✅ ${result.message}\nImmatriculation: ${result.immatriculation || 'Générée'}`;
                         alert(message);
-                        closeAddCamionModal();
-                        await loadCamionsTab();
+                        this.closeModal();
+                        await this.loadCamionsTab();
                     } else {
                         alert('❌ Erreur: ' + result.message);
                     }
-
                 } catch (error) {
-                    console.error('❌ Erreur ajout camion:', error);
+                    console.error('❌ Erreur ajout:', error);
                     alert('❌ Erreur réseau: ' + error.message);
                 }
-            });
-        }
+            },
 
-        function closeAddCamionModal() {
-            const modal = document.querySelector('.modal');
-            if (modal) modal.remove();
-        }
-
-        function editCamion(camionId) {
-            const camion = camionManager.data.camions.find(c => c.id == camionId);
-            if (!camion) {
-                alert('Camion non trouvé');
-                return;
-            }
-
-            const modal = document.createElement('div');
-            modal.className = 'modal';
-            modal.innerHTML = `
-                <div class="modal-content">
-                    <h3>Modifier le camion #${camion.id}</h3>
-                    <form id="edit-camion-form">
-                        <div class="form-group">
-                            <label for="edit-nom-camion">Nom du camion *</label>
-                            <input type="text" id="edit-nom-camion" name="nom_camion" value="${camion.nom_camion || ''}" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="edit-etat">État</label>
-                            <select id="edit-etat" name="etat">
-                                ${getEtatOptions().map(opt => 
-                                    `<option value="${opt.value}" ${opt.value === camion.etat ? 'selected' : ''}>${opt.text}</option>`
-                                ).join('')}
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="edit-date-livraison">Date de livraison</label>
-                            <input type="date" id="edit-date-livraison" name="date_livraison" value="${camion.date_livraison || ''}">
-                        </div>
-                        <div class="form-group">
-                            <label for="edit-emplacement">Emplacement</label>
-                            <input type="text" id="edit-emplacement" name="emplacement" value="${camion.emplacement || ''}">
-                        </div>
-                        <div class="form-group">
-                            <label for="edit-menu">Menu</label>
-                            <textarea id="edit-menu" name="menu" rows="3">${camion.menu || ''}</textarea>
-                        </div>
-                        <div class="form-group">
-                            <label for="edit-jours">Jours d'ouverture</label>
-                            <input type="text" id="edit-jours" name="jours" value="${camion.jours || ''}">
-                        </div>
-                        <div class="modal-actions">
-                            <button type="button" class="btn-secondary" onclick="closeEditCamionModal()">Annuler</button>
-                            <button type="submit" class="btn-primary">Modifier</button>
-                        </div>
-                    </form>
-                </div>
-            `;
-
-            document.body.appendChild(modal);
-
-            // GESTION FORMULAIRE
-            document.getElementById('edit-camion-form').addEventListener('submit', async function(e) {
+            async handleEdit(camionId, e) {
                 e.preventDefault();
-
-                const formData = new FormData(this);
-                const data = Object.fromEntries(formData);
-                data.id = camionId; // Ajouter l'ID
-
-                console.log('🔄 MODIFICATION CAMION - Données à envoyer:', data);
-
-                if (!data.nom_camion) {
-                    alert('❌ Le nom du camion est obligatoire');
-                    return;
-                }
+                const data = Object.fromEntries(new FormData(e.target));
+                data.id = camionId;
+                
+                console.log('🔧 Données modification camion:', data);
+                
+                if (!this.validateCamionData(data, true)) return;
 
                 try {
-                    const response = await fetch('../api/camions/update.php', {
+                    const response = await fetch(this.config.endpoints.update, {
                         method: 'PUT',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json'
-                        },
+                        headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(data)
                     });
 
                     const result = await response.json();
-                    console.log('📋 Résultat API modification camion:', result);
+                    console.log('📋 Résultat modification:', result);
 
                     if (result.success) {
                         alert('✅ Camion modifié avec succès !');
-                        closeEditCamionModal();
-                        await loadCamionsTab();
+                        this.closeModal();
+                        await this.loadCamionsTab();
                     } else {
                         alert('❌ Erreur: ' + result.message);
                     }
-
                 } catch (error) {
-                    console.error('❌ Erreur modification camion:', error);
+                    console.error('❌ Erreur modification:', error);
                     alert('❌ Erreur réseau: ' + error.message);
                 }
-            });
-        }
+            },
 
-        function closeEditCamionModal() {
-            const modal = document.querySelector('.modal');
-            if (modal) modal.remove();
-        }
+            // ===== FONCTIONS SPÉCIALISÉES DEMANDES =====
+            validerDemande(demandeId) {
+                const demande = this.data.demandes.find(d => d.id == demandeId);
+                if (!demande) {
+                    alert('Demande non trouvée');
+                    return;
+                }
 
-        function validerDemande(demandeId) {
-            const demande = camionManager.data.demandes.find(d => d.id == demandeId);
-            if (!demande) {
-                alert('Demande non trouvée');
-                return;
-            }
+                this.createDemandeModal('Valider la demande de camion', demande, 'valider', (data) => {
+                    return { demande_id: demandeId, action: 'valider', ...data };
+                });
+            },
 
-            const modal = document.createElement('div');
-            modal.className = 'modal';
-            modal.innerHTML = `
-                <div class="modal-content">
-                    <h3>Valider la demande de camion</h3>
-                    
+            refuserDemande(demandeId) {
+                const demande = this.data.demandes.find(d => d.id == demandeId);
+                if (!demande) {
+                    alert('Demande non trouvée');
+                    return;
+                }
+
+                this.createDemandeModal('Refuser la demande de camion', demande, 'refuser', (data) => {
+                    return { demande_id: demandeId, action: 'refuser', ...data };
+                });
+            },
+
+            createDemandeModal(title, demande, action, dataBuilder) {
+                const modal = document.createElement('div');
+                modal.className = 'modal';
+
+                const infoHTML = this.buildDemandeInfo(demande);
+                const formHTML = action === 'valider' ? this.buildValidateForm() : this.buildRefuseForm();
+
+                modal.innerHTML = `
+                    <div class="modal-content">
+                        <h3>${title}</h3>
+                        ${infoHTML}
+                        <form id="demande-modal-form">
+                            ${formHTML}
+                            <div class="modal-actions">
+                                <button type="button" class="btn-secondary" onclick="CamionManager.closeModal()">Annuler</button>
+                                <button type="submit" class="btn-primary ${action === 'refuser' ? 'btn-action danger' : ''}">${action === 'valider' ? 'Valider la demande' : 'Refuser définitivement'}</button>
+                            </div>
+                        </form>
+                    </div>
+                `;
+
+                document.body.appendChild(modal);
+                document.getElementById('demande-modal-form').addEventListener('submit', 
+                    this.handleDemandeSubmit.bind(this, dataBuilder)
+                );
+            },
+
+            buildDemandeInfo(demande) {
+                return `
                     <div style="background: #f8f9fa; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
                         <strong>Franchisé :</strong> ${demande.franchise_nom} ${demande.franchise_prenom}<br>
                         <strong>Email :</strong> ${demande.franchise_email}<br>
@@ -457,249 +459,117 @@ require_admin();
                         <strong>Menu :</strong> ${AdminCommon.utils.truncateText(demande.menu, 100)}<br>
                         <strong>Jours :</strong> ${demande.jours}
                     </div>
-                    
-                    <form id="validate-demande-form">
-                        <div class="form-group">
-                            <label for="validate-date-livraison">Date de livraison prévue *</label>
-                            <input type="date" id="validate-date-livraison" name="date_livraison" required 
-                                   min="${new Date().toISOString().split('T')[0]}"
-                                   value="${new Date(Date.now() + 14*24*60*60*1000).toISOString().split('T')[0]}">
-                            <small style="color:#666;">Par défaut : dans 2 semaines</small>
-                        </div>
-                        <div class="form-group">
-                            <label for="validate-commentaire">Commentaire (optionnel)</label>
-                            <textarea id="validate-commentaire" name="commentaire" rows="3" 
-                                      placeholder="Instructions pour le franchisé, notes particulières..."></textarea>
-                        </div>
-                        <div class="modal-actions">
-                            <button type="button" class="btn-secondary" onclick="closeValidateDemandeModal()">Annuler</button>
-                            <button type="submit" class="btn-primary">Valider la demande</button>
-                        </div>
-                    </form>
-                </div>
-            `;
+                `;
+            },
 
-            document.body.appendChild(modal);
+            buildValidateForm() {
+                const defaultDate = new Date(Date.now() + 14*24*60*60*1000).toISOString().split('T')[0];
+                return `
+                    <div class="form-group">
+                        <label for="validate-date-livraison">Date de livraison prévue *</label>
+                        <input type="date" id="validate-date-livraison" name="date_livraison" required 
+                               min="${new Date().toISOString().split('T')[0]}"
+                               value="${defaultDate}">
+                        <small style="color:#666;">Par défaut : dans 2 semaines</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="validate-commentaire">Commentaire (optionnel)</label>
+                        <textarea id="validate-commentaire" name="commentaire" rows="3" 
+                                  placeholder="Instructions pour le franchisé, notes particulières..."></textarea>
+                    </div>
+                `;
+            },
 
-            // GESTION FORMULAIRE
-            document.getElementById('validate-demande-form').addEventListener('submit', async function(e) {
-                e.preventDefault();
-
-                const formData = new FormData(this);
-                const data = Object.fromEntries(formData);
-
-                console.log('✅ VALIDATION DEMANDE - Données à envoyer:', data);
-
-                if (!data.date_livraison) {
-                    alert('❌ La date de livraison est obligatoire');
-                    return;
-                }
-
-                try {
-                    const response = await fetch('../api/camions/validate_demande.php', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            demande_id: demandeId,
-                            action: 'valider',
-                            ...data
-                        })
-                    });
-
-                    const result = await response.json();
-                    console.log('📋 Résultat API validation:', result);
-
-                    if (result.success) {
-                        alert('✅ ' + result.message);
-                        closeValidateDemandeModal();
-                        await Promise.all([
-                            loadDemandesTab(),
-                            loadCamionsTab()
-                        ]);
-                    } else {
-                        alert('❌ Erreur: ' + result.message);
-                    }
-
-                } catch (error) {
-                    console.error('❌ Erreur validation demande:', error);
-                    alert('❌ Erreur réseau: ' + error.message);
-                }
-            });
-        }
-
-        function closeValidateDemandeModal() {
-            const modal = document.querySelector('.modal');
-            if (modal) modal.remove();
-        }
-
-        function refuserDemande(demandeId) {
-            const demande = camionManager.data.demandes.find(d => d.id == demandeId);
-            if (!demande) {
-                alert('Demande non trouvée');
-                return;
-            }
-
-            const modal = document.createElement('div');
-            modal.className = 'modal';
-            modal.innerHTML = `
-                <div class="modal-content">
-                    <h3>Refuser la demande de camion</h3>
-                    
+            buildRefuseForm() {
+                return `
                     <div style="background: #fff3cd; padding: 1rem; border-radius: 6px; margin-bottom: 1rem; border-left: 4px solid #ffc107;">
-                        <strong>⚠️ Attention :</strong> Cette action va refuser définitivement la demande de camion de <strong>${demande.franchise_nom} ${demande.franchise_prenom}</strong>.
+                        <strong>⚠️ Attention :</strong> Cette action va refuser définitivement la demande de camion.
                     </div>
-                    
-                    <form id="refuse-demande-form">
-                        <div class="form-group">
-                            <label for="refuse-commentaire">Raison du refus *</label>
-                            <textarea id="refuse-commentaire" name="commentaire" rows="4" required
-                                      placeholder="Expliquez pourquoi cette demande est refusée (ex: documentation incomplète, critères non respectés, etc.)"></textarea>
-                        </div>
-                        <div class="modal-actions">
-                            <button type="button" class="btn-secondary" onclick="closeRefuseDemandeModal()">Annuler</button>
-                            <button type="submit" class="btn-action danger">Refuser définitivement</button>
-                        </div>
-                    </form>
-                </div>
-            `;
+                    <div class="form-group">
+                        <label for="refuse-commentaire">Raison du refus *</label>
+                        <textarea id="refuse-commentaire" name="commentaire" rows="4" required
+                                  placeholder="Expliquez pourquoi cette demande est refusée (ex: documentation incomplète, critères non respectés, etc.)"></textarea>
+                    </div>
+                `;
+            },
 
-            document.body.appendChild(modal);
-
-            document.getElementById('refuse-demande-form').addEventListener('submit', async function(e) {
+            async handleDemandeSubmit(dataBuilder, e) {
                 e.preventDefault();
+                const formData = Object.fromEntries(new FormData(e.target));
+                const data = dataBuilder(formData);
 
-                const formData = new FormData(this);
-                const data = Object.fromEntries(formData);
-
-                console.log('❌ REFUS DEMANDE - Données à envoyer:', data);
-
-                if (!data.commentaire || data.commentaire.trim().length < 10) {
-                    alert('❌ Veuillez expliquer la raison du refus (minimum 10 caractères)');
-                    return;
-                }
+                if (!this.validateDemandeData(data)) return;
 
                 try {
-                    const response = await fetch('../api/camions/validate_demande.php', {
+                    const response = await fetch(this.config.endpoints.validate, {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            demande_id: demandeId,
-                            action: 'refuser',
-                            ...data
-                        })
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
                     });
 
                     const result = await response.json();
-                    console.log('📋 Résultat API refus:', result);
 
                     if (result.success) {
                         alert('✅ ' + result.message);
-                        closeRefuseDemandeModal();
+                        this.closeModal();
                         await Promise.all([
-                            loadDemandesTab(),
-                            loadCamionsTab()
+                            this.loadDemandesTab(),
+                            this.loadCamionsTab()
                         ]);
                     } else {
                         alert('❌ Erreur: ' + result.message);
                     }
-
                 } catch (error) {
-                    console.error('❌ Erreur refus demande:', error);
                     alert('❌ Erreur réseau: ' + error.message);
                 }
-            });
-        }
+            },
 
-        function closeRefuseDemandeModal() {
-            const modal = document.querySelector('.modal');
-            if (modal) modal.remove();
-        }
+            // ===== FONCTIONS UTILITAIRES =====
+            synchroniserEmplacement(camionId) {
+                const camion = this.data.camions.find(c => c.id == camionId);
+                if (!camion) {
+                    alert('Camion non trouvé');
+                    return;
+                }
 
-        function getEtatOptions() {
-            return Object.entries(camionManager.config.etatsLabels).map(([value, text]) => ({
-                value,
-                text
-            }));
-        }
-
-        function getFranchiseOptions() {
-            return [
-                { value: '', text: 'Sélectionner un franchisé' },
-                ...camionManager.data.franchises
-                    .filter(f => f.role === 'franchise' && f.statut === 'valide')
-                    .map(f => ({
-                        value: f.id,
-                        text: `${f.nom || ''} ${f.prenom || ''} (${f.email || ''})`
-                    }))
-            ];
-        }
-
-        function updateBadges() {
-            // Mettre à jour le badge des demandes en attente
-            const badgeElement = document.getElementById('badge-demandes');
-            const count = camionManager.data.demandes?.length || 0;
-            
-            if (count > 0) {
-                badgeElement.textContent = count;
-                badgeElement.style.display = 'inline';
-            } else {
-                badgeElement.style.display = 'none';
-            }
-        }
-
-        function planifierMaintenance(camionId) {
-            AdminCommon.utils.showAlert(`Planification de maintenance pour le camion #${camionId} - Fonctionnalité à développer`, 'info');
-        }
-
-        function synchroniserEmplacement(camionId) {
-            const camion = camionManager.data.camions.find(c => c.id == camionId);
-            if (!camion) {
-                alert('Camion non trouvé');
-                return;
-            }
-
-            const modal = document.createElement('div');
-            modal.className = 'modal';
-            modal.innerHTML = `
-                <div class="modal-content">
-                    <h3>Synchroniser l'emplacement</h3>
-                    
-                    <div style="background: #f8f9fa; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
-                        <strong>Camion :</strong> ${camion.nom_camion}<br>
-                        <strong>Franchisé :</strong> ${camion.franchise_nom}<br>
-                        <strong>Emplacement actuel du camion :</strong> ${camion.emplacement || 'Non défini'}<br>
-                        <strong>Lieu d'installation du franchisé :</strong> ${camion.lieu_installation || 'Non défini'}
+                const modal = document.createElement('div');
+                modal.className = 'modal';
+                modal.innerHTML = `
+                    <div class="modal-content">
+                        <h3>Synchroniser l'emplacement</h3>
+                        
+                        <div style="background: #f8f9fa; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
+                            <strong>Camion :</strong> ${camion.nom_camion}<br>
+                            <strong>Franchisé :</strong> ${camion.franchise_nom}<br>
+                            <strong>Emplacement actuel du camion :</strong> ${camion.emplacement || 'Non défini'}<br>
+                            <strong>Lieu d'installation du franchisé :</strong> ${camion.lieu_installation || 'Non défini'}
+                        </div>
+                        
+                        <form id="sync-emplacement-form">
+                            <div class="form-group">
+                                <label for="sync-emplacement">Nouvel emplacement unifié *</label>
+                                <input type="text" id="sync-emplacement" name="emplacement" 
+                                       value="${camion.emplacement || camion.lieu_installation || ''}" 
+                                       required placeholder="Ex: Place de la République, Paris">
+                                <small style="color:#666;">Cet emplacement sera appliqué au camion ET au franchisé</small>
+                            </div>
+                            <div class="modal-actions">
+                                <button type="button" class="btn-secondary" onclick="CamionManager.closeModal()">Annuler</button>
+                                <button type="submit" class="btn-primary">Synchroniser</button>
+                            </div>
+                        </form>
                     </div>
-                    
-                    <form id="sync-emplacement-form">
-                        <div class="form-group">
-                            <label for="sync-emplacement">Nouvel emplacement unifié *</label>
-                            <input type="text" id="sync-emplacement" name="emplacement" 
-                                   value="${camion.emplacement || camion.lieu_installation || ''}" 
-                                   required placeholder="Ex: Place de la République, Paris">
-                            <small style="color:#666;">Cet emplacement sera appliqué au camion ET au franchisé</small>
-                        </div>
-                        <div class="modal-actions">
-                            <button type="button" class="btn-secondary" onclick="closeSyncEmplacementModal()">Annuler</button>
-                            <button type="submit" class="btn-primary">Synchroniser</button>
-                        </div>
-                    </form>
-                </div>
-            `;
+                `;
 
-            document.body.appendChild(modal);
+                document.body.appendChild(modal);
+                document.getElementById('sync-emplacement-form').addEventListener('submit', 
+                    this.handleSyncEmplacement.bind(this, camionId)
+                );
+            },
 
-            document.getElementById('sync-emplacement-form').addEventListener('submit', async function(e) {
+            async handleSyncEmplacement(camionId, e) {
                 e.preventDefault();
-
-                const formData = new FormData(this);
-                const data = Object.fromEntries(formData);
+                const data = Object.fromEntries(new FormData(e.target));
 
                 if (!data.emplacement) {
                     alert('❌ Veuillez saisir un emplacement');
@@ -707,12 +577,9 @@ require_admin();
                 }
 
                 try {
-                    const response = await fetch('../api/camions/sync_emplacement.php', {
+                    const response = await fetch(this.config.endpoints.syncEmplacement, {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json'
-                        },
+                        headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             camion_id: camionId,
                             emplacement: data.emplacement
@@ -723,27 +590,137 @@ require_admin();
 
                     if (result.success) {
                         alert('✅ Emplacement synchronisé avec succès !');
-                        closeSyncEmplacementModal();
+                        this.closeModal();
                         await Promise.all([
-                            loadCamionsTab(),
-                            loadFranchises()
+                            this.loadCamionsTab(),
+                            this.loadFranchises()
                         ]);
                     } else {
                         alert('❌ Erreur: ' + result.message);
                     }
-
                 } catch (error) {
-                    console.error('❌ Erreur synchronisation:', error);
                     alert('❌ Erreur réseau: ' + error.message);
                 }
-            });
-        }
+            },
 
-        function closeSyncEmplacementModal() {
-            const modal = document.querySelector('.modal');
-            if (modal) modal.remove();
-        }
+            planifierMaintenance(camionId) {
+                AdminCommon.utils.showAlert(`Planification de maintenance pour le camion #${camionId} - Fonctionnalité à développer`, 'info');
+            },
 
+            // ===== HELPERS =====
+            getSelectOptions(optionsSource) {
+                if (typeof optionsSource === 'string') {
+                    return this[optionsSource]();
+                }
+                return optionsSource || [];
+            },
+
+            getFranchiseOptions() {
+                if (!Array.isArray(this.data.franchises)) {
+                    console.warn('⚠️ Franchises non chargées');
+                    return [{ value: '', text: 'Chargement des franchisés...' }];
+                }
+
+                return [
+                    { value: '', text: 'Sélectionner un franchisé' },
+                    ...this.data.franchises
+                        .filter(f => f.role === 'franchise' && f.statut === 'valide')
+                        .map(f => ({
+                            value: f.id,
+                            text: `${f.nom || ''} ${f.prenom || ''} (${f.email || ''})`
+                        }))
+                ];
+            },
+
+            getEtatOptions() {
+                return Object.entries(this.config.etatsLabels).map(([value, text]) => ({
+                    value,
+                    text
+                }));
+            },
+
+            getEtatLabel(etat) {
+                return this.config.etatsLabels[etat] || etat;
+            },
+
+            getMaintenanceBadge(demandeMaintenance) {
+                return demandeMaintenance ? 
+                    '<span class="badge-danger">À traiter</span>' : 
+                    '<span class="badge-success">OK</span>';
+            },
+
+            getLivraisonInfo(dateLivraison) {
+                return dateLivraison ? 
+                    `<span class="date-livraison">${AdminCommon.utils.formatDate(dateLivraison)}</span>` : 
+                    '-';
+            },
+
+            updateBadges() {
+                const badgeElement = document.getElementById('badge-demandes');
+                const count = this.data.demandes?.length || 0;
+                
+                if (count > 0) {
+                    badgeElement.textContent = count;
+                    badgeElement.style.display = 'inline';
+                } else {
+                    badgeElement.style.display = 'none';
+                }
+            },
+
+            // ===== VALIDATIONS =====
+            validateCamionData(data, isEdit = false) {
+                console.log('🔍 Validation camion:', { data, isEdit });
+                
+                if (isEdit) {
+                    if (!data.nom_camion || data.nom_camion.trim() === '') {
+                        alert('❌ Le nom du camion est obligatoire');
+                        return false;
+                    }
+                } else {
+                    if (!data.user_id || !data.nom_camion || data.nom_camion.trim() === '') {
+                        alert('❌ Veuillez remplir tous les champs obligatoires');
+                        return false;
+                    }
+                }
+                
+                return true;
+            },
+
+            validateDemandeData(data) {
+                if (data.action === 'valider' && !data.date_livraison) {
+                    alert('❌ La date de livraison est obligatoire');
+                    return false;
+                }
+                
+                if (data.action === 'refuser' && (!data.commentaire || data.commentaire.trim().length < 10)) {
+                    alert('❌ Veuillez expliquer la raison du refus (minimum 10 caractères)');
+                    return false;
+                }
+                
+                return true;
+            },
+
+            closeModal() {
+                const modal = document.querySelector('.modal');
+                if (modal) modal.remove();
+            }
+        };
+
+        // ===== INITIALISATION AUTOMATIQUE =====
+        document.addEventListener('DOMContentLoaded', function() {
+            CamionManager.init();
+        });
+
+        // ===== FONCTIONS GLOBALES =====
+        function loadCamionsTab() { return CamionManager.loadCamionsTab(); }
+        function loadDemandesTab() { return CamionManager.loadDemandesTab(); }
+        function showAddCamionModal() { CamionManager.showAddModal(); }
+        function editCamion(id) { CamionManager.edit(id); }
+        function validerDemande(id) { CamionManager.validerDemande(id); }
+        function refuserDemande(id) { CamionManager.refuserDemande(id); }
+        function synchroniserEmplacement(id) { CamionManager.synchroniserEmplacement(id); }
+        function planifierMaintenance(id) { CamionManager.planifierMaintenance(id); }
+        function updateBadges() { CamionManager.updateBadges(); }
     </script>
 </body>
 </html>
