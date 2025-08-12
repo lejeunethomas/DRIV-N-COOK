@@ -479,26 +479,105 @@ require_admin();
         }
 
         function showAddStockModal() {
-            AdminCommon.utils.createFormModal({
-                title: 'Ajouter/Modifier un stock',
-                fields: entrepotManager.config.formFields.stock.map(field => {
-                    if (field.options === 'getEntrepotOptions') {
-                        field.options = getEntrepotOptions();
-                    } else if (field.options === 'getProduitOptions') {
-                        field.options = getProduitOptions();
-                    }
-                    return field;
-                }),
-                onSubmit: async (data, isEdit) => {
-                    const success = await AdminCommon.utils.saveData(entrepotManager.config.endpoints.stockAdd, data);
-                    if (success) {
-                        AdminCommon.utils.closeModal();
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <h3>Ajouter/Modifier un stock</h3>
+                    <form id="add-stock-form">
+                        <div class="form-group">
+                            <label for="add-entrepot-id">Entrepôt *</label>
+                            <select id="add-entrepot-id" name="entrepot_id" required>
+                                <option value="">Sélectionner un entrepôt</option>
+                                ${entrepotManager.data.entrepots.map(e => 
+                                    `<option value="${e.id}">${e.nom}</option>`
+                                ).join('')}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="add-produit-id">Produit *</label>
+                            <select id="add-produit-id" name="produit_id" required>
+                                <option value="">Sélectionner un produit</option>
+                                ${entrepotManager.data.produits.map(p => 
+                                    `<option value="${p.id}">${p.nom} (${p.type})</option>`
+                                ).join('')}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="add-quantite">Quantité *</label>
+                            <input type="number" id="add-quantite" name="quantite" required step="0.01" min="0" placeholder="0.00">
+                        </div>
+                        <div class="form-group">
+                            <label for="add-unite">Unité *</label>
+                            <select id="add-unite" name="unite" required>
+                                <option value="kg">Kilogrammes</option>
+                                <option value="litres">Litres</option>
+                                <option value="unites">Unités</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="add-seuil-alerte">Seuil d'alerte</label>
+                            <input type="number" id="add-seuil-alerte" name="seuil_alerte" step="0.01" min="0" placeholder="5.00">
+                        </div>
+                        <div class="modal-actions">
+                            <button type="button" class="btn-secondary" onclick="closeAddStockModal()">Annuler</button>
+                            <button type="submit" class="btn-primary">Ajouter</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+
+            document.getElementById('add-stock-form').addEventListener('submit', async function(e) {
+                e.preventDefault();
+
+                const formData = new FormData(this);
+                const data = Object.fromEntries(formData);
+
+                console.log('📦 AJOUT STOCK - Données à envoyer:', data);
+
+                if (!data.entrepot_id || !data.produit_id || !data.quantite || !data.unite) {
+                    alert('❌ Veuillez remplir tous les champs obligatoires');
+                    return;
+                }
+
+                try {
+                    const response = await fetch('../api/stocks/add.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify(data)
+                    });
+
+                    const result = await response.json();
+                    console.log('📋 Résultat API ajout stock:', result);
+
+                    if (result.success) {
+                        alert('✅ Stock ajouté avec succès !');
+                        closeAddStockModal();
+                        
                         await loadAllStockData();
                         syncData();
                         displayStocks();
+                        updateGlobalStats();
+                        
+                    } else {
+                        alert('❌ Erreur: ' + result.message);
                     }
+
+                } catch (error) {
+                    console.error('❌ Erreur ajout stock:', error);
+                    alert('❌ Erreur réseau: ' + error.message);
                 }
             });
+        }
+
+        function closeAddStockModal() {
+            const modal = document.querySelector('.modal');
+            if (modal) modal.remove();
         }
 
         async function editStock(entrepotId, produitId) {
@@ -508,40 +587,104 @@ require_admin();
             );
             
             if (!stock) {
-                AdminCommon.utils.showAlert('Stock non trouvé', 'error');
+                alert('Stock non trouvé');
                 return;
             }
 
-            AdminCommon.utils.createFormModal({
-                title: 'Modifier le stock',
-                data: {
-                    entrepot_id: entrepotId,
-                    produit_id: produitId,
-                    quantite: stock.quantite,
-                    unite: stock.unite,
-                    seuil_alerte: stock.seuil_alerte
-                },
-                fields: [
-                    { name: 'entrepot_id', type: 'hidden' },
-                    { name: 'produit_id', type: 'hidden' },
-                    { name: 'quantite', label: 'Quantité', type: 'number', required: true, attributes: 'step="0.01" min="0"' },
-                    { name: 'unite', label: 'Unité', type: 'select', required: true, options: [
-                        { value: 'kg', text: 'Kilogrammes' },
-                        { value: 'litres', text: 'Litres' },
-                        { value: 'unites', text: 'Unités' }
-                    ]},
-                    { name: 'seuil_alerte', label: 'Seuil d\'alerte', type: 'number', attributes: 'step="0.01" min="0"' }
-                ],
-                onSubmit: async (data, isEdit) => {
-                    const success = await AdminCommon.utils.saveData(entrepotManager.config.endpoints.stockUpdate, data, true);
-                    if (success) {
-                        AdminCommon.utils.closeModal();
-                        await loadAllStockData();  
-                        syncData();                
-                        displayStocks();           
+            const entrepotNom = getEntrepotName(entrepotId);
+            const produitNom = getProduitName(produitId);
+
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <h3>Modifier le stock</h3>
+                    
+                    <div style="background: #f8f9fa; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
+                        <strong>Entrepôt :</strong> ${entrepotNom}<br>
+                        <strong>Produit :</strong> ${produitNom}<br>
+                        <strong>Stock actuel :</strong> ${parseFloat(stock.quantite).toFixed(2)} ${stock.unite}
+                    </div>
+                    
+                    <form id="edit-stock-form">
+                        <input type="hidden" name="entrepot_id" value="${entrepotId}">
+                        <input type="hidden" name="produit_id" value="${produitId}">
+                        
+                        <div class="form-group">
+                            <label for="edit-quantite">Quantité *</label>
+                            <input type="number" id="edit-quantite" name="quantite" value="${stock.quantite}" required step="0.01" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-unite">Unité *</label>
+                            <select id="edit-unite" name="unite" required>
+                                <option value="kg" ${stock.unite === 'kg' ? 'selected' : ''}>Kilogrammes</option>
+                                <option value="litres" ${stock.unite === 'litres' ? 'selected' : ''}>Litres</option>
+                                <option value="unites" ${stock.unite === 'unites' ? 'selected' : ''}>Unités</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-seuil-alerte">Seuil d'alerte</label>
+                            <input type="number" id="edit-seuil-alerte" name="seuil_alerte" value="${stock.seuil_alerte}" step="0.01" min="0">
+                        </div>
+                        <div class="modal-actions">
+                            <button type="button" class="btn-secondary" onclick="closeEditStockModal()">Annuler</button>
+                            <button type="submit" class="btn-primary">Modifier</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+
+            document.getElementById('edit-stock-form').addEventListener('submit', async function(e) {
+                e.preventDefault();
+
+                const formData = new FormData(this);
+                const data = Object.fromEntries(formData);
+
+                console.log('🔄 MODIFICATION STOCK - Données à envoyer:', data);
+
+                if (!data.quantite || !data.unite) {
+                    alert('❌ Veuillez remplir tous les champs obligatoires');
+                    return;
+                }
+
+                try {
+                    const response = await fetch('../api/stocks/update.php', {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify(data)
+                    });
+
+                    const result = await response.json();
+                    console.log('📋 Résultat API modification stock:', result);
+
+                    if (result.success) {
+                        alert('✅ Stock modifié avec succès !');
+                        closeEditStockModal();
+                        
+                        await loadAllStockData();
+                        syncData();
+                        displayStocks();
+                        updateGlobalStats();
+                        
+                    } else {
+                        alert('❌ Erreur: ' + result.message);
                     }
+
+                } catch (error) {
+                    console.error('❌ Erreur modification stock:', error);
+                    alert('❌ Erreur réseau: ' + error.message);
                 }
             });
+        }
+
+        function closeEditStockModal() {
+            const modal = document.querySelector('.modal');
+            if (modal) modal.remove();
         }
 
         async function deleteStock(entrepotId, produitId) {
