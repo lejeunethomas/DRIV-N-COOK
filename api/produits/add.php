@@ -19,7 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt = $conn->prepare("INSERT INTO produits (nom, type, prix_unitaire, obligatoire, quantite_minimale) VALUES (?, ?, ?, ?, ?)");
         $stmt->execute([
             $data['nom'],
-            $data['type'] ?? 'aliment',
+            isset($data['type']) ? $data['type'] : 'aliment',
             $data['prix_unitaire'],
             isset($data['obligatoire']) ? ($data['obligatoire'] ? 1 : 0) : 1,
             isset($data['quantite_minimale']) ? intval($data['quantite_minimale']) : 0

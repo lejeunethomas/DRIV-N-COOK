@@ -344,32 +344,55 @@ async function apiRequest(endpoint, options = {}) {
     };
     
     if (data && ['POST','PUT','DELETE','PATCH'].includes(method)) {
-    try { requestOptions.body = JSON.stringify(data); }
-    catch(e){ console.warn('Serialize fail', e); }
-    };
-
+        try { requestOptions.body = JSON.stringify(data); }
+        catch(e){ console.warn('Serialize fail', e); }
+    }
+    
     if (method === 'DELETE' && !requestOptions.body && data && typeof data === 'object') {
         const qs = new URLSearchParams(data).toString();
         endpoint += (endpoint.includes('?') ? '&' : '?') + qs;
-    };
+    }
     
     if (showLoader) showAlert('Chargement...', 'info', 1000);
     
     try {
+        console.log(`[API] ${method} ${endpoint}`, data ? { data } : '');
+        
         const response = await fetch(endpoint, requestOptions);
         
-        if (!response.ok) {
-            throw new Error(`Erreur HTTP: ${response.status}`);
+        console.log(`[API] Status: ${response.status}, Headers:`, [...response.headers.entries()]);
+        
+        const rawResponse = await response.text();
+        console.log(`[API] Raw response (${rawResponse.length} chars):`, rawResponse.substring(0, 200));
+        
+        if (!rawResponse || rawResponse.trim() === '') {
+            throw new Error(`API ${endpoint} a retourné une réponse vide`);
         }
         
-        const result = await response.json();
+        const contentType = response.headers.get('content-type') || 'non défini';
+        if (!contentType.includes('application/json')) {
+            throw new Error(`API ${endpoint} a retourné du "${contentType}" au lieu de JSON. Réponse: ${rawResponse.substring(0, 300)}`);
+        }
+        
+        if (!response.ok) {
+            throw new Error(`Erreur HTTP ${response.status}: ${rawResponse.substring(0, 200)}`);
+        }
+        
+        let result;
+        try {
+            result = JSON.parse(rawResponse);
+        } catch (parseError) {
+            throw new Error(`JSON invalide de ${endpoint}: ${parseError.message}. Contenu: ${rawResponse.substring(0, 200)}`);
+        }
+        
+        console.log(`[API] ✅ Succès:`, result);
         return result;
         
     } catch (error) {
-        console.error('Erreur API:', error);
+        console.error(`[API] ❌ Erreur ${method} ${endpoint}:`, error);
         showAlert(`${errorMessage}: ${error.message}`, 'error');
         throw error;
-    };
+    }
 }
 
 /**

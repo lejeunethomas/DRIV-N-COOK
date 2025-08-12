@@ -1,4 +1,7 @@
 <?php
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
 require_once '../includes/auth.php';
 require_admin();
 ?>
@@ -635,72 +638,140 @@ require_admin();
         async function editEntrepot(id) {
             const entrepot = entrepotManager.data.entrepots.find(e => e.id == id);
             if (!entrepot) {
-                AdminCommon.utils.showAlert('Entrepôt non trouvé', 'error');
+                alert('Entrepôt non trouvé');
                 return;
             }
 
-            AdminCommon.utils.createFormModal({
-                title: `Modifier l'entrepôt #${id}`,
-                data: entrepot,
-                fields: entrepotManager.config.formFields.entrepot,
-                onSubmit: async (data, isEdit) => {
-                    try {
-                        data.id = id;
-                        
-                        console.log('🔄 Modification entrepôt, données envoyées:', data);
-                        
-                        const response = await fetch(entrepotManager.config.endpoints.update, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'Accept': 'application/json'
-                            },
-                            body: JSON.stringify(data)
-                        });
-                        
-                        console.log('📊 Status HTTP:', response.status);
-                        console.log('📊 Headers:', [...response.headers.entries()]);
-                        
-                        // ✅ VÉRIFICATION DU CONTENT-TYPE
-                        const contentType = response.headers.get('content-type');
-                        console.log('📋 Content-Type reçu:', contentType);
-                        
-                        if (!contentType || !contentType.includes('application/json')) {
-                            const textResponse = await response.text();
-                            console.error('❌ Réponse non-JSON reçue:', textResponse);
-                            throw new Error(`API a retourné du ${contentType} au lieu de JSON: ${textResponse.substring(0, 200)}...`);
-                        }
-                        
-                        if (!response.ok) {
-                            const errorText = await response.text();
-                            console.error('❌ Erreur HTTP:', errorText);
-                            throw new Error(`Erreur HTTP ${response.status}: ${errorText}`);
-                        }
-                        
-                        // ✅ PARSING JSON SÉCURISÉ
-                        const result = await response.json();
-                        console.log('📋 Résultat API:', result);
-                        
-                        if (result.success) {
-                            AdminCommon.utils.showAlert('✅ Entrepôt modifié avec succès !', 'success');
-                            AdminCommon.utils.closeModal();
-                            
-                            await loadAllStockData();
-                            syncData();
-                            displayEntrepots();
-                            updateGlobalStats();
-                        } else {
-                            AdminCommon.utils.showAlert('❌ Erreur API: ' + (result.message || 'Erreur inconnue'), 'error');
-                        }
-                        
-                    } catch (error) {
-                        console.error('❌ Erreur complète dans modification:', error);
-                        console.error('❌ Stack trace:', error.stack);
-                        AdminCommon.utils.showAlert('❌ Erreur détaillée: ' + error.message, 'error');
+            // ✅ MODAL MANUEL (comme pour l'ajout)
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <h3>Modifier l'entrepôt #${id}</h3>
+                    <form id="edit-entrepot-form">
+                        <div class="form-group">
+                            <label for="edit-nom">Nom de l'entrepôt *</label>
+                            <input type="text" id="edit-nom" name="nom" value="${entrepot.nom || ''}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-adresse">Adresse complète *</label>
+                            <input type="text" id="edit-adresse" name="adresse" value="${entrepot.adresse || ''}" required placeholder="123 Rue de la Logistique">
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-ville">Ville *</label>
+                            <input type="text" id="edit-ville" name="ville" value="${entrepot.ville || ''}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-code-postal">Code postal *</label>
+                            <input type="text" id="edit-code-postal" name="code_postal" value="${entrepot.code_postal || ''}" required pattern="[0-9]{5}" title="Code postal français (5 chiffres)">
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-telephone">Téléphone</label>
+                            <input type="tel" id="edit-telephone" name="telephone" value="${entrepot.telephone || ''}" placeholder="01 23 45 67 89">
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-email">Email</label>
+                            <input type="email" id="edit-email" name="email" value="${entrepot.email || ''}" placeholder="entrepot@drivncook.com">
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-responsable">Responsable</label>
+                            <input type="text" id="edit-responsable" name="responsable" value="${entrepot.responsable || ''}" placeholder="Jean Dupont">
+                        </div>
+                        <div class="modal-actions">
+                            <button type="button" class="btn-secondary" onclick="closeEditEntrepotModal()">Annuler</button>
+                            <button type="submit" class="btn-primary">Modifier</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+
+            // ✅ GESTION FORMULAIRE AVEC DEBUG COMPLET
+            document.getElementById('edit-entrepot-form').addEventListener('submit', async function(e) {
+                e.preventDefault();
+
+                const formData = new FormData(this);
+                const data = Object.fromEntries(formData);
+                data.id = id; // Ajouter l'ID
+
+                console.log('🔄 MODIFICATION - Données à envoyer:', data);
+
+                if (!data.nom || !data.adresse || !data.ville || !data.code_postal) {
+                    alert('❌ Veuillez remplir tous les champs obligatoires');
+                    return;
+                }
+
+                try {
+                    console.log('🌐 Envoi vers:', '../api/entrepots/update.php');
+                    
+                    const response = await fetch('../api/entrepots/update.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify(data)
+                    });
+
+                    console.log('📊 Status HTTP:', response.status);
+                    console.log('📊 Headers response:', [...response.headers.entries()]);
+
+                    // ✅ LECTURE RAW POUR DEBUG
+                    const rawResponse = await response.text();
+                    console.log('📋 Réponse brute (longueur ' + rawResponse.length + '):', rawResponse);
+
+                    if (!rawResponse || rawResponse.trim() === '') {
+                        alert('❌ L\'API a retourné une réponse vide');
+                        return;
                     }
+
+                    // ✅ VÉRIFICATION CONTENT-TYPE
+                    const contentType = response.headers.get('content-type') || 'non défini';
+                    console.log('📋 Content-Type reçu:', contentType);
+
+                    if (!contentType.includes('application/json')) {
+                        alert(`❌ API a retourné du ${contentType} au lieu de JSON:\n${rawResponse.substring(0, 300)}`);
+                        return;
+                    }
+
+                    // ✅ PARSING JSON SÉCURISÉ
+                    let result;
+                    try {
+                        result = JSON.parse(rawResponse);
+                        console.log('✅ JSON parsé:', result);
+                    } catch (parseError) {
+                        console.error('❌ Erreur parsing JSON:', parseError);
+                        alert(`❌ Impossible de parser la réponse JSON:\n${rawResponse.substring(0, 200)}`);
+                        return;
+                    }
+
+                    if (result.success) {
+                        alert('✅ Entrepôt modifié avec succès !');
+                        closeEditEntrepotModal();
+                        
+                        await loadAllStockData();
+                        syncData();
+                        displayEntrepots();
+                        populateEntrepotFilter();
+                        updateGlobalStats();
+                        
+                    } else {
+                        alert('❌ Erreur API: ' + (result.message || 'Erreur inconnue'));
+                    }
+
+                } catch (error) {
+                    console.error('❌ Erreur complète:', error);
+                    alert('❌ Erreur réseau: ' + error.message);
                 }
             });
         }
-    </script>
+
+        // ✅ FONCTION POUR FERMER LE MODAL DE MODIFICATION
+        function closeEditEntrepotModal() {
+            const modal = document.querySelector('.modal');
+            if (modal) modal.remove();
+        }
+        </script>
 </body>
 </html>
