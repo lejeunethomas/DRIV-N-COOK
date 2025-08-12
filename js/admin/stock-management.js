@@ -404,73 +404,39 @@ function viewProductStocks(productId) {
 // FONCTIONS DE GÉOLOCALISATION
 
 /**
- * Géolocaliser une adresse avec l'API Nominatim
- */
-async function geocodeAddress(address) {
-    try {
-        console.log('🌍 Géolocalisation de:', address);
-        
-        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`);
-        
-        if (!response.ok) {
-            throw new Error(`Erreur HTTP: ${response.status}`);
-        }
-        
-        const results = await response.json();
-        
-        if (results && results.length > 0) {
-            const result = results[0];
-            return {
-                success: true,
-                latitude: parseFloat(result.lat),
-                longitude: parseFloat(result.lon),
-                display_name: result.display_name
-            };
-        } else {
-            return {
-                success: false,
-                message: 'Adresse non trouvée'
-            };
-        }
-        
-    } catch (error) {
-        console.error('Erreur géolocalisation:', error);
-        return {
-            success: false,
-            message: error.message
-        };
-    }
-}
-
-/**
  * Géolocaliser tous les entrepôts non géolocalisés
  */
-async function geocodeAllEntrepots() {
-    const entrepotsSansCoordonnees = globalStockData.entrepots.filter(e => !e.latitude || !e.longitude);
+async function geocodeAllEntrepots(opts = {}) {
+    const silent = opts.silent === true;
+    const statusEl = document.getElementById('geocoding-status');
     
-    if (entrepotsSansCoordonnees.length === 0) {
-        showAlert('Tous les entrepôts sont déjà géolocalisés !', 'success');
+    const entrepotsSansCoord = globalStockData.entrepots.filter(e => !e.latitude || !e.longitude);
+    if (entrepotsSansCoord.length === 0) {
+        if (!silent) showAlert('Tous les entrepôts sont déjà géolocalisés !', 'success');
+        else if (statusEl) statusEl.textContent = 'Tous les entrepôts sont déjà géolocalisés.';
+        console.log('[GEO] Aucun entrepôt à géolocaliser');
         return;
     }
     
-    if (!confirm(`Géolocaliser ${entrepotsSansCoordonnees.length} entrepôt(s) ? Cette opération peut prendre quelques minutes.`)) {
+    if (!silent && !confirm(`Géolocaliser ${entrepotsSansCoord.length} entrepôt(s) ?`)) {
         return;
     }
     
     let processed = 0;
     let success = 0;
     
-    for (const entrepot of entrepotsSansCoordonnees) {
+    if (statusEl) statusEl.textContent = `Géolocalisation en cours: 0/${entrepotsSansCoord.length}...`;
+    console.log(`[GEO] Lancement géolocalisation ${entrepotsSansCoord.length} entrepôts`);
+    
+    for (const entrepot of entrepotsSansCoord) {
         try {
-            showAlert(`Géolocalisation ${processed + 1}/${entrepotsSansCoordonnees.length}: ${entrepot.nom}...`, 'info');
-            
             const fullAddress = `${entrepot.adresse}, ${entrepot.code_postal} ${entrepot.ville}, France`;
             const result = await geocodeAddress(fullAddress);
             
             if (result.success) {
-                const response = await fetch('../api/entrepots/update.php', {
+                const resp = await fetch('../api/entrepots/update.php', {
                     method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
+                    headers: {'Content-Type':'application/json'},
                     body: JSON.stringify({
                         id: entrepot.id,
                         nom: entrepot.nom,
@@ -484,28 +450,30 @@ async function geocodeAllEntrepots() {
                         longitude: result.longitude
                     })
                 });
-                
-                if (response.ok) {
-                    success++;
-                }
+                if (resp.ok) success++;
             }
-            
+        } catch (e) {
+            console.warn('[GEO] Échec pour', entrepot.nom, e.message);
+        } finally {
             processed++;
-            
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            
-        } catch (error) {
-            console.error(`Erreur pour ${entrepot.nom}:`, error);
-            processed++;
+            if (statusEl) statusEl.textContent = `Géolocalisation: ${processed}/${entrepotsSansCoord.length} (succès: ${success})`;
+            await new Promise(r => setTimeout(r, 800));
         }
     }
     
-    showAlert(`Géolocalisation terminée : ${success}/${processed} entrepôts traités avec succès`, success > 0 ? 'success' : 'error');
     await loadAllStockData();
-    
     if (typeof displayEntrepots === 'function') displayEntrepots();
-    if (typeof displayProducts === 'function') displayProducts();
+    if (statusEl) statusEl.textContent = `Terminé: ${success}/${processed} entrepôt(s) géolocalisé(s).`;
+    if (!silent) showAlert(`Géolocalisation terminée: ${success}/${processed}`, success > 0 ? 'success' : 'warning');
+    console.log('[GEO] Terminé', { processed, success });
 }
+
+function geocodeAllEntrepotsSilent() {
+    return geocodeAllEntrepots({ silent: true });
+}
+
+window.geocodeAllEntrepots = window.geocodeAllEntrepots || geocodeAllEntrepots;
+window.geocodeAllEntrepotsSilent = window.geocodeAllEntrepotsSilent || geocodeAllEntrepotsSilent;
 
 // FONCTIONS UTILITAIRES GÉNÉRALES
 
@@ -645,6 +613,14 @@ if (typeof module !== 'undefined' && module.exports) {
         showAlert,
         startGlobalMonitoring,
         updateUniteOptions,
-        toggleQuantiteMinimale
+        toggleQuantiteMinimale,
+        geocodeAllEntrepotsSilent
     };
 }
+
+window.globalStockData = window.globalStockData || globalStockData;
+window.showGlobalStockMatrix = window.showGlobalStockMatrix || showGlobalStockMatrix;
+window.showStockAlerts = window.showStockAlerts || showStockAlerts;
+window.viewProductStocks = window.viewProductStocks || viewProductStocks;
+window.geocodeAllEntrepots = window.geocodeAllEntrepots || geocodeAllEntrepots;
+window.geocodeAllEntrepotsSilent = window.geocodeAllEntrepotsSilent || geocodeAllEntrepotsSilent;

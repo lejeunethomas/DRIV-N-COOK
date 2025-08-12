@@ -134,3 +134,10 @@ function getDeliveryTimeEstimate(km) {
     if (km <= 150) return { text: "48h", class: "delivery-two-days", hours: 48 };
     return { text: "3-5 jours", class: "delivery-long", hours: 120 };
 }
+
+// Export global pour utilisation dans les pages admin
+window.geocodeAddress = geocodeAddress;
+window.getCurrentPosition = getCurrentPosition;
+window.calculateDistance = calculateDistance;
+window.formatDistance = formatDistance;
+window.getDeliveryTimeEstimate = getDeliveryTimeEstimate;

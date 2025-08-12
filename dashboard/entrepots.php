@@ -42,6 +42,8 @@ require_admin();
                 <button onclick="showStockAlertsView()" class="btn-nav">Alertes</button>
                 <button onclick="geocodeAllEntrepotsView()" class="btn-nav">Géolocaliser tous</button>
             </div>
+
+            <div id="geocoding-status" style="margin:0.75rem 0;font-size:0.85rem;color:#555;"></div>
             
             <div class="global-overview">
                 <h3 style="margin: 0 0 1rem 0; color: #1976d2;">Vue d'ensemble du système</h3>
@@ -93,10 +95,26 @@ require_admin();
     </div>
 
     <script src="../js/admin/common.js"></script>
-    <script src="../js/admin/stock-management.js"></script>
     <script src="../js/admin/geolocation.js"></script>
+    <script src="../js/admin/stock-management.js"></script>
     <script>
         function runStockModule(methodName) {
+            // Diagnostic si fonction absente
+            if (!window.__stockDiagDone) {
+                window.__stockDiagDone = true;
+                console.log('[STOCK DIAG] Fonctions dispo:',
+                    'showGlobalStockMatrix=', typeof window.showGlobalStockMatrix,
+                    'showStockAlerts=', typeof window.showStockAlerts,
+                    'geocodeAllEntrepotsSilent=', typeof window.geocodeAllEntrepotsSilent
+                );
+            }
+
+            // Retarder si script pas encore prêt
+            if (typeof window[methodName] !== 'function') {
+                console.warn(`[runStockModule] ${methodName} indisponible, nouvel essai dans 100ms`);
+                return setTimeout(() => runStockModule(methodName), 100);
+            }
+
             const backup = window.globalStockData;
             window.globalStockData = {
                 products: (entrepotManager?.data?.produits) || [],
@@ -105,22 +123,17 @@ require_admin();
                 globalStats: backup?.globalStats || { ruptures: 0, alertes: 0, stocksOk: 0, totalEntrepots: 0, totalProduits: 0 }
             };
             try {
-                const fn = window[methodName];
-                if (typeof fn === 'function') fn();
-                else alert(`Fonction indisponible: ${methodName}`);
+                window[methodName]();
+            } catch (e) {
+                console.error(`[runStockModule] Erreur dans ${methodName}:`, e);
+                alert(`Erreur lors de l'exécution de ${methodName}`);
             } finally {
                 window.globalStockData = backup;
             }
         }
 
-        function openGlobalMatrixView() {
-            runStockModule('showGlobalStockMatrix');
-        }
-
-        function showStockAlertsView() {
-            runStockModule('showStockAlerts');
-        }
-
+        function openGlobalMatrixView() { runStockModule('showGlobalStockMatrix'); }
+        function showStockAlertsView() { runStockModule('showStockAlerts'); }
         function geocodeAllEntrepotsView() {
             runStockModule('geocodeAllEntrepots');
         }
@@ -256,16 +269,20 @@ require_admin();
         }
 
 
-        function geocodeAllEntrepots() {
-            alert('Géolocalisation automatique en développement');
-        }
-
         document.addEventListener('DOMContentLoaded', async function() {
             await loadAllStockData();
             syncData();
             displayEntrepots();
             populateEntrepotFilter();
             startGlobalMonitoring();
+            
+            console.log('=== DIAGNOSTIC GEOLOCALISATION ===');
+            console.log('geocodeAddress:', typeof window.geocodeAddress);
+            console.log('geocodeAllEntrepots:', typeof window.geocodeAllEntrepots);
+            console.log('Entrepôts sans coordonnées:', 
+                entrepotManager.data.entrepots.filter(e => !e.latitude || !e.longitude).length
+            );
+            console.log('=== FIN DIAGNOSTIC ===');
         });
 
         function syncData() {
@@ -630,16 +647,42 @@ require_admin();
                     try {
                         data.id = id;
                         
+                        console.log('🔄 Modification entrepôt, données envoyées:', data);
+                        
                         const response = await fetch(entrepotManager.config.endpoints.update, {
                             method: 'POST',
-                            headers: {'Content-Type': 'application/json'},
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json'
+                            },
                             body: JSON.stringify(data)
                         });
                         
+                        console.log('📊 Status HTTP:', response.status);
+                        console.log('📊 Headers:', [...response.headers.entries()]);
+                        
+                        // ✅ VÉRIFICATION DU CONTENT-TYPE
+                        const contentType = response.headers.get('content-type');
+                        console.log('📋 Content-Type reçu:', contentType);
+                        
+                        if (!contentType || !contentType.includes('application/json')) {
+                            const textResponse = await response.text();
+                            console.error('❌ Réponse non-JSON reçue:', textResponse);
+                            throw new Error(`API a retourné du ${contentType} au lieu de JSON: ${textResponse.substring(0, 200)}...`);
+                        }
+                        
+                        if (!response.ok) {
+                            const errorText = await response.text();
+                            console.error('❌ Erreur HTTP:', errorText);
+                            throw new Error(`Erreur HTTP ${response.status}: ${errorText}`);
+                        }
+                        
+                        // ✅ PARSING JSON SÉCURISÉ
                         const result = await response.json();
+                        console.log('📋 Résultat API:', result);
                         
                         if (result.success) {
-                            AdminCommon.utils.showAlert('Entrepôt modifié avec succès !', 'success');
+                            AdminCommon.utils.showAlert('✅ Entrepôt modifié avec succès !', 'success');
                             AdminCommon.utils.closeModal();
                             
                             await loadAllStockData();
@@ -647,12 +690,13 @@ require_admin();
                             displayEntrepots();
                             updateGlobalStats();
                         } else {
-                            AdminCommon.utils.showAlert('Erreur : ' + result.message, 'error');
+                            AdminCommon.utils.showAlert('❌ Erreur API: ' + (result.message || 'Erreur inconnue'), 'error');
                         }
                         
                     } catch (error) {
-                        console.error('Erreur lors de la modification:', error);
-                        AdminCommon.utils.showAlert('Erreur réseau lors de la modification', 'error');
+                        console.error('❌ Erreur complète dans modification:', error);
+                        console.error('❌ Stack trace:', error.stack);
+                        AdminCommon.utils.showAlert('❌ Erreur détaillée: ' + error.message, 'error');
                     }
                 }
             });
