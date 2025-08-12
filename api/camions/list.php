@@ -11,10 +11,11 @@ try {
         LEFT JOIN users u ON c.user_id = u.id 
         ORDER BY c.id DESC
     ");
-    $camions = $stmt->fetchAll();
+    $camions = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
-    echo json_encode($camions);
+    echo json_encode($camions ?: []);
 } catch (Exception $e) {
+    error_log('Erreur camions/list.php: ' . $e->getMessage());
     echo json_encode(['error' => $e->getMessage()]);
 }
 ?>

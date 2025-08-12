@@ -128,33 +128,76 @@ require_admin();
             // ===== CHARGEMENT DONNÉES =====
             async loadCamionsTab() {
                 try {
-                    this.data.camions = await AdminCommon.utils.apiRequest(this.config.endpoints.camions);
+                    // ✅ Utiliser fetch directement au lieu d'AdminCommon.utils.apiRequest
+                    const response = await fetch(this.config.endpoints.camions);
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                    
+                    this.data.camions = await response.json();
                     console.log('✅ Camions chargés:', this.data.camions);
+                    
+                    // ✅ Vérifier si c'est un tableau valide
+                    if (!Array.isArray(this.data.camions)) {
+                        console.warn('⚠️ Réponse camions non valide:', this.data.camions);
+                        this.data.camions = [];
+                    }
+                    
                     this.displayCamions();
                 } catch (error) {
                     console.error('❌ Erreur chargement camions:', error);
-                    AdminCommon.utils.showAlert('Erreur lors du chargement des camions', 'error');
+                    this.data.camions = [];
+                    this.displayCamions(); // Afficher tableau vide
+                    this.showError('Erreur lors du chargement des camions: ' + error.message);
                 }
             },
 
             async loadDemandesTab() {
                 try {
-                    this.data.demandes = await AdminCommon.utils.apiRequest(this.config.endpoints.demandes);
+                    const response = await fetch(this.config.endpoints.demandes);
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                    
+                    this.data.demandes = await response.json();
                     console.log('✅ Demandes chargées:', this.data.demandes);
+                    
+                    if (!Array.isArray(this.data.demandes)) {
+                        console.warn('⚠️ Réponse demandes non valide:', this.data.demandes);
+                        this.data.demandes = [];
+                    }
+                    
                     this.displayDemandes();
-                    AdminCommon.utils.updateTabBadge('demandes', this.data.demandes.length);
+                    this.updateBadges();
                 } catch (error) {
                     console.error('❌ Erreur chargement demandes:', error);
-                    AdminCommon.utils.showAlert('Erreur lors du chargement des demandes', 'error');
+                    this.data.demandes = [];
+                    this.displayDemandes(); // Afficher tableau vide
+                    this.updateBadges();
+                    this.showError('Erreur lors du chargement des demandes: ' + error.message);
                 }
             },
 
             async loadFranchises() {
                 try {
-                    this.data.franchises = await AdminCommon.utils.apiRequest(this.config.endpoints.franchises);
+                    const response = await fetch(this.config.endpoints.franchises);
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                    
+                    this.data.franchises = await response.json();
                     console.log('✅ Franchises chargées:', this.data.franchises);
+                    
+                    if (!Array.isArray(this.data.franchises)) {
+                        console.warn('⚠️ Réponse franchises non valide:', this.data.franchises);
+                        this.data.franchises = [];
+                    }
                 } catch (error) {
                     console.error('❌ Erreur chargement franchises:', error);
+                    this.data.franchises = [];
                 }
             },
 
@@ -167,20 +210,14 @@ require_admin();
                     this.data.camions = [];
                 }
 
-                AdminCommon.utils.createTable({
+                // ✅ Créer le tableau manuellement
+                this.createTable({
                     containerId: 'camions-table-container',
                     headers: this.config.headers.camions,
                     data: this.data.camions,
                     rowBuilder: (camion) => {
-                        const row = document.createElement('tr');
                         const cells = this.buildCamionRow(camion);
-                        
-                        if (camion.demande_maintenance) {
-                            row.className = 'camion-urgence';
-                        }
-                        
-                        row.innerHTML = cells.map(cell => `<td>${cell}</td>`).join('');
-                        return row;
+                        return cells.map(cell => `<td>${cell}</td>`).join('');
                     },
                     emptyMessage: 'Aucun camion trouvé'
                 });
@@ -194,18 +231,78 @@ require_admin();
                     this.data.demandes = [];
                 }
 
-                AdminCommon.utils.createTable({
+                this.createTable({
                     containerId: 'demandes-table-container',
                     headers: this.config.headers.demandes,
                     data: this.data.demandes,
                     rowBuilder: (demande) => {
-                        const row = document.createElement('tr');
                         const cells = this.buildDemandeRow(demande);
-                        row.innerHTML = cells.map(cell => `<td>${cell}</td>`).join('');
-                        return row;
+                        return cells.map(cell => `<td>${cell}</td>`).join('');
                     },
                     emptyMessage: 'Aucune demande en attente'
                 });
+            },
+
+            // ===== UTILITAIRES =====
+            createTable(config) {
+                const container = document.getElementById(config.containerId);
+                
+                if (!container) {
+                    console.error(`Container ${config.containerId} non trouvé`);
+                    return;
+                }
+
+                if (!config.data || config.data.length === 0) {
+                    container.innerHTML = `<p style="text-align: center; color: #666; padding: 2rem;">${config.emptyMessage}</p>`;
+                    return;
+                }
+
+                const table = document.createElement('table');
+                table.innerHTML = `
+                    <thead>
+                        <tr>${config.headers.map(h => `<th>${h}</th>`).join('')}</tr>
+                    </thead>
+                    <tbody>
+                        ${config.data.map(item => `<tr>${config.rowBuilder(item)}</tr>`).join('')}
+                    </tbody>
+                `;
+
+                container.innerHTML = '';
+                container.appendChild(table);
+            },
+
+            showError(message) {
+                console.error('💥', message);
+                
+                const alertDiv = document.createElement('div');
+                alertDiv.style.cssText = `
+                    position: fixed; top: 20px; right: 20px; z-index: 9999;
+                    background: #f44336; color: white; padding: 1rem;
+                    border-radius: 6px; max-width: 300px;
+                `;
+                alertDiv.textContent = message;
+                
+                document.body.appendChild(alertDiv);
+                
+                setTimeout(() => {
+                    if (alertDiv.parentNode) {
+                        alertDiv.parentNode.removeChild(alertDiv);
+                    }
+                }, 5000);
+            },
+
+            updateBadges() {
+                const badgeElement = document.getElementById('badge-demandes');
+                if (!badgeElement) return;
+                
+                const count = this.data.demandes?.length || 0;
+                
+                if (count > 0) {
+                    badgeElement.textContent = count;
+                    badgeElement.style.display = 'inline';
+                } else {
+                    badgeElement.style.display = 'none';
+                }
             },
 
             // ===== CONSTRUCTEURS DE LIGNES =====
@@ -234,9 +331,9 @@ require_admin();
                     `<strong>${demande.nom_camion || ''}</strong>`,
                     demande.numero_permis || 'Non renseigné',
                     demande.emplacement || 'Non renseigné',
-                    `<span title="${demande.menu || ''}">${AdminCommon.utils.truncateText(demande.menu, 30)}</span>`,
+                    `<span title="${demande.menu || ''}">${this.truncateText(demande.menu, 30)}</span>`,
                     demande.jours || 'Non renseigné',
-                    AdminCommon.utils.formatDate(demande.date_demande),
+                    this.formatDate(demande.date_demande),
                     `<button class="btn-action success" onclick="CamionManager.validerDemande(${demande.id})">Valider</button>
                      <button class="btn-action danger" onclick="CamionManager.refuserDemande(${demande.id})">Refuser</button>`
                 ];
@@ -608,11 +705,18 @@ require_admin();
             },
 
             // ===== HELPERS =====
-            getSelectOptions(optionsSource) {
-                if (typeof optionsSource === 'string') {
-                    return this[optionsSource]();
+            formatDate(dateString) {
+                if (!dateString) return '-';
+                try {
+                    return new Date(dateString).toLocaleDateString('fr-FR');
+                } catch {
+                    return dateString;
                 }
-                return optionsSource || [];
+            },
+
+            truncateText(text, maxLength) {
+                if (!text) return '';
+                return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
             },
 
             getFranchiseOptions() {
@@ -651,12 +755,14 @@ require_admin();
 
             getLivraisonInfo(dateLivraison) {
                 return dateLivraison ? 
-                    `<span class="date-livraison">${AdminCommon.utils.formatDate(dateLivraison)}</span>` : 
+                    `<span class="date-livraison">${this.formatDate(dateLivraison)}</span>` : 
                     '-';
             },
 
             updateBadges() {
                 const badgeElement = document.getElementById('badge-demandes');
+                if (!badgeElement) return;
+                
                 const count = this.data.demandes?.length || 0;
                 
                 if (count > 0) {
