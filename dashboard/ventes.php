@@ -48,10 +48,10 @@ require_admin();
             </div>
 
             <div class="tabs">
-                <button class="tab-btn active" onclick="AdminCommon.utils.switchTab('ventes', VentesAdminManager.loadVentes)">
+                <button class="tab-btn active" onclick="AdminCommon.utils.switchTab('ventes', VentesAdminManager.loadVentes.bind(VentesAdminManager))">
                     Toutes les ventes
                 </button>
-                <button class="tab-btn" onclick="AdminCommon.utils.switchTab('produits', VentesAdminManager.loadProduitsVendus)">
+                <button class="tab-btn" onclick="AdminCommon.utils.switchTab('produits', VentesAdminManager.loadProduitsVendus.bind(VentesAdminManager))">
                     Produits vendus
                 </button>
             </div>
@@ -123,10 +123,13 @@ require_admin();
                 if (periode) params.append('periode', periode);
                 const url = this.config.endpoints.ventes + (params.toString() ? '?' + params.toString() : '');
                 const response = await fetch(url);
+                if (!response.ok) throw new Error(`Erreur HTTP ${response.status}: ${response.statusText}`);
                 this.data.ventes = await response.json();
                 this.displayVentes();
             } catch (error) {
-                AdminCommon.utils.showAlert('Erreur lors du chargement des ventes', 'error');
+                AdminCommon.utils.showAlert('Erreur lors du chargement des ventes: ' + error.message, 'error');
+                this.data.ventes = [];
+                this.displayVentes();
             }
         },
 
@@ -168,10 +171,17 @@ require_admin();
         async loadProduitsVendus() {
             try {
                 const response = await fetch(this.config.endpoints.produits);
-                this.data.produits = await response.json();
+                if (!response.ok) throw new Error(`Erreur HTTP ${response.status}: ${response.statusText}`);
+                const produits = await response.json();
+                if (!Array.isArray(produits)) {
+                    throw new Error(produits && produits.error ? produits.error : "Format de données inattendu");
+                }
+                this.data.produits = produits;
                 this.displayProduitsVendus();
             } catch (error) {
-                AdminCommon.utils.showAlert('Erreur lors du chargement des produits', 'error');
+                AdminCommon.utils.showAlert('Erreur lors du chargement des produits: ' + error.message, 'error');
+                this.data.produits = [];
+                this.displayProduitsVendus();
             }
         },
 
@@ -224,18 +234,20 @@ require_admin();
         async loadCamionsFilter() {
             try {
                 const response = await fetch(this.config.endpoints.camions);
+                if (!response.ok) throw new Error(`Erreur HTTP ${response.status}: ${response.statusText}`);
                 this.data.camions = await response.json();
                 const select = document.getElementById('filter-camion');
                 this.data.camions.forEach(camion => {
                     select.innerHTML += `<option value="${camion.id}">${camion.nom} - ${camion.localisation || 'Position inconnue'}</option>`;
                 });
             } catch (error) {
-                console.error('Erreur lors du chargement des camions:', error);
+                AdminCommon.utils.showAlert('Erreur lors du chargement des camions: ' + error.message, 'error');
+                this.data.camions = [];
             }
         },
 
         showAddModal() {
-            // Modal d'ajout manuel DRY
+            // Modal d'ajout manuel
             const modal = document.createElement('div');
             modal.className = 'modal';
             modal.innerHTML = `

@@ -12,14 +12,20 @@ try {
     $stmt = $conn->query("
         SELECT 
             p.nom,
-            p.unite,
+            (
+                SELECT vd2.prix_unitaire
+                FROM vente_details vd2
+                WHERE vd2.produit_id = p.id
+                ORDER BY vd2.vente_id DESC
+                LIMIT 1
+            ) as unite,
             SUM(vd.quantite) as quantite_totale,
             SUM(vd.prix_total) as ca_total,
             COUNT(DISTINCT vd.vente_id) as nb_ventes
         FROM vente_details vd
         JOIN produits p ON vd.produit_id = p.id
         JOIN ventes v ON vd.vente_id = v.id
-        GROUP BY p.id, p.nom, p.unite
+        GROUP BY p.id, p.nom
         ORDER BY quantite_totale DESC
     ");
     
