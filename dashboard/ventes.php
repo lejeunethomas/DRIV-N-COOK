@@ -222,10 +222,10 @@ require_admin();
                 const response = await fetch(this.config.endpoints.stats);
                 const stats = await response.json();
                 if (stats.error) return;
-                this.updateStatElement('total-ventes', AdminCommon.utils.formatPrice(stats.total || 0));
-                this.updateStatElement('ventes-jour', AdminCommon.utils.formatPrice(stats.aujourdhui || 0));
-                this.updateStatElement('ventes-semaine', AdminCommon.utils.formatPrice(stats.semaine || 0));
-                this.updateStatElement('ventes-mois', AdminCommon.utils.formatPrice(stats.mois || 0));
+                this.updateStatElement('total-ventes', AdminCommon.utils.formatPrice(stats.total_general || 0));
+                this.updateStatElement('ventes-jour', AdminCommon.utils.formatPrice(stats.ventes_jour || 0));
+                this.updateStatElement('ventes-semaine', AdminCommon.utils.formatPrice(stats.ventes_semaine || 0));
+                this.updateStatElement('ventes-mois', AdminCommon.utils.formatPrice(stats.total_mois || 0));
             } catch (error) {
                 console.error('Erreur lors du chargement des statistiques:', error);
             }
@@ -237,8 +237,9 @@ require_admin();
                 if (!response.ok) throw new Error(`Erreur HTTP ${response.status}: ${response.statusText}`);
                 this.data.camions = await response.json();
                 const select = document.getElementById('filter-camion');
+                select.innerHTML = '<option value="">Tous les camions</option>';
                 this.data.camions.forEach(camion => {
-                    select.innerHTML += `<option value="${camion.id}">${camion.nom} - ${camion.localisation || 'Position inconnue'}</option>`;
+                    select.innerHTML += `<option value="${camion.id}">${camion.nom_camion || 'Camion #' + camion.id}</option>`;
                 });
             } catch (error) {
                 AdminCommon.utils.showAlert('Erreur lors du chargement des camions: ' + error.message, 'error');
@@ -258,7 +259,7 @@ require_admin();
                             <label for="add-camion">Camion *</label>
                             <select id="add-camion" name="camion_id" required>
                                 <option value="">Sélectionner un camion</option>
-                                ${this.data.camions.map(c => `<option value="${c.id}">${c.nom}</option>`).join('')}
+                                ${this.data.camions.map(c => `<option value="${c.id}">${c.nom_camion}</option>`).join('')}
                             </select>
                         </div>
                         <div class="form-group">

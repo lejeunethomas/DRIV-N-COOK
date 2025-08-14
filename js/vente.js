@@ -8,6 +8,7 @@ let produits = [];
 let ventesAujourdhui = [];
 let totalJournalier = 0;
 let venteEnCours = [];
+let currentCamionId = null;
 
 // CHARGEMENT INITIAL
 
@@ -15,6 +16,7 @@ document.addEventListener('DOMContentLoaded', function() {
     loadProduits();
     loadVentesStats();
     loadVentesAujourdhui();
+    loadCamionFranchise();
     
     // Initialiser le bouton d'ajout de vente
     const addBtn = document.getElementById('add-ventes-btn');
@@ -346,7 +348,8 @@ async function finaliserVente() {
         try {
             const venteData = {
                 montant: total,
-                produits: venteEnCours
+                produits: venteEnCours,
+                camion_id: currentCamionId
             };
             
             const response = await fetch('../api/ventes/add.php', {
@@ -470,6 +473,17 @@ async function deleteVente(venteId) {
     } catch (error) {
         console.error('Erreur lors de la suppression:', error);
         showAlert('Erreur réseau lors de la suppression', 'error');
+    }
+}
+
+/**
+ * Charger le camion associé à l'utilisateur
+ */
+async function loadCamionFranchise() {
+    const res = await fetch('../api/camions/get_by_user.php');
+    const camions = await res.json();
+    if (Array.isArray(camions) && camions.length > 0) {
+        currentCamionId = camions[0].id;
     }
 }
 
