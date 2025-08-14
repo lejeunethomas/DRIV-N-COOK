@@ -8,9 +8,13 @@ header('Content-Type: application/json');
 try {
     $conn = Database::getInstance()->getConnection();
     
-    $statut = isset($_GET['statut']) ? $_GET['statut'] : '';
-    $whereClause = $statut ? "WHERE c.statut = ?" : "";
-    $params = $statut ? array($statut) : array();
+    $whereClause = "WHERE 1";
+    $params = [];
+
+    if (isset($_GET['statut']) && $_GET['statut'] !== '') {
+        $whereClause .= " AND c.statut = ?";
+        $params[] = $_GET['statut'];
+    }
     
     $stmt = $conn->prepare("
         SELECT c.*, 
