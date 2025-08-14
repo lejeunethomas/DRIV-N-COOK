@@ -809,7 +809,14 @@ require_admin();
             closeModal() {
                 const modal = document.querySelector('.modal');
                 if (modal) modal.remove();
-            }
+            },
+
+            getSelectOptions(optionsSource) {
+                if (typeof optionsSource === 'string' && typeof this[optionsSource] === 'function') {
+                    return this[optionsSource]();
+                }
+                return Array.isArray(optionsSource) ? optionsSource : [];
+            },
         };
 
         // ===== INITIALISATION AUTOMATIQUE =====
