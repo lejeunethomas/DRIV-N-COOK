@@ -96,7 +96,7 @@ require_admin();
     <script src="../js/admin/common.js"></script>
     <script src="../js/admin/stock-management.js"></script>
     <script>
-        // GESTIONNAIRE PRINCIPAL UNIFIÉ - DRY
+        // GESTIONNAIRE PRINCIPAL 
         const ProductManager = {
             // ===== DONNÉES =====
             data: {
@@ -441,7 +441,6 @@ require_admin();
                 if (typeof window.updateGlobalStats === 'function') {
                     window.updateGlobalStats();
                 } else {
-                    // Fallback manuel
                     const stats = {
                         ruptures: this.data.stocks.filter(s => s.quantite == 0).length,
                         alertes: this.data.stocks.filter(s => s.alerte == 1 && s.quantite > 0).length,

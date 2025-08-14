@@ -131,7 +131,7 @@ require_admin();
             }
         }
 
-        // Charger les alertes et éléments nécessitant attention
+        // Charger les alertes
         async function loadAlerts() {
             try {
                 // Comptes franchisés en attente

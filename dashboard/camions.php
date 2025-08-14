@@ -56,7 +56,7 @@ require_admin();
     <script src="../js/admin/common.js"></script>
 
     <script>
-        // GESTIONNAIRE PRINCIPAL UNIFIÉ - DRY
+        // GESTIONNAIRE PRINCIPAL UNIFIÉ 
         const CamionManager = {
             // ===== DONNÉES =====
             data: {
@@ -128,7 +128,6 @@ require_admin();
             // ===== CHARGEMENT DONNÉES =====
             async loadCamionsTab() {
                 try {
-                    // ✅ Utiliser fetch directement au lieu d'AdminCommon.utils.apiRequest
                     const response = await fetch(this.config.endpoints.camions);
                     
                     if (!response.ok) {
@@ -138,7 +137,6 @@ require_admin();
                     this.data.camions = await response.json();
                     console.log('✅ Camions chargés:', this.data.camions);
                     
-                    // ✅ Vérifier si c'est un tableau valide
                     if (!Array.isArray(this.data.camions)) {
                         console.warn('⚠️ Réponse camions non valide:', this.data.camions);
                         this.data.camions = [];
@@ -148,7 +146,7 @@ require_admin();
                 } catch (error) {
                     console.error('❌ Erreur chargement camions:', error);
                     this.data.camions = [];
-                    this.displayCamions(); // Afficher tableau vide
+                    this.displayCamions();
                     this.showError('Erreur lors du chargement des camions: ' + error.message);
                 }
             },
@@ -174,7 +172,7 @@ require_admin();
                 } catch (error) {
                     console.error('❌ Erreur chargement demandes:', error);
                     this.data.demandes = [];
-                    this.displayDemandes(); // Afficher tableau vide
+                    this.displayDemandes();
                     this.updateBadges();
                     this.showError('Erreur lors du chargement des demandes: ' + error.message);
                 }
@@ -210,7 +208,6 @@ require_admin();
                     this.data.camions = [];
                 }
 
-                // ✅ Créer le tableau manuellement
                 this.createTable({
                     containerId: 'camions-table-container',
                     headers: this.config.headers.camions,

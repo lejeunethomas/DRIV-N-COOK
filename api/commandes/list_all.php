@@ -24,7 +24,7 @@ try {
                admin.nom as admin_nom, admin.prenom as admin_prenom,
                COUNT(cd.id) as nb_produits,
                GROUP_CONCAT(CONCAT(p.nom, ' (', cd.quantite, ')') SEPARATOR ', ') as produits_resume,
-               -- Essayer de récupérer les coordonnées du franchisé depuis ses demandes de camion
+               SUM(cd.prix_total) as total,
                dc.latitude as franchise_latitude, dc.longitude as franchise_longitude
         FROM commandes c 
         LEFT JOIN users u ON c.user_id = u.id
@@ -33,13 +33,20 @@ try {
         LEFT JOIN commande_details cd ON c.id = cd.commande_id
         LEFT JOIN produits p ON cd.produit_id = p.id
         LEFT JOIN (
-            SELECT user_id, latitude, longitude,
-                   ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY date_demande DESC) as rn
-            FROM demandes_camion 
-            WHERE latitude IS NOT NULL AND longitude IS NOT NULL
-        ) dc ON u.id = dc.user_id AND dc.rn = 1
+            SELECT d1.user_id, d1.latitude, d1.longitude
+            FROM demandes_camion d1
+            INNER JOIN (
+                SELECT user_id, MAX(date_demande) as max_date
+                FROM demandes_camion
+                WHERE latitude IS NOT NULL AND longitude IS NOT NULL
+                GROUP BY user_id
+            ) d2 ON d1.user_id = d2.user_id AND d1.date_demande = d2.max_date
+            WHERE d1.latitude IS NOT NULL AND d1.longitude IS NOT NULL
+        ) dc ON u.id = dc.user_id
         {$whereClause}
-        GROUP BY c.id
+        GROUP BY 
+            c.id, u.nom, u.prenom, u.email, e.nom, e.ville, e.adresse, e.latitude, e.longitude, 
+            admin.nom, admin.prenom, dc.latitude, dc.longitude
         ORDER BY 
             CASE c.statut 
                 WHEN 'en_attente' THEN 1 

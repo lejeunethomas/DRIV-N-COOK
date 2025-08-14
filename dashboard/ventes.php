@@ -248,7 +248,6 @@ require_admin();
         },
 
         showAddModal() {
-            // Modal d'ajout manuel
             const modal = document.createElement('div');
             modal.className = 'modal';
             modal.innerHTML = `

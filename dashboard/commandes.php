@@ -140,8 +140,6 @@ require_admin();
                     ? this.config.endpoints.list
                     : `${this.config.endpoints.list}?statut=${statut}`;
                 const commandes = await AdminCommon.utils.apiRequest(url);
-                console.log('Chargement commandes:', url);
-                console.log('Réponse API:', commandes);
                 this.data[statut] = commandes;
                 AdminCommon.utils.createTable({
                     containerId: `table-${statut}-container`,
@@ -165,6 +163,85 @@ require_admin();
         },
 
         // ====== MODALS ======
+        validerCommande(commandeId) {
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            const today = new Date().toISOString().split('T')[0];
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <h3>Valider la commande #${commandeId}</h3>
+                    <form id="valider-commande-form">
+                        <div class="form-group">
+                            <label for="date-livraison">Date de livraison prévue *</label>
+                            <input type="date" id="date-livraison" name="date_livraison" required min="${today}">
+                        </div>
+                        <div class="form-group">
+                            <label for="commentaire">Commentaire (optionnel)</label>
+                            <textarea id="commentaire" name="commentaire" rows="3" placeholder="Instructions particulières, notes..."></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" id="reserver-stocks" name="reserver_stocks" checked>
+                                Réserver les stocks maintenant (recommandé)
+                            </label>
+                        </div>
+                        <div class="modal-actions">
+                            <button type="button" class="btn-secondary" onclick="AdminCommon.utils.closeModal()">Annuler</button>
+                            <button type="submit" class="btn-primary">Valider</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            document.body.appendChild(modal);
+
+            document.getElementById('valider-commande-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const data = {
+                    date_livraison: document.getElementById('date-livraison').value,
+                    commentaire: document.getElementById('commentaire').value,
+                    reserver_stocks: document.getElementById('reserver-stocks').checked
+                };
+                const success = await this.submitValidation(commandeId, 'valider', data);
+                if (success) {
+                    AdminCommon.utils.closeModal();
+                    await this.refreshData();
+                }
+            });
+        },
+
+        annulerCommande(commandeId) {
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <h3>Annuler la commande #${commandeId}</h3>
+                    <form id="annuler-commande-form">
+                        <div class="form-group">
+                            <label for="annuler-commentaire">Raison de l'annulation *</label>
+                            <textarea id="annuler-commentaire" name="commentaire" rows="4" required placeholder="Expliquez pourquoi cette commande est annulée..."></textarea>
+                        </div>
+                        <div class="modal-actions">
+                            <button type="button" class="btn-secondary" onclick="AdminCommon.utils.closeModal()">Annuler</button>
+                            <button type="submit" class="btn-primary btn-action danger">Confirmer l'annulation</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            document.body.appendChild(modal);
+
+            document.getElementById('annuler-commande-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const data = {
+                    commentaire: document.getElementById('annuler-commentaire').value
+                };
+                const success = await this.submitValidation(commandeId, 'annuler', data);
+                if (success) {
+                    AdminCommon.utils.closeModal();
+                    await this.refreshData();
+                }
+            });
+        },
+
         async voirDetails(commandeId) {
             try {
                 const commande = await AdminCommon.utils.apiRequest(`${this.config.endpoints.details}?id=${commandeId}`);
@@ -244,63 +321,6 @@ require_admin();
             } catch (error) {
                 AdminCommon.utils.showAlert('Erreur lors du chargement des détails', 'error');
             }
-        },
-
-        validerCommande(commandeId) {
-            AdminCommon.utils.createFormModal({
-                title: `Valider la commande #${commandeId}`,
-                fields: [
-                    { 
-                        name: 'date_livraison', 
-                        label: 'Date de livraison prévue', 
-                        type: 'date', 
-                        required: true,
-                        attributes: `min="${new Date().toISOString().split('T')[0]}"`,
-                        help: 'Date à laquelle la commande sera livrée au franchisé'
-                    },
-                    { 
-                        name: 'commentaire', 
-                        label: 'Commentaire (optionnel)', 
-                        type: 'textarea', 
-                        attributes: 'rows="3" placeholder="Instructions particulières, notes..."'
-                    },
-                    { 
-                        name: 'reserver_stocks', 
-                        label: 'Réserver les stocks maintenant (recommandé)', 
-                        type: 'checkbox',
-                        defaultValue: true
-                    }
-                ],
-                onSubmit: async (data, isEdit) => {
-                    const success = await this.submitValidation(commandeId, 'valider', data);
-                    if (success) {
-                        AdminCommon.utils.closeModal();
-                        await this.refreshData();
-                    }
-                }
-            });
-        },
-
-        annulerCommande(commandeId) {
-            AdminCommon.utils.createFormModal({
-                title: `Annuler la commande #${commandeId}`,
-                fields: [
-                    { 
-                        name: 'commentaire', 
-                        label: 'Raison de l\'annulation', 
-                        type: 'textarea', 
-                        required: true,
-                        attributes: 'rows="4" placeholder="Expliquez pourquoi cette commande est annulée..."'
-                    }
-                ],
-                onSubmit: async (data, isEdit) => {
-                    const success = await this.submitValidation(commandeId, 'annuler', data);
-                    if (success) {
-                        AdminCommon.utils.closeModal();
-                        await this.refreshData();
-                    }
-                }
-            });
         },
 
         async marquerLivree(commandeId) {

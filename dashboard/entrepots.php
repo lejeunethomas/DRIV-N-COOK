@@ -105,7 +105,7 @@ require_admin();
     <script src="../js/admin/geolocation.js"></script>
     <script src="../js/admin/stock-management.js"></script>
     <script>
-        // GESTIONNAIRE PRINCIPAL UNIFIÉ - DRY
+        // GESTIONNAIRE PRINCIPAL
         const EntrepotManager = {
             // ===== DONNÉES =====
             data: {
@@ -129,11 +129,9 @@ require_admin();
                 tables: {
                     entrepots: {
                         headers: ['ID', 'Nom', 'Adresse', 'Ville', 'Responsable', 'Nb produits', 'Alertes stock', 'Géolocalisation', 'Actions']
-                        // ❌ SUPPRIMER rowBuilder d'ici
                     },
                     stocks: {
                         headers: ['Entrepôt', 'Produit', 'Type', 'Quantité', 'Unité', 'Seuil d\'alerte', 'État', 'Dernière MAJ', 'Actions']
-                        // ❌ SUPPRIMER rowBuilder d'ici
                     }
                 },
 
@@ -785,8 +783,7 @@ require_admin();
         });
 
 
-        function updateGlobalStats() { 
-            // Utiliser directement la fonction du stock-management.js
+        function updateGlobalStats() {
             if (typeof window.globalStockData !== 'undefined' && window.globalStockData.stocks) {
                 const stats = window.globalStockData.globalStats;
                 const stocks = window.globalStockData.stocks;
@@ -797,7 +794,6 @@ require_admin();
                 stats.totalEntrepots = window.globalStockData.entrepots.length;
                 stats.totalProduits = window.globalStockData.products.length;
                 
-                // Mettre à jour l'affichage directement
                 ['global-ruptures', 'global-alertes', 'global-stocks-ok', 'global-entrepots', 'global-produits'].forEach(id => {
                     const element = document.getElementById(id);
                     if (element) {
