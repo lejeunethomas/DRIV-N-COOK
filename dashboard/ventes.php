@@ -48,10 +48,10 @@ require_admin();
             </div>
 
             <div class="tabs">
-                <button class="tab-btn active" onclick="AdminCommon.utils.switchTab('ventes', loadVentesData)">
+                <button class="tab-btn active" onclick="AdminCommon.utils.switchTab('ventes', VentesAdminManager.loadVentes)">
                     Toutes les ventes
                 </button>
-                <button class="tab-btn" onclick="AdminCommon.utils.switchTab('produits', loadProduitsVendus)">
+                <button class="tab-btn" onclick="AdminCommon.utils.switchTab('produits', VentesAdminManager.loadProduitsVendus)">
                     Produits vendus
                 </button>
             </div>
@@ -59,24 +59,21 @@ require_admin();
             <div id="tab-ventes" class="tab-content active">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                     <h3>Liste des ventes</h3>
-                    <button class="add-btn" onclick="showAddVenteModal()">+ Enregistrer une vente</button>
+                    <button class="add-btn" onclick="VentesAdminManager.showAddModal()">+ Enregistrer une vente</button>
                 </div>
-                
                 <div class="filters" style="margin-bottom: 1rem; display: flex; gap: 1rem; align-items: center;">
                     <label for="filter-camion">Camion :</label>
-                    <select id="filter-camion" onchange="loadVentesData()">
+                    <select id="filter-camion" onchange="VentesAdminManager.loadVentes()">
                         <option value="">Tous les camions</option>
                     </select>
-                    
                     <label for="filter-periode">Période :</label>
-                    <select id="filter-periode" onchange="loadVentesData()">
+                    <select id="filter-periode" onchange="VentesAdminManager.loadVentes()">
                         <option value="">Toutes les périodes</option>
                         <option value="aujourdhui">Aujourd'hui</option>
-                        <option value="semaine">Ce mois</option>
+                        <option value="semaine">Cette semaine</option>
                         <option value="mois">Ce mois</option>
                     </select>
                 </div>
-                
                 <div id="ventes-table-container"></div>
             </div>
 
@@ -88,169 +85,229 @@ require_admin();
     </div>
 
     <script src="../js/admin/common.js"></script>
-    <script src="../js/vente.js"></script>
-
     <script>
-        const ventesAdminManager = {
-            config: {
-                endpoints: {
-                    ventes: '../api/ventes/list.php',              
-                    camions: '../api/camions/list.php',            
-                    stats: '../api/ventes/stats.php?global=1',
-                    produits: '../api/ventes/produits_vendus.php', 
-                    deleteVente: '../api/ventes/delete_admin.php'  
-                },
-                
-                tables: {
-                    ventes: {
-                        headers: ['ID', 'Camion', 'Franchisé', 'Produits', 'Montant', 'Date', 'Actions'],
-                        rowBuilder: (vente) => [
-                            `#${vente.id}`,
-                            vente.nom_camion || 'N/A',                    
-                            vente.franchise_nom ? `${vente.franchise_nom} ${vente.franchise_prenom || ''}` : 'N/A',
-                            `${vente.nb_produits || 0} produit(s)`,       
-                            `<strong>${AdminCommon.utils.formatPrice(vente.montant)}</strong>`,
-                            AdminCommon.utils.formatDate(vente.date_vente, true),
-                            `<button class="btn-action" onclick="viewVenteDetails(${vente.id})">Détails</button>
-                             <button class="btn-action danger" onclick="deleteVenteAdmin(${vente.id})">Supprimer</button>`
-                        ]
-                    },
-                    produits: {
-                        headers: ['Produit', 'Unité', 'Quantité vendue', 'CA généré', 'Nb ventes'],
-                        rowBuilder: (produit) => [
-                            `<strong>${produit.nom}</strong>`,
-                            produit.unite || 'N/A',
-                            `${produit.quantite_totale || 0}`,
-                            `<strong>${AdminCommon.utils.formatPrice(produit.ca_total || 0)}</strong>`,
-                            produit.nb_ventes || 0
-                        ]
-                    }
-                }
+    const VentesAdminManager = {
+        config: {
+            endpoints: {
+                ventes: '../api/ventes/list.php',
+                camions: '../api/camions/list.php',
+                stats: '../api/ventes/stats.php?global=1',
+                produits: '../api/ventes/produits_vendus.php',
+                deleteVente: '../api/ventes/delete_admin.php'
             },
-            data: {
-                ventes: []
+            headers: {
+                ventes: ['ID', 'Camion', 'Franchisé', 'Produits', 'Montant', 'Date', 'Actions'],
+                produits: ['Produit', 'Unité', 'Quantité vendue', 'CA généré', 'Nb ventes']
             }
-        };
+        },
+        data: {
+            ventes: [],
+            produits: [],
+            camions: []
+        },
 
-        document.addEventListener('DOMContentLoaded', async function() {
+        async init() {
             await Promise.all([
-                loadCamionsFilter(),
-                loadVentesData(),
-                loadStats()
+                this.loadCamionsFilter(),
+                this.loadVentes(),
+                this.loadStats()
             ]);
-        });
+        },
 
-        async function loadVentesData() {
+        async loadVentes() {
             const camion = document.getElementById('filter-camion')?.value || '';
             const periode = document.getElementById('filter-periode')?.value || '';
-            
             try {
                 const params = new URLSearchParams();
                 if (camion) params.append('camion', camion);
                 if (periode) params.append('periode', periode);
-                
-                const url = ventesAdminManager.config.endpoints.ventes + 
-                           (params.toString() ? '?' + params.toString() : '');
-                
+                const url = this.config.endpoints.ventes + (params.toString() ? '?' + params.toString() : '');
                 const response = await fetch(url);
-                ventesAdminManager.data.ventes = await response.json();
-                
-                AdminCommon.utils.createTable({
-                    containerId: 'ventes-table-container',
-                    headers: ventesAdminManager.config.tables.ventes.headers,
-                    data: ventesAdminManager.data.ventes,
-                    rowBuilder: (vente) => {
-                        const row = document.createElement('tr');
-                        const cells = ventesAdminManager.config.tables.ventes.rowBuilder(vente);
-                        row.innerHTML = cells.map(cell => `<td>${cell}</td>`).join('');
-                        return row;
-                    },
-                    emptyMessage: 'Aucune vente trouvée'
-                });
-                
+                this.data.ventes = await response.json();
+                this.displayVentes();
             } catch (error) {
                 AdminCommon.utils.showAlert('Erreur lors du chargement des ventes', 'error');
-                console.error('Erreur:', error);
             }
-        }
+        },
 
-        async function loadProduitsVendus() {
+        displayVentes() {
+            const container = document.getElementById('ventes-table-container');
+            if (!this.data.ventes || this.data.ventes.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #666; padding: 2rem;">Aucune vente trouvée</p>';
+                return;
+            }
+            const table = document.createElement('table');
+            table.innerHTML = `
+                <thead>
+                    <tr>${this.config.headers.ventes.map(h => `<th>${h}</th>`).join('')}</tr>
+                </thead>
+                <tbody>
+                    ${this.data.ventes.map(vente => {
+                        const cells = this.buildVenteRow(vente);
+                        return `<tr>${cells.map(cell => `<td>${cell}</td>`).join('')}</tr>`;
+                    }).join('')}
+                </tbody>
+            `;
+            container.innerHTML = '';
+            container.appendChild(table);
+        },
+
+        buildVenteRow(vente) {
+            return [
+                `#${vente.id}`,
+                vente.nom_camion || 'N/A',
+                vente.franchise_nom ? `${vente.franchise_nom} ${vente.franchise_prenom || ''}` : 'N/A',
+                `${vente.nb_produits || 0} produit(s)`,
+                `<strong>${AdminCommon.utils.formatPrice(vente.montant)}</strong>`,
+                AdminCommon.utils.formatDate(vente.date_vente, true),
+                `<button class="btn-action" onclick="VentesAdminManager.viewDetails(${vente.id})">Détails</button>
+                 <button class="btn-action danger" onclick="VentesAdminManager.deleteVente(${vente.id})">Supprimer</button>`
+            ];
+        },
+
+        async loadProduitsVendus() {
             try {
-                const response = await fetch(ventesAdminManager.config.endpoints.produits);
-                const produits = await response.json();
-                
-                AdminCommon.utils.createTable({
-                    containerId: 'produits-vendus-table-container',
-                    headers: ventesAdminManager.config.tables.produits.headers,
-                    data: produits,
-                    rowBuilder: (produit) => {
-                        const row = document.createElement('tr');
-                        const cells = ventesAdminManager.config.tables.produits.rowBuilder(produit);
-                        row.innerHTML = cells.map(cell => `<td>${cell}</td>`).join('');
-                        return row;
-                    },
-                    emptyMessage: 'Aucun produit vendu'
-                });
-                
+                const response = await fetch(this.config.endpoints.produits);
+                this.data.produits = await response.json();
+                this.displayProduitsVendus();
             } catch (error) {
                 AdminCommon.utils.showAlert('Erreur lors du chargement des produits', 'error');
             }
-        }
+        },
 
-        async function loadStats() {
+        displayProduitsVendus() {
+            const container = document.getElementById('produits-vendus-table-container');
+            if (!this.data.produits || this.data.produits.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #666; padding: 2rem;">Aucun produit vendu</p>';
+                return;
+            }
+            const table = document.createElement('table');
+            table.innerHTML = `
+                <thead>
+                    <tr>${this.config.headers.produits.map(h => `<th>${h}</th>`).join('')}</tr>
+                </thead>
+                <tbody>
+                    ${this.data.produits.map(produit => {
+                        const cells = this.buildProduitRow(produit);
+                        return `<tr>${cells.map(cell => `<td>${cell}</td>`).join('')}</tr>`;
+                    }).join('')}
+                </tbody>
+            `;
+            container.innerHTML = '';
+            container.appendChild(table);
+        },
+
+        buildProduitRow(produit) {
+            return [
+                `<strong>${produit.nom}</strong>`,
+                produit.unite || 'N/A',
+                `${produit.quantite_totale || 0}`,
+                `<strong>${AdminCommon.utils.formatPrice(produit.ca_total || 0)}</strong>`,
+                produit.nb_ventes || 0
+            ];
+        },
+
+        async loadStats() {
             try {
-                const response = await fetch(ventesAdminManager.config.endpoints.stats);
+                const response = await fetch(this.config.endpoints.stats);
                 const stats = await response.json();
-                
-                if (stats.error) {
-                    console.error('Erreur stats:', stats.error);
-                    return;
-                }
-                
-                updateStatElement('total-ventes', AdminCommon.utils.formatPrice(stats.total || 0));
-                updateStatElement('ventes-jour', AdminCommon.utils.formatPrice(stats.aujourdhui || 0));
-                updateStatElement('ventes-semaine', AdminCommon.utils.formatPrice(stats.semaine || 0));
-                updateStatElement('ventes-mois', AdminCommon.utils.formatPrice(stats.mois || 0));
-                
+                if (stats.error) return;
+                this.updateStatElement('total-ventes', AdminCommon.utils.formatPrice(stats.total || 0));
+                this.updateStatElement('ventes-jour', AdminCommon.utils.formatPrice(stats.aujourdhui || 0));
+                this.updateStatElement('ventes-semaine', AdminCommon.utils.formatPrice(stats.semaine || 0));
+                this.updateStatElement('ventes-mois', AdminCommon.utils.formatPrice(stats.mois || 0));
             } catch (error) {
                 console.error('Erreur lors du chargement des statistiques:', error);
             }
-        }
+        },
 
-        async function loadCamionsFilter() {
+        async loadCamionsFilter() {
             try {
-                const response = await fetch(ventesAdminManager.config.endpoints.camions);
-                const camions = await response.json();
-                
+                const response = await fetch(this.config.endpoints.camions);
+                this.data.camions = await response.json();
                 const select = document.getElementById('filter-camion');
-                camions.forEach(camion => {
+                this.data.camions.forEach(camion => {
                     select.innerHTML += `<option value="${camion.id}">${camion.nom} - ${camion.localisation || 'Position inconnue'}</option>`;
                 });
-                
             } catch (error) {
                 console.error('Erreur lors du chargement des camions:', error);
             }
-        }
+        },
 
-        function showAddVenteModal() {
-            if (typeof window.showAddVenteModal === 'function') {
-                window.showAddVenteModal();
-            } else {
-                AdminCommon.utils.showAlert('Fonctionnalité d\'ajout en cours de développement', 'info');
+        showAddModal() {
+            // Modal d'ajout manuel DRY
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <h3>Ajouter une vente manuellement</h3>
+                    <form id="add-vente-form">
+                        <div class="form-group">
+                            <label for="add-camion">Camion *</label>
+                            <select id="add-camion" name="camion_id" required>
+                                <option value="">Sélectionner un camion</option>
+                                ${this.data.camions.map(c => `<option value="${c.id}">${c.nom}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="add-montant">Montant total (€) *</label>
+                            <input type="number" id="add-montant" name="montant" min="0" step="0.01" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="add-date">Date de vente *</label>
+                            <input type="datetime-local" id="add-date" name="date_vente" required>
+                        </div>
+                        <div class="modal-actions">
+                            <button type="button" class="btn-secondary" onclick="AdminCommon.utils.closeModal()">Annuler</button>
+                            <button type="submit" class="btn-primary">Ajouter</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            document.getElementById('add-vente-form').addEventListener('submit', this.handleAddVente.bind(this));
+        },
+
+        async handleAddVente(e) {
+            e.preventDefault();
+            const form = e.target;
+            const data = {
+                camion_id: form.camion_id.value,
+                montant: form.montant.value,
+                date_vente: form.date_vente.value
+            };
+            if (!data.camion_id || !data.montant || !data.date_vente) {
+                AdminCommon.utils.showAlert('Veuillez remplir tous les champs obligatoires', 'error');
+                return;
             }
-        }
+            try {
+                const response = await fetch('../api/ventes/add.php', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                });
+                const result = await response.json();
+                if (result.success) {
+                    AdminCommon.utils.closeModal();
+                    AdminCommon.utils.showAlert('Vente ajoutée avec succès', 'success');
+                    await this.loadVentes();
+                    await this.loadStats();
+                } else {
+                    AdminCommon.utils.showAlert('Erreur: ' + result.message, 'error');
+                }
+            } catch (error) {
+                AdminCommon.utils.showAlert('Erreur réseau lors de l\'ajout', 'error');
+            }
+        },
 
-        // FONCTION GÉNÉRIQUE POUR VOIR LES DÉTAILS
-        async function viewVenteDetails(venteId) {
+        async viewDetails(venteId) {
             try {
                 const response = await fetch(`../api/ventes/details_admin.php?id=${venteId}`);
                 const vente = await response.json();
-                
                 if (vente.error) {
                     AdminCommon.utils.showAlert('Erreur: ' + vente.error, 'error');
                     return;
                 }
-                
                 const content = `
                     <div style="background: #f8f9fa; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
                         <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
@@ -266,7 +323,6 @@ require_admin();
                             <div><strong>Type paiement:</strong> ${vente.type_paiement || 'N/A'}</div>
                         </div>
                     </div>
-                    
                     ${vente.details && vente.details.length > 0 ? `
                         <h4>Produits vendus :</h4>
                         <table style="margin: 0;">
@@ -289,43 +345,42 @@ require_admin();
                                 `).join('')}
                             </tbody>
                         </table>
-                        
                         <div style="text-align: right; padding-top: 1rem; border-top: 2px solid #1976d2; margin-top: 1rem;">
                             <strong style="font-size: 1.2rem;">Total: ${AdminCommon.utils.formatPrice(vente.montant)}</strong>
                         </div>
                     ` : '<p style="text-align: center; color: #666;">Aucun détail disponible</p>'}
                 `;
-                
                 AdminCommon.utils.createModal({
                     title: `Détails de la vente #${vente.id}`,
                     content: content,
                     size: 'large'
                 });
-                
             } catch (error) {
                 AdminCommon.utils.showAlert('Erreur lors du chargement des détails', 'error');
-                console.error('Erreur:', error);
             }
-        }
-        async function deleteVenteAdmin(venteId) {
+        },
+
+        async deleteVente(venteId) {
             const success = await AdminCommon.utils.deleteData(
-                ventesAdminManager.config.endpoints.deleteVente,
+                this.config.endpoints.deleteVente,
                 { id: venteId },
                 'Êtes-vous sûr de vouloir supprimer cette vente ? Cette action est irréversible.'
             );
-            
             if (success) {
-                await loadVentesData();
-                await loadStats();
+                await this.loadVentes();
+                await this.loadStats();
             }
-        }
+        },
 
-        function updateStatElement(id, value) {
+        updateStatElement(id, value) {
             const element = document.getElementById(id);
-            if (element) {
-                element.textContent = value;
-            }
+            if (element) element.textContent = value;
         }
+    };
+
+    document.addEventListener('DOMContentLoaded', function() {
+        VentesAdminManager.init();
+    });
     </script>
 </body>
 </html>
