@@ -32,7 +32,7 @@ require_admin();
         }
     </style>
 </head>
-<body>
+<body data-role="admin">
     <div class="dashboard-layout">
         <nav class="sidebar admin">
             <h2>Admin</h2>

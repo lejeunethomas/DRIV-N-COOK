@@ -31,6 +31,7 @@ document.addEventListener('DOMContentLoaded', function() {
 async function loadProduits() {
     try {
         const response = await fetch('../api/produits/list.php');
+        if (!response.ok) throw new Error('Erreur HTTP ' + response.status);
         produits = await response.json();
     } catch (error) {
         console.error('Erreur lors du chargement des produits:', error);
@@ -43,7 +44,8 @@ async function loadProduits() {
  */
 async function loadVentesStats() {
     try {
-        const response = await fetch('../api/ventes/stats_by_user.php');
+        const response = await fetch('../api/ventes/stats.php');
+        if (!response.ok) throw new Error('Erreur HTTP ' + response.status);
         const stats = await response.json();
         
         // Mettre à jour les éléments statistiques s'ils existent
@@ -67,7 +69,14 @@ async function loadVentesStats() {
  */
 async function loadVentesAujourdhui() {
     try {
-        const response = await fetch('../api/ventes/list_by_user.php?periode=aujourdhui');
+        // Utilisation d'un attribut data-role fiable
+        const role = document.body.getAttribute('data-role');
+        const endpoint = (role === 'admin')
+            ? '../api/ventes/list.php?periode=aujourdhui'
+            : '../api/ventes/list_by_user.php?periode=aujourdhui';
+
+        const response = await fetch(endpoint);
+        if (!response.ok) throw new Error('Erreur HTTP ' + response.status);
         const ventes = await response.json();
         
         displayVentesTable(ventes);
@@ -346,6 +355,7 @@ async function finaliserVente() {
                 body: JSON.stringify(venteData)
             });
             
+            if (!response.ok) throw new Error('Erreur HTTP ' + response.status);
             const result = await response.json();
             
             if (result.success) {
@@ -374,6 +384,7 @@ async function finaliserVente() {
 async function viewVenteDetails(venteId) {
     try {
         const response = await fetch(`../api/ventes/details.php?id=${venteId}`);
+        if (!response.ok) throw new Error('Erreur HTTP ' + response.status);
         const vente = await response.json();
         
         if (!vente.success) {
@@ -445,6 +456,7 @@ async function deleteVente(venteId) {
             body: JSON.stringify({id: venteId})
         });
         
+        if (!response.ok) throw new Error('Erreur HTTP ' + response.status);
         const result = await response.json();
         
         if (result.success) {

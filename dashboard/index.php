@@ -9,7 +9,7 @@ require_admin();
     <title>Tableau de bord Admin - DRIV'N'COOK</title>
     <link rel="stylesheet" href="../css/style.css">
 </head>
-<body>
+<body data-role="admin">
     <div class="dashboard-layout">
         <nav class="sidebar admin">
             <h2>Admin</h2>

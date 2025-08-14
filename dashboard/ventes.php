@@ -9,7 +9,7 @@ require_admin();
     <title>Gestion des ventes - Admin</title>
     <link rel="stylesheet" href="../css/style.css">
 </head>
-<body>
+<body data-role="admin">
     <div class="dashboard-layout">
         <nav class="sidebar admin">
             <h2>Admin</h2>
@@ -96,7 +96,7 @@ require_admin();
                 endpoints: {
                     ventes: '../api/ventes/list.php',              
                     camions: '../api/camions/list.php',            
-                    stats: '../api/ventes/stats_admin.php',
+                    stats: '../api/ventes/stats.php?global=1',
                     produits: '../api/ventes/produits_vendus.php', 
                     deleteVente: '../api/ventes/delete_admin.php'  
                 },

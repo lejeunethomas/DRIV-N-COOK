@@ -10,7 +10,7 @@ require_franchise_validated();
     <link rel="stylesheet" href="../css/style.css">
     <script src="../js/vente.js"></script>
 </head>
-<body>
+<body data-role="franchise">
     <div class="dashboard-layout">
         <nav class="sidebar franchise">
             <h2>Mon espace</h2>

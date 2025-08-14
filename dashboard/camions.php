@@ -9,7 +9,7 @@ require_admin();
     <title>Gestion des camions - Admin</title>
     <link rel="stylesheet" href="../css/style.css">
 </head>
-<body>
+<body data-role="admin">
     <div class="dashboard-layout">
         <nav class="sidebar admin">
             <h2>Admin</h2>

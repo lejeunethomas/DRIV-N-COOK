@@ -9,7 +9,7 @@ require_franchise_validated();
     <title>Mon compte - Franchisé</title>
     <link rel="stylesheet" href="../css/style.css">
 </head>
-<body>
+<body data-role="franchise">
     <div class="dashboard-layout">
         <nav class="sidebar franchise">
             <h2>Mon espace</h2>

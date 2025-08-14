@@ -44,7 +44,7 @@ require_franchise_validated();
         }
     </style>
 </head>
-<body>
+<body data-role="franchise">
     <div class="dashboard-layout">
         <nav class="sidebar franchise">
             <h2>Mon espace</h2>

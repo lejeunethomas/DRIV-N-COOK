@@ -19,7 +19,7 @@ require_admin();
         .geocoding-info { font-size: 0.9rem; color: #666; margin-top: 0.5rem; }
     </style>
 </head>
-<body>
+<body data-role="admin">
     <div class="dashboard-layout">
         <nav class="sidebar admin">
             <h2>Admin</h2>
