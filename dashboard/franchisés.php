@@ -15,21 +15,9 @@ require_admin();
             font-size: 0.85rem;
             font-weight: bold;
         }
-        
-        .status-valide {
-            background: #e8f5e8;
-            color: #2e7d32;
-        }
-        
-        .status-en_attente {
-            background: #fff3e0;
-            color: #f57c00;
-        }
-        
-        .status-refuse {
-            background: #ffebee;
-            color: #d32f2f;
-        }
+        .status-valide { background: #e8f5e8; color: #2e7d32; }
+        .status-en_attente { background: #fff3e0; color: #f57c00; }
+        .status-refuse { background: #ffebee; color: #d32f2f; }
     </style>
 </head>
 <body data-role="admin">
@@ -52,16 +40,16 @@ require_admin();
             <h1 class="admin">Gestion des franchisés</h1>
             
             <div class="tabs">
-                <button class="tab-btn active" onclick="AdminCommon.utils.switchTab('franchise', loadFranchises)">
+                <button class="tab-btn active" onclick="AdminCommon.utils.switchTab('franchise', franchiseManager.loadFranchises.bind(franchiseManager))">
                     Tous les franchisés
                 </button>
-                <button class="tab-btn" onclick="AdminCommon.utils.switchTab('validation', loadValidation)">
+                <button class="tab-btn" onclick="AdminCommon.utils.switchTab('validation', franchiseManager.loadValidation.bind(franchiseManager))">
                     Comptes à valider <span class="badge" id="badge-validation" style="display:none;">0</span>
                 </button>
             </div>
 
             <div id="tab-franchise" class="tab-content active">
-                <button class="add-btn" onclick="showAddFranchiseModal()">+ Ajouter un franchisé</button>
+                <button class="add-btn" onclick="franchiseManager.showAddFranchiseModal()">+ Ajouter un franchisé</button>
                 <div id="franchise-table-container"></div>
             </div>
 
@@ -73,226 +61,254 @@ require_admin();
     </div>
 
     <script src="../js/admin/common.js"></script>
-
     <script>
-        const franchiseManager = {
-            data: { franchises: [], validationQueue: [] },
-            
-            config: {
-                endpoints: {
-                    getAll: '../api/users/get_all.php',
-                    validation: '../api/users/validation.php',
-                    register: '../api/users/register.php',
-                    update: '../api/users/update.php',
-                    delete: '../api/users/delete.php'
+    const franchiseManager = {
+        data: { franchises: [], validationQueue: [] },
+        config: {
+            endpoints: {
+                getAll: '../api/users/get_all.php',
+                validation: '../api/users/validation.php',
+                register: '../api/users/register.php',
+                update: '../api/users/update.php',
+                delete: '../api/users/delete.php'
+            },
+            statusLabels: {
+                'valide': 'Validé',
+                'en_attente': 'En attente',
+                'refuse': 'Refusé'
+            },
+            tables: {
+                franchise: {
+                    headers: ['Nom complet', 'Email', 'Téléphone', 'Lieu', 'Statut', 'Date inscription', 'Actions'],
+                    rowBuilder: (franchise) => [
+                        `${franchise.nom || ''} ${franchise.prenom || ''}`,
+                        franchise.email || '',
+                        franchise.telephone || 'Non renseigné',
+                        franchise.lieu_installation || 'Non renseigné',
+                        `<span class="status-badge status-${franchise.statut || 'valide'}">${franchiseManager.getStatusLabel(franchise.statut)}</span>`,
+                        AdminCommon.utils.formatDate(franchise.date_inscription),
+                        `<button class="btn-action" onclick="franchiseManager.editFranchise(${franchise.id})">Modifier</button>
+                         <button class="btn-action danger" onclick="franchiseManager.deleteFranchise(${franchise.id})">Supprimer</button>`
+                    ]
                 },
-                
-                tables: {
-                    franchise: {
-                        headers: ['Nom complet', 'Email', 'Téléphone', 'Lieu', 'Statut', 'Date inscription', 'Actions'],
-                        rowBuilder: (franchise) => [
-                            `${franchise.nom || ''} ${franchise.prenom || ''}`,
-                            franchise.email || '',
-                            franchise.telephone || 'Non renseigné',
-                            franchise.lieu_installation || 'Non renseigné',
-                            `<span class="status-badge status-${franchise.statut || 'valide'}">${getStatusLabel(franchise.statut)}</span>`,
-                            AdminCommon.utils.formatDate(franchise.date_inscription),
-                            `<button class="btn-action" onclick="editFranchise(${franchise.id})">Modifier</button>
-                             <button class="btn-action danger" onclick="deleteFranchise(${franchise.id})">Supprimer</button>`
-                        ]
-                    },
-                    
-                    validation: {
-                        headers: ['Nom complet', 'Email', 'Téléphone', 'Lieu souhaité', 'Motivation', 'Date inscription', 'Actions'],
-                        rowBuilder: (compte) => [
-                            `${compte.nom || ''} ${compte.prenom || ''}`,
-                            compte.email || '',
-                            compte.telephone || 'Non renseigné',
-                            compte.lieu_installation || 'Non renseigné',
-                            `<span title="${compte.motivation || ''}">${AdminCommon.utils.truncateText(compte.motivation)}</span>`,
-                            AdminCommon.utils.formatDate(compte.date_inscription),
-                            `<button class="btn-action success" onclick="validerCompte(${compte.id}, 'valider')">Valider</button>
-                             <button class="btn-action danger" onclick="validerCompte(${compte.id}, 'refuser')">Refuser</button>`
-                        ]
-                    }
-                },
-                
-                statusLabels: {
-                    'valide': 'Validé',
-                    'en_attente': 'En attente', 
-                    'refuse': 'Refusé'
-                },
-                
-                formFields: {
-                    base: [
-                        { name: 'nom', label: 'Nom', type: 'text', required: true },
-                        { name: 'prenom', label: 'Prénom', type: 'text', required: true },
-                        { name: 'email', label: 'Email', type: 'email', required: true },
-                        { name: 'telephone', label: 'Téléphone', type: 'tel' },
-                        { name: 'numero_permis', label: 'Numéro de permis', type: 'text' },
-                        { name: 'lieu_installation', label: 'Lieu d\'installation', type: 'text', required: true }
-                    ],
-                    add: [
-                        { name: 'password', label: 'Mot de passe temporaire', type: 'password', required: true },
-                        { name: 'motivation', label: 'Motivation', type: 'textarea' }
+                validation: {
+                    headers: ['Nom complet', 'Email', 'Téléphone', 'Lieu souhaité', 'Motivation', 'Date inscription', 'Actions'],
+                    rowBuilder: (compte) => [
+                        `${compte.nom || ''} ${compte.prenom || ''}`,
+                        compte.email || '',
+                        compte.telephone || 'Non renseigné',
+                        compte.lieu_installation || 'Non renseigné',
+                        `<span title="${compte.motivation || ''}">${AdminCommon.utils.truncateText(compte.motivation)}</span>`,
+                        AdminCommon.utils.formatDate(compte.date_inscription),
+                        `<button class="btn-action success" onclick="franchiseManager.validerCompte(${compte.id}, 'valider')">Valider</button>
+                         <button class="btn-action danger" onclick="franchiseManager.validerCompte(${compte.id}, 'refuser')">Refuser</button>`
                     ]
                 }
+            },
+            formFields: {
+                base: [
+                    { name: 'nom', label: 'Nom', type: 'text', required: true },
+                    { name: 'prenom', label: 'Prénom', type: 'text', required: true },
+                    { name: 'email', label: 'Email', type: 'email', required: true },
+                    { name: 'telephone', label: 'Téléphone', type: 'tel' },
+                    { name: 'numero_permis', label: 'Numéro de permis', type: 'text' },
+                    { name: 'lieu_installation', label: 'Lieu d\'installation', type: 'text', required: true }
+                ],
+                add: [
+                    { name: 'password', label: 'Mot de passe temporaire', type: 'password', required: true },
+                    { name: 'motivation', label: 'Motivation', type: 'textarea' }
+                ]
             }
-        };
+        },
 
-        document.addEventListener('DOMContentLoaded', function() {
-            loadFranchises();
-            loadValidation();
-        });
-
-        async function loadFranchises() {
+        async loadFranchises() {
             try {
-                const franchises = await AdminCommon.utils.apiRequest(franchiseManager.config.endpoints.getAll);
-                franchiseManager.data.franchises = franchises;
-                
+                const franchises = await AdminCommon.utils.apiRequest(this.config.endpoints.getAll);
+                this.data.franchises = franchises;
                 AdminCommon.utils.createTable({
                     containerId: 'franchise-table-container',
-                    headers: franchiseManager.config.tables.franchise.headers,
+                    headers: this.config.tables.franchise.headers,
                     data: franchises,
                     rowBuilder: (franchise) => {
                         const row = document.createElement('tr');
-                        const cells = franchiseManager.config.tables.franchise.rowBuilder(franchise);
+                        const cells = this.config.tables.franchise.rowBuilder(franchise);
                         row.innerHTML = cells.map(cell => `<td>${cell}</td>`).join('');
                         return row;
                     },
                     emptyMessage: 'Aucun franchisé trouvé'
                 });
-                
             } catch (error) {
                 AdminCommon.utils.showAlert('Erreur lors du chargement des franchisés', 'error');
             }
-        }
+        },
 
-        async function loadValidation() {
+        async loadValidation() {
             try {
-                const comptes = await AdminCommon.utils.apiRequest(franchiseManager.config.endpoints.validation);
-                franchiseManager.data.validationQueue = comptes;
-                
+                const comptes = await AdminCommon.utils.apiRequest(this.config.endpoints.validation);
+                this.data.validationQueue = comptes;
                 AdminCommon.utils.createTable({
                     containerId: 'validation-table-container',
-                    headers: franchiseManager.config.tables.validation.headers,
+                    headers: this.config.tables.validation.headers,
                     data: comptes,
                     rowBuilder: (compte) => {
                         const row = document.createElement('tr');
-                        const cells = franchiseManager.config.tables.validation.rowBuilder(compte);
+                        const cells = this.config.tables.validation.rowBuilder(compte);
                         row.innerHTML = cells.map(cell => `<td>${cell}</td>`).join('');
                         return row;
                     },
                     emptyMessage: 'Aucun compte en attente'
                 });
-                
                 AdminCommon.utils.updateTabBadge('validation', comptes.length);
-                
             } catch (error) {
                 AdminCommon.utils.showAlert('Erreur lors du chargement des validations', 'error');
             }
-        }
+        },
 
-        function getStatusLabel(statut) {
-            return franchiseManager.config.statusLabels[statut || 'valide'];
-        }
+        getStatusLabel(statut) {
+            return this.config.statusLabels[statut || 'valide'];
+        },
 
-        function showAddFranchiseModal() {
-            const fields = [
-                ...franchiseManager.config.formFields.base,
-                ...franchiseManager.config.formFields.add,
-                { 
-                    name: 'statut', 
-                    label: 'Statut', 
-                    type: 'select', 
-                    defaultValue: 'valide',
-                    options: Object.entries(franchiseManager.config.statusLabels).map(([value, text]) => ({ value, text }))
-                }
-            ];
+        showAddFranchiseModal() {
+            this.createFranchiseModal('Ajouter un nouveau franchisé', null, this.handleAddFranchise.bind(this));
+        },
 
-            AdminCommon.utils.createFormModal({
-                title: 'Ajouter un nouveau franchisé',
-                fields: fields,
-                onSubmit: async (data, isEdit) => {
-                    data.role = 'franchise';
-                    data.admin_create = true;
-                    
-                    const success = await AdminCommon.utils.saveData(
-                        franchiseManager.config.endpoints.register, 
-                        data
-                    );
-                    
-                    if (success) {
-                        AdminCommon.utils.closeModal();
-                        await loadFranchises();
-                        await loadValidation();
-                    }
-                }
-            });
-        }
-
-        function editFranchise(id) {
-            const franchise = franchiseManager.data.franchises.find(f => f.id == id);
+        editFranchise(id) {
+            const franchise = this.data.franchises.find(f => f.id == id);
             if (!franchise) {
                 AdminCommon.utils.showAlert('Franchisé non trouvé', 'error');
                 return;
             }
+            this.createFranchiseModal(`Modifier le franchisé #${id}`, franchise, this.handleEditFranchise.bind(this, id));
+        },
 
+        createFranchiseModal(title, data, onSubmit) {
+            const isEdit = !!data;
             const fields = [
-                ...franchiseManager.config.formFields.base,
-                { 
-                    name: 'statut', 
-                    label: 'Statut', 
+                ...this.config.formFields.base,
+                ...(isEdit ? [] : this.config.formFields.add),
+                {
+                    name: 'statut',
+                    label: 'Statut',
                     type: 'select',
-                    options: Object.entries(franchiseManager.config.statusLabels).map(([value, text]) => ({ value, text }))
+                    defaultValue: 'valide',
+                    options: Object.entries(this.config.statusLabels).map(([value, text]) => ({ value, text }))
                 }
             ];
 
-            AdminCommon.utils.createFormModal({
-                title: `Modifier le franchisé #${id}`,
-                data: franchise,
-                fields: fields,
-                onSubmit: async (data, isEdit) => {
-                    const success = await AdminCommon.utils.saveData(
-                        franchiseManager.config.endpoints.update, 
-                        data, 
-                        true
-                    );
-                    
-                    if (success) {
-                        AdminCommon.utils.closeModal();
-                        await loadFranchises();
-                    }
-                }
-            });
-        }
+            const modal = document.createElement('div');
+            modal.className = 'modal';
 
-        async function validerCompte(userId, action) {
-            if (!confirm(`Êtes-vous sûr de vouloir ${action} ce compte ?`)) return;
-            
+            const fieldsHTML = fields.map(field => {
+                const value = data ? (data[field.name] || '') : (field.defaultValue || '');
+                const id = `franchise-${field.name}`;
+                const attributes = [];
+                if (field.required) attributes.push('required');
+                if (field.placeholder) attributes.push(`placeholder="${field.placeholder}"`);
+                if (field.rows) attributes.push(`rows="${field.rows}"`);
+                if (field.type === 'select') {
+                    const optionsHTML = field.options.map(opt =>
+                        `<option value="${opt.value}" ${value == opt.value ? 'selected' : ''}>${opt.text}</option>`
+                    ).join('');
+                    return `
+                        <div class="form-group">
+                            <label for="${id}">${field.label}</label>
+                            <select id="${id}" name="${field.name}" ${attributes.join(' ')}>
+                                ${optionsHTML}
+                            </select>
+                        </div>
+                    `;
+                } else if (field.type === 'textarea') {
+                    return `
+                        <div class="form-group">
+                            <label for="${id}">${field.label}</label>
+                            <textarea id="${id}" name="${field.name}" ${attributes.join(' ')}>${value}</textarea>
+                        </div>
+                    `;
+                } else {
+                    return `
+                        <div class="form-group">
+                            <label for="${id}">${field.label}</label>
+                            <input type="${field.type}" id="${id}" name="${field.name}" value="${value}" ${attributes.join(' ')}>
+                        </div>
+                    `;
+                }
+            }).join('');
+
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <h3>${title}</h3>
+                    <form id="franchise-modal-form">
+                        ${fieldsHTML}
+                        <div class="modal-actions">
+                            <button type="button" class="btn-secondary" onclick="AdminCommon.utils.closeModal()">Annuler</button>
+                            <button type="submit" class="btn-primary">${isEdit ? 'Modifier' : 'Ajouter'}</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            document.getElementById('franchise-modal-form').addEventListener('submit', onSubmit);
+        },
+
+        async handleAddFranchise(e) {
+            e.preventDefault();
+            const data = Object.fromEntries(new FormData(e.target));
+            data.role = 'franchise';
+            data.admin_create = true;
             const success = await AdminCommon.utils.saveData(
-                franchiseManager.config.endpoints.validation,
+                this.config.endpoints.register,
+                data
+            );
+            if (success) {
+                AdminCommon.utils.closeModal();
+                await this.loadFranchises();
+                await this.loadValidation();
+            }
+        },
+
+        async handleEditFranchise(id, e) {
+            e.preventDefault();
+            const data = Object.fromEntries(new FormData(e.target));
+            data.id = id;
+            const success = await AdminCommon.utils.saveData(
+                this.config.endpoints.update,
+                data,
+                true
+            );
+            if (success) {
+                AdminCommon.utils.closeModal();
+                await this.loadFranchises();
+            }
+        },
+
+        async validerCompte(userId, action) {
+            if (!confirm(`Êtes-vous sûr de vouloir ${action} ce compte ?`)) return;
+            const success = await AdminCommon.utils.saveData(
+                this.config.endpoints.validation,
                 { user_id: userId, action: action }
             );
-            
             if (success) {
-                await loadFranchises();
-                await loadValidation();
+                await this.loadFranchises();
+                await this.loadValidation();
             }
-        }
+        },
 
-        async function deleteFranchise(id) {
+        async deleteFranchise(id) {
             const success = await AdminCommon.utils.deleteData(
-                franchiseManager.config.endpoints.delete,
+                this.config.endpoints.delete,
                 { id: id },
                 'Êtes-vous sûr de vouloir supprimer ce franchisé ?\n\nCette action désactivera le compte plutôt que de le supprimer définitivement.'
             );
-            
             if (success) {
-                await loadFranchises();
+                await this.loadFranchises();
             }
         }
+    };
 
+    document.addEventListener('DOMContentLoaded', function() {
+        franchiseManager.loadFranchises();
+        franchiseManager.loadValidation();
+    });
     </script>
 </body>
 </html>
