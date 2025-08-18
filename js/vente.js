@@ -4,40 +4,29 @@
  */
 
 // Variables globales
-let produits = [];
 let ventesAujourdhui = [];
 let totalJournalier = 0;
 let venteEnCours = [];
 let currentCamionId = null;
 
-// CHARGEMENT INITIAL
-
+// CHARGEMENT INITIAL UNIQUEMENT SI produits EST DÉJÀ PRÉPARÉ
 document.addEventListener('DOMContentLoaded', function() {
-    loadProduits();
-    loadVentesStats();
-    loadVentesAujourdhui();
-    loadCamionFranchise();
-    
-    // Initialiser le bouton d'ajout de vente
-    const addBtn = document.getElementById('add-ventes-btn');
-    if (addBtn) {
-        addBtn.onclick = showAddVenteModal;
+    // On attend que window.produits soit défini par la page (franchise/ventes.php)
+    if (!window.produits || !Array.isArray(window.produits) || window.produits.length === 0) {
+        // On attend un court instant puis on réessaie (cas où le fetch du menu est asynchrone)
+        setTimeout(initVentes, 200);
+    } else {
+        initVentes();
     }
 });
 
-// CHARGEMENT DES DONNÉES
-
-/**
- * Charger les produits disponibles
- */
-async function loadProduits() {
-    try {
-        const response = await fetch('../api/produits/list.php');
-        if (!response.ok) throw new Error('Erreur HTTP ' + response.status);
-        produits = await response.json();
-    } catch (error) {
-        console.error('Erreur lors du chargement des produits:', error);
-        showAlert('Erreur lors du chargement des produits', 'error');
+function initVentes() {
+    loadVentesStats();
+    loadVentesAujourdhui();
+    loadCamionFranchise();
+    const addBtn = document.getElementById('add-ventes-btn');
+    if (addBtn) {
+        addBtn.onclick = showAddVenteModal;
     }
 }
 
@@ -133,6 +122,10 @@ function displayVentesTable(ventes) {
  * Afficher le modal d'ajout de vente
  */
 function showAddVenteModal() {
+    if (!window.produits || window.produits.length === 0) {
+        showAlert('Aucun plat disponible dans votre menu. Ajoutez d\'abord des plats dans votre menu.', 'warning');
+        return;
+    }
     venteEnCours = [];
     
     const modal = document.createElement('div');
@@ -148,7 +141,7 @@ function showAddVenteModal() {
                     <label for="produit-select">Ajouter un produit *</label>
                     <select id="produit-select">
                         <option value="">Sélectionner un produit</option>
-                        ${produits.map(p => `
+                        ${window.produits.map(p => `
                             <option value="${p.id}" data-prix="${p.prix_unitaire}" data-nom="${p.nom}">
                                 ${p.nom} - ${parseFloat(p.prix_unitaire).toFixed(2)}€
                             </option>
@@ -207,22 +200,28 @@ function ajouterProduitVente() {
     const produitSelect = document.getElementById('produit-select');
     const quantite = parseInt(document.getElementById('quantite-produit').value) || 1;
     const prixUnitaire = parseFloat(document.getElementById('prix-unitaire').value) || 0;
-    
+
     if (!produitSelect.value) {
         showAlert('Veuillez sélectionner un produit', 'error');
         return;
     }
-    
+
+    const produitId = parseInt(produitSelect.value);
+    const produitMenu = produits.find(p => p.id === produitId);
+    if (!produitMenu) {
+        showAlert('Produit non autorisé à la vente', 'error');
+        return;
+    }
+
     if (quantite <= 0) {
         showAlert('La quantité doit être supérieure à 0', 'error');
         return;
     }
-    
-    const produitId = parseInt(produitSelect.value);
+
     const produitNom = produitSelect.selectedOptions[0].dataset.nom;
-    
+
     const existingIndex = venteEnCours.findIndex(item => item.produit_id === produitId);
-    
+
     if (existingIndex >= 0) {
         venteEnCours[existingIndex].quantite += quantite;
         venteEnCours[existingIndex].prix_total = venteEnCours[existingIndex].quantite * prixUnitaire;
@@ -235,11 +234,11 @@ function ajouterProduitVente() {
             prix_total: quantite * prixUnitaire
         });
     }
-    
+
     produitSelect.value = '';
     document.getElementById('quantite-produit').value = 1;
     document.getElementById('prix-unitaire').value = '';
-    
+
     updateVenteResume();
 }
 

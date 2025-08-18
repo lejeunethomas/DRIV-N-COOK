@@ -40,7 +40,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['user_id'],
             isset($data['camion_id']) ? $data['camion_id'] : null,
             $data['montant'],
-            isset($data['type_paiement']) ? $data['type_paiement'] : 'especes'
+            isset($data['type_paiement']) ? $data['type_paiement'] : 'especes',
+            'valide'
         ]);
         
         $venteId = $conn->lastInsertId();

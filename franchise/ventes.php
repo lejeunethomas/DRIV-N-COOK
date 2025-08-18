@@ -8,7 +8,6 @@ require_franchise_validated();
     <meta charset="UTF-8">
     <title>Mes ventes - Franchisé</title>
     <link rel="stylesheet" href="../css/style.css">
-    <script src="../js/vente.js"></script>
 </head>
 <body data-role="franchise">
     <div class="dashboard-layout">
@@ -25,6 +24,7 @@ require_franchise_validated();
         </nav>
         
         <main class="main-content franchise">
+            <div id="alert-container"></div>
             <div class="section-card franchise">
                 <h2>💰 Mes ventes du jour</h2>
                 <p>Enregistrez vos ventes rapidement et suivez vos performances</p>
@@ -77,12 +77,24 @@ require_franchise_validated();
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            loadVentesStats();
-            loadVentesAujourdhui();
-            loadProduits();
-        });
+    // On charge le menu AVANT le JS principal
+    window.addEventListener('DOMContentLoaded', async function() {
+        try {
+            const res = await fetch('../api/menu/list.php');
+            const menu = await res.json();
+            window.produits = Array.isArray(menu)
+                ? menu.filter(p => p.statut !== 'indisponible').map(p => ({
+                    id: p.id,
+                    nom: p.nom,
+                    prix_unitaire: parseFloat(p.prix)
+                }))
+                : [];
+        } catch (e) {
+            window.produits = [];
+        }
+    });
     </script>
+    <script src="../js/vente.js"></script>
 </body>
 </html>
 
