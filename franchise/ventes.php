@@ -77,7 +77,6 @@ require_franchise_validated();
     </div>
 
     <script>
-    // On charge le menu AVANT le JS principal
     window.addEventListener('DOMContentLoaded', async function() {
         try {
             const res = await fetch('../api/menu/list.php');
