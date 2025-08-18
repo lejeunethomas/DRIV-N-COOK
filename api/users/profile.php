@@ -70,7 +70,7 @@ function handleUpdateProfile($userId, $isAdmin) {
         
         $stmt = $conn->prepare("
             UPDATE users 
-            SET nom = ?, prenom = ?, telephone = ?, numero_permis = ?, lieu_installation = ?
+            SET nom = ?, prenom = ?, telephone = ?, numero_permis = ?, lieu_installation = ?, motivation = ?
             WHERE id = ?
         ");
         
@@ -80,6 +80,7 @@ function handleUpdateProfile($userId, $isAdmin) {
             isset($data['telephone']) ? $data['telephone'] : null,
             isset($data['numero_permis']) ? $data['numero_permis'] : null,
             isset($data['lieu_installation']) ? $data['lieu_installation'] : '',
+            isset($data['motivation']) ? $data['motivation'] : '',
             $targetUserId
         ]);
         

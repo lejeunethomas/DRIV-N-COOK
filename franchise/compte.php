@@ -25,7 +25,7 @@ require_franchise_validated();
         <main class="main-content franchise">
             <div class="topbar">
                 <h1 style="margin:0; color:#e64a19;">Mon compte</h1>
-                <button id="edit-btn" class="btn" onclick="toggleEditMode()">Modifier</button>
+                <button id="edit-btn" class="btn" onclick="CompteManager.toggleEditMode()">Modifier</button>
             </div>
 
             <div id="alert-container"></div>
@@ -100,7 +100,7 @@ require_franchise_validated();
                         </div>
                         <div class="btn-group">
                             <button type="submit" class="btn">Sauvegarder</button>
-                            <button type="button" class="btn-secondary" onclick="cancelEdit()">Annuler</button>
+                            <button type="button" class="btn-secondary" onclick="CompteManager.cancelEdit()">Annuler</button>
                         </div>
                     </form>
                 </div>
@@ -127,15 +127,15 @@ require_franchise_validated();
     </div>
 
     <script src="../js/admin/common.js"></script>
-
     <script>
-        let userProfile = null;
+    const CompteManager = {
+        userProfile: null,
 
-        function showAlert(message, type) {
+        showAlert(message, type) {
             AdminCommon.utils.showAlert(message, type);
-        }
+        },
 
-        function displayProfile(profile) {
+        displayProfile(profile) {
             document.getElementById('view-nom').textContent = profile.nom || '-';
             document.getElementById('view-prenom').textContent = profile.prenom || '-';
             document.getElementById('view-email').textContent = profile.email || '-';
@@ -145,15 +145,14 @@ require_franchise_validated();
             document.getElementById('view-motivation').textContent = profile.motivation || '-';
             document.getElementById('view-date').textContent = profile.date_inscription ? 
                 AdminCommon.utils.formatDate(profile.date_inscription) : '-';
-        }
+        },
 
-        async function loadStats() {
+        async loadStats() {
             try {
                 const camionsRes = await fetch('../api/camions/get_by_user.php');
                 const camions = await camionsRes.json();
                 const nbCamions = Array.isArray(camions) && camions.length > 0 ? 1 : 0;
                 document.getElementById('stat-camions').textContent = nbCamions;
-                
                 document.querySelector('#stat-camions').parentElement.querySelector('.stat-label').textContent = 
                     nbCamions > 0 ? 'Mon camion' : 'Aucun camion';
 
@@ -166,101 +165,96 @@ require_franchise_validated();
                 try {
                     const ventesRes = await fetch('../api/ventes/stats.php');
                     const ventes = await ventesRes.json();
-                    
                     if (ventes.success) {
                         document.getElementById('stat-ventes').textContent = ventes.total_mois + '€';
                     }
                 } catch (error) {
                     console.error('Erreur ventes:', error);
                 }
-                
             } catch (error) {
                 console.error('Erreur lors du chargement des statistiques:', error);
                 document.getElementById('stat-camions').textContent = 'Erreur';
                 document.getElementById('stat-ventes').textContent = 'Erreur';
                 document.getElementById('stat-commandes').textContent = 'Erreur';
             }
-        }
+        },
 
-        async function loadProfile() {
+        async loadProfile() {
             try {
                 const response = await fetch('../api/users/profile.php');
                 const data = await response.json();
-                
                 if (data.success === false) {
-                    showAlert('Erreur lors du chargement du profil: ' + data.message, 'error');
+                    this.showAlert('Erreur lors du chargement du profil: ' + data.message, 'error');
                     return;
                 }
-                
-                userProfile = data.user;
-                displayProfile(data.user);
+                this.userProfile = data.user;
+                this.displayProfile(data.user);
             } catch (error) {
-                showAlert('Erreur réseau lors du chargement du profil', 'error');
+                this.showAlert('Erreur réseau lors du chargement du profil', 'error');
                 console.error('Erreur:', error);
             }
-        }
+        },
 
-        function toggleEditMode() {
+        toggleEditMode() {
             document.getElementById('view-mode').style.display = 'none';
             document.getElementById('edit-mode').style.display = 'block';
             document.getElementById('edit-btn').style.display = 'none';
-            
-            if (userProfile) {
-                document.getElementById('edit-nom').value = userProfile.nom || '';
-                document.getElementById('edit-prenom').value = userProfile.prenom || '';
-                document.getElementById('edit-telephone').value = userProfile.telephone || '';
-                document.getElementById('edit-numero-permis').value = userProfile.numero_permis || '';
-                document.getElementById('edit-lieu').value = userProfile.lieu_installation || '';
-                document.getElementById('edit-motivation').value = userProfile.motivation || '';
+            if (this.userProfile) {
+                document.getElementById('edit-nom').value = this.userProfile.nom || '';
+                document.getElementById('edit-prenom').value = this.userProfile.prenom || '';
+                document.getElementById('edit-telephone').value = this.userProfile.telephone || '';
+                document.getElementById('edit-numero-permis').value = this.userProfile.numero_permis || '';
+                document.getElementById('edit-lieu').value = this.userProfile.lieu_installation || '';
+                document.getElementById('edit-motivation').value = this.userProfile.motivation || '';
             }
-        }
+        },
 
-        function cancelEdit() {
+        cancelEdit() {
             document.getElementById('view-mode').style.display = 'block';
             document.getElementById('edit-mode').style.display = 'none';
             document.getElementById('edit-btn').style.display = 'block';
-        }
+        },
 
-        async function saveProfile(formData) {
+        async saveProfile(formData) {
             try {
                 const result = await AdminCommon.utils.apiRequest('../api/users/profile.php', {
                     method: 'PUT',
                     data: formData,
                     showLoader: true
                 });
-                
                 if (result.success) {
-                    showAlert('Profil mis à jour avec succès !', 'success');
-                    userProfile = { ...userProfile, ...formData };
-                    displayProfile(userProfile);
-                    cancelEdit();
+                    this.showAlert('Profil mis à jour avec succès !', 'success');
+                    this.userProfile = { ...this.userProfile, ...formData };
+                    this.displayProfile(this.userProfile);
+                    this.cancelEdit();
                 } else {
-                    showAlert('Erreur: ' + result.message, 'error');
+                    this.showAlert('Erreur: ' + result.message, 'error');
                 }
             } catch (error) {
-                showAlert('Erreur réseau lors de la sauvegarde', 'error');
+                this.showAlert('Erreur réseau lors de la sauvegarde', 'error');
             }
+        },
+
+        init() {
+            document.getElementById('profile-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const formData = {
+                    nom: document.getElementById('edit-nom').value,
+                    prenom: document.getElementById('edit-prenom').value,
+                    telephone: document.getElementById('edit-telephone').value,
+                    numero_permis: document.getElementById('edit-numero-permis').value,
+                    lieu_installation: document.getElementById('edit-lieu').value,
+                    motivation: document.getElementById('edit-motivation').value
+                };
+                await this.saveProfile(formData);
+            });
+
+            this.loadProfile();
+            this.loadStats();
         }
+    };
 
-        document.getElementById('profile-form').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const formData = {
-                nom: document.getElementById('edit-nom').value,
-                prenom: document.getElementById('edit-prenom').value,
-                telephone: document.getElementById('edit-telephone').value,
-                numero_permis: document.getElementById('edit-numero-permis').value,
-                lieu_installation: document.getElementById('edit-lieu').value,
-                motivation: document.getElementById('edit-motivation').value
-            };
-            
-            await saveProfile(formData);
-        });
-
-        document.addEventListener('DOMContentLoaded', function() {
-            loadProfile();
-            loadStats();
-        });
+    document.addEventListener('DOMContentLoaded', () => CompteManager.init());
     </script>
 </body>
 </html>
