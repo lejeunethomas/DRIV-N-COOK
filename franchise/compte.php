@@ -192,8 +192,8 @@ require_franchise_validated();
                     return;
                 }
                 
-                userProfile = data;
-                displayProfile(data);
+                userProfile = data.user;
+                displayProfile(data.user);
             } catch (error) {
                 showAlert('Erreur réseau lors du chargement du profil', 'error');
                 console.error('Erreur:', error);

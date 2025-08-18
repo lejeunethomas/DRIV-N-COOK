@@ -35,6 +35,7 @@ function handleGetProfile($userId, $isAdmin) {
         
         $stmt = $conn->prepare("
             SELECT id, nom, prenom, email, telephone, numero_permis, lieu_installation, 
+                   motivation,
                    role, statut, date_inscription 
             FROM users WHERE id = ?
         ");
