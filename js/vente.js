@@ -11,9 +11,7 @@ let currentCamionId = null;
 
 // CHARGEMENT INITIAL UNIQUEMENT SI produits EST DÉJÀ PRÉPARÉ
 document.addEventListener('DOMContentLoaded', function() {
-    // On attend que window.produits soit défini par la page (franchise/ventes.php)
     if (!window.produits || !Array.isArray(window.produits) || window.produits.length === 0) {
-        // On attend un court instant puis on réessaie (cas où le fetch du menu est asynchrone)
         setTimeout(initVentes, 200);
     } else {
         initVentes();
