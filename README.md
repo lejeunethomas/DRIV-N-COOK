@@ -7,13 +7,13 @@ Le projet vise à remplacer un système manuel (type tableurs Excel) par une pla
 
 Fonctionnalités principales :
 
-🔐 Authentification et séparation des rôles (administrateur / franchisé)
+🔐 Authentification et séparation des rôles (administrateur / franchisé / client)
 
 🧾 Gestion des franchisés et affectation des camions
 
 🚚 Suivi du parc de véhicules (état, entretiens, localisation)
 
-📦 Système de commande de stock, avec contrôle automatique du respect du ratio d’achat imposé (≥80% des produits provenant du réseau)
+📦 Système de commande de stock
 
 📊 Suivi des ventes et génération automatique de rapports PDF
 
@@ -28,8 +28,6 @@ Frontend : HTML5, CSS3, JavaScript (vanilla)
 Backend : PHP (API REST)
 
 Base de données : MySQL, avec phpMyAdmin
-
-PDF : FPDF
 
 Serveur web : Apache2 sur machine virtuelle Linux (déploiement local)
 
