@@ -1,14 +1,27 @@
 <?php
 require_once '../../includes/db.php';
 require_once '../../includes/auth.php';
-require_franchise_validated();
 
 header('Content-Type: application/json');
 
 try {
     $conn = Database::getInstance()->getConnection();
-    $userId = $_SESSION['user_id'];
-    
+
+    if (isset($_GET['camion_id'])) {
+        // Récupérer le franchisé propriétaire du camion
+        $stmt = $conn->prepare("SELECT user_id FROM camions WHERE id = ?");
+        $stmt->execute([$_GET['camion_id']]);
+        $camion = $stmt->fetch();
+        if (!$camion) {
+            echo json_encode([]);
+            exit;
+        }
+        $userId = $camion['user_id'];
+    } else {
+        require_franchise_validated();
+        $userId = $_SESSION['user_id'];
+    }
+
     $stmt = $conn->prepare("
         SELECT 
             id,
@@ -26,9 +39,9 @@ try {
     ");
     $stmt->execute([$userId]);
     $menus = $stmt->fetchAll();
-    
+
     echo json_encode($menus);
-    
+
 } catch (Exception $e) {
     echo json_encode([]);
 }

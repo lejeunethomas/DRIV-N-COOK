@@ -32,16 +32,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $conn = Database::getInstance()->getConnection();
         $conn->beginTransaction();
         
+        // Récupérer le franchisé propriétaire du camion
+        $camionId = isset($data['camion_id']) ? $data['camion_id'] : null;
+        $stmt = $conn->prepare("SELECT user_id FROM camions WHERE id = ?");
+        $stmt->execute([$camionId]);
+        $camion = $stmt->fetch();
+        if (!$camion) {
+            echo json_encode(['success' => false, 'message' => 'Camion introuvable']);
+            $conn->rollBack();
+            exit;
+        }
+        $userId = $camion['user_id'];
+
         $stmt = $conn->prepare("
             INSERT INTO ventes (user_id, camion_id, montant, type_paiement, date_vente, statut) 
             VALUES (?, ?, ?, ?, NOW(), ?)
         ");
         $stmt->execute([
-            $_SESSION['user_id'],
-            isset($data['camion_id']) ? $data['camion_id'] : null,
+            $userId,
+            $camionId,
             $data['montant'],
             isset($data['type_paiement']) ? $data['type_paiement'] : 'especes',
-            'valide'
+            isset($data['statut']) ? $data['statut'] : 'en_attente'
         ]);
         
         $venteId = $conn->lastInsertId();
