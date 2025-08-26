@@ -20,7 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
         
         $stmt = $conn->prepare("
             UPDATE camions 
-            SET nom_camion = ?, etat = ?, emplacement = ?, menu = ?, jours = ?, date_livraison = ?
+            SET nom_camion = ?, etat = ?, emplacement = ?, menu = ?, jours = ?, date_livraison = ?, latitude = ?, longitude = ?
             WHERE id = ?
         ");
         $stmt->execute([
@@ -30,6 +30,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
             isset($data['menu']) ? $data['menu'] : '',
             isset($data['jours']) ? $data['jours'] : '',
             array_key_exists('date_livraison', $data) ? $data['date_livraison'] : null,
+            isset($data['latitude']) ? $data['latitude'] : null,
+            isset($data['longitude']) ? $data['longitude'] : null,
             $data['id']
         ]);
         

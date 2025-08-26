@@ -54,6 +54,7 @@ require_admin();
     </div>
     
     <script src="../js/admin/common.js"></script>
+    <script src="../js/admin/geolocation.js"></script>
 
     <script>
         // GESTIONNAIRE PRINCIPAL UNIFIÉ 
@@ -670,30 +671,39 @@ require_admin();
                     return;
                 }
 
+                let geo = { success: false };
                 try {
-                    const response = await fetch(this.config.endpoints.syncEmplacement, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            camion_id: camionId,
-                            emplacement: data.emplacement
-                        })
-                    });
+                    geo = await geocodeAddress(data.emplacement);
+                } catch (err) {
+                    geo = { success: false };
+                }
 
-                    const result = await response.json();
+                const payload = {
+                    camion_id: camionId,
+                    emplacement: data.emplacement,
+                    latitude: geo.success ? geo.latitude : null,
+                    longitude: geo.success ? geo.longitude : null
+                };
 
-                    if (result.success) {
-                        alert('✅ Emplacement synchronisé avec succès !');
-                        this.closeModal();
-                        await Promise.all([
-                            this.loadCamionsTab(),
-                            this.loadFranchises()
-                        ]);
-                    } else {
-                        alert('❌ Erreur: ' + result.message);
-                    }
-                } catch (error) {
-                    alert('❌ Erreur réseau: ' + error.message);
+                const response = await fetch(this.config.endpoints.syncEmplacement, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    let msg = '✅ Emplacement synchronisé avec succès !';
+                    if (!geo.success) msg += '\n⚠️ Coordonnées GPS non trouvées, seule l\'adresse a été enregistrée.';
+                    alert(msg);
+                    this.closeModal();
+                    await Promise.all([
+                        this.loadCamionsTab(),
+                        this.loadFranchises()
+                    ]);
+                } else {
+                    alert('❌ Erreur: ' + result.message);
                 }
             },
 
