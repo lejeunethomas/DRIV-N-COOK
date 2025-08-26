@@ -21,44 +21,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
 
     try {
         $conn = Database::getInstance()->getConnection();
-        $userId = $_SESSION['user_id'];
 
-        $stmt = $conn->prepare("SELECT id, statut FROM ventes WHERE id = ? AND user_id = ?");
-        $stmt->execute([$data['id'], $userId]);
+        // Pour le client, ne filtre pas sur user_id
+        $stmt = $conn->prepare("SELECT id, statut FROM ventes WHERE id = ?");
+        $stmt->execute([$data['id']]);
         $vente = $stmt->fetch();
-        
+
         if (!$vente) {
             echo json_encode(['success' => false, 'message' => 'Commande non trouvée']);
             exit;
         }
-        
+
         if ($vente['statut'] === 'valide' && $data['statut'] === 'valide') {
             echo json_encode(['success' => true, 'message' => 'Commande déjà validée']);
             exit;
         }
-        
+
         if ($vente['statut'] !== 'en_attente' && $data['statut'] === 'valide') {
             echo json_encode(['success' => false, 'message' => 'Seules les commandes en attente peuvent être validées']);
             exit;
         }
-        
-        $stmt = $conn->prepare("UPDATE ventes SET statut = ? WHERE id = ? AND user_id = ?");
-        $stmt->execute([$data['statut'], $data['id'], $userId]);
-        
+
+        $stmt = $conn->prepare("UPDATE ventes SET statut = ? WHERE id = ?");
+        $stmt->execute([$data['statut'], $data['id']]);
+
         if ($stmt->rowCount() > 0) {
             echo json_encode([
-                'success' => true, 
-                'message' => 'Statut mis à jour',
-                'nouveau_statut' => $data['statut']
+                'success' => true,
+                'message' => 'Commande validée avec succès'
             ]);
         } else {
-            echo json_encode(['success' => false, 'message' => 'Aucune modification effectuée']);
+            echo json_encode([
+                'success' => false,
+                'message' => 'Aucune modification effectuée'
+            ]);
         }
-        
     } catch (Exception $e) {
         echo json_encode(['success' => false, 'message' => 'Erreur serveur : ' . $e->getMessage()]);
     }
-    
+    exit;
 } else {
     echo json_encode(['success' => false, 'message' => 'Méthode non autorisée']);
 }

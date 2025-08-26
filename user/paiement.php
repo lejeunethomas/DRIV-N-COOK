@@ -35,8 +35,7 @@ require_role('client');
                             <th>Total</th>
                         </tr>
                     </thead>
-                    <tbody>
-                    </tbody>
+                    <tbody></tbody>
                 </table>
             </div>
 
@@ -44,46 +43,46 @@ require_role('client');
             <div class="section-card client">
                 <h2>Informations de Paiement</h2>
                 <p>Veuillez entrer vos informations de paiement pour finaliser votre commande.</p>
-                <form action="../api/paiement/process.php" method="post">
+                <form id="paiement-form">
                     <input type="text" name="card_number" placeholder="Numéro de carte" required>
                     <input type="text" name="card_holder" placeholder="Nom du titulaire" required>
                     <input type="text" name="expiry_date" placeholder="Date d'expiration (MM/AA)" required>
                     <input type="text" name="cvv" placeholder="CVV" required>
-                    <button type="submit" class="btn-nav" onclick="processPaiement(commandeId);">Payer</button>
-                    <button type="reset" class="btn-nav" style="background-color: #f44336;" onclick="annulerCommande(commandeId);">Annuler</button>
+                    <button type="submit" class="btn-nav">Payer</button>
+                    <button type="button" class="btn-nav" style="background-color: #f44336;" id="btn-annuler">Annuler</button>
                 </form>
+                <div id="paiement-alert"></div>
             </div>
         </main>
     </div>
 
-    <script src="../js/vente.js"></script>
+    <script src="../js/admin/common.js"></script>
     <script>
         let commandeId = null;
-        
+
         document.addEventListener('DOMContentLoaded', async function() {
-            // Récupérer l'ID depuis l'URL
             const urlParams = new URLSearchParams(window.location.search);
             commandeId = urlParams.get('commande_id');
-            
-            if (commandeId) {
-                await chargerCommande();
-            }
+            if (commandeId) await chargerCommande();
+
+            document.getElementById('paiement-form').onsubmit = async function(e) {
+                e.preventDefault();
+                await processPaiement();
+            };
+            document.getElementById('btn-annuler').onclick = annulerCommande;
         });
-        
+
         async function chargerCommande() {
             try {
                 const response = await fetch(`../api/ventes/details.php?id=${commandeId}`);
                 const result = await response.json();
-                
                 if (result.success && result.details) {
                     const tbody = document.querySelector('#recap-ventes tbody');
                     let total = 0;
-                    
                     tbody.innerHTML = '';
                     result.details.forEach(detail => {
                         const sousTotal = parseFloat(detail.prix_total || 0);
                         total += sousTotal;
-                        
                         tbody.innerHTML += `
                             <tr>
                                 <td>${detail.nom}</td>
@@ -93,14 +92,13 @@ require_role('client');
                             </tr>
                         `;
                     });
-                    
-                    document.getElementById('total-commandes').textContent = total.toFixed(2) + '€';
+                    document.getElementById('total-commandes').textContent = AdminCommon.utils.formatPrice ? AdminCommon.utils.formatPrice(total) : total.toFixed(2) + '€';
                 }
             } catch (error) {
-                console.error('Erreur chargement:', error);
+                AdminCommon.utils.showAlert('Erreur chargement commande', 'error');
             }
         }
-        
+
         async function simulatePayment() {
             return new Promise((resolve) => {
                 setTimeout(() => {
@@ -109,13 +107,11 @@ require_role('client');
             });
         }
 
-        async function processPaiement() { 
+        async function processPaiement() {
             try {
-                // Simuler le paiement
                 const paiementResult = await simulatePayment();
-                
                 if (paiementResult.success) {
-                    await fetch('../api/ventes/uppdate.php', {
+                    const res = await fetch('../api/ventes/uppdate.php', {
                         method: 'PUT',
                         headers: {'Content-Type': 'application/json'},
                         body: JSON.stringify({
@@ -123,26 +119,31 @@ require_role('client');
                             statut: 'valide'
                         })
                     });
-                    
-                    window.location.href = 'mes_commandes.php?success=1';
-                    
+                    const result = await res.json();
+                    if (result.success) {
+                        AdminCommon.utils.showAlert('Paiement réussi !', 'success');
+                        setTimeout(() => {
+                            window.location.href = 'mes_commandes.php?success=1';
+                        }, 1200);
+                    } else {
+                        AdminCommon.utils.showAlert('Erreur lors de la validation de la commande', 'error');
+                    }
                 } else {
                     await fetch('../api/ventes/delete.php', {
                         method: 'DELETE',
                         headers: {'Content-Type': 'application/json'},
                         body: JSON.stringify({id: commandeId})
                     });
-                    
-                    alert('Paiement échoué, commande supprimée');
-                    window.location.href = 'commander.php';
+                    AdminCommon.utils.showAlert('Paiement échoué, commande annulée', 'error');
+                    setTimeout(() => {
+                        window.location.href = 'attente.html';
+                    }, 1200);
                 }
-                
             } catch (error) {
-                console.error('Erreur paiement:', error);
+                AdminCommon.utils.showAlert('Erreur paiement', 'error');
             }
         }
 
-        // Bouton annuler
         async function annulerCommande() {
             if (confirm('Êtes-vous sûr de vouloir annuler cette commande ?')) {
                 await fetch('../api/ventes/delete.php', {
@@ -150,8 +151,10 @@ require_role('client');
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({id: commandeId})
                 });
-                
-                window.location.href = 'commander.php';
+                AdminCommon.utils.showAlert('Commande annulée', 'info');
+                setTimeout(() => {
+                    window.location.href = 'attente.html';
+                }, 1200);
             }
         }
     </script>

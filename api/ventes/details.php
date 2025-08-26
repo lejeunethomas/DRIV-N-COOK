@@ -1,7 +1,6 @@
 <?php
 require_once '../../includes/db.php';
 require_once '../../includes/auth.php';
-require_franchise_validated();
 
 header('Content-Type: application/json');
 
@@ -12,39 +11,44 @@ if (!isset($_GET['id'])) {
 
 try {
     $conn = Database::getInstance()->getConnection();
-    $userId = $_SESSION['user_id'];
-    
-    // Récupérer la vente
-    $stmt = $conn->prepare("
-        SELECT * FROM ventes 
-        WHERE id = ? AND user_id = ?
-    ");
-    $stmt->execute([$_GET['id'], $userId]);
+
+    $venteId = intval($_GET['id']);
+    $role = isset($_SESSION['role']) ? $_SESSION['role'] : null;
+
+    // Pour le client, pas de filtre sur user_id
+    if ($role === 'client') {
+        $stmt = $conn->prepare("SELECT * FROM ventes WHERE id = ?");
+        $stmt->execute([$venteId]);
+    } else {
+        $userId = $_SESSION['user_id'];
+        $stmt = $conn->prepare("SELECT * FROM ventes WHERE id = ? AND user_id = ?");
+        $stmt->execute([$venteId, $userId]);
+    }
     $vente = $stmt->fetch();
-    
+
     if (!$vente) {
         echo json_encode(['success' => false, 'message' => 'Vente non trouvée']);
         exit;
     }
-    
+
     // Récupérer les détails
     $stmt = $conn->prepare("
-        SELECT 
-            vd.*,
-            p.nom
+        SELECT vd.*, p.nom
         FROM vente_details vd
         JOIN produits p ON vd.produit_id = p.id
         WHERE vd.vente_id = ?
     ");
-    $stmt->execute([$_GET['id']]);
+    $stmt->execute([$venteId]);
     $details = $stmt->fetchAll();
-    
-    $vente['details'] = $details;
-    $vente['success'] = true;
-    
-    echo json_encode($vente);
-    
+
+    echo json_encode([
+        'success' => true,
+        'details' => $details,
+        'montant' => $vente['montant'],
+        'date_vente' => $vente['date_vente'],
+        'statut' => $vente['statut']
+    ]);
 } catch (Exception $e) {
-    echo json_encode(['success' => false, 'message' => 'Erreur serveur : ' . $e->getMessage()]);
+    echo json_encode(['success' => false, 'message' => $e->getMessage()]);
 }
 ?>
