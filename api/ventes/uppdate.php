@@ -46,6 +46,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
         $stmt->execute([$data['statut'], $data['id']]);
 
         if ($stmt->rowCount() > 0) {
+            // Ajouter les points fidélité au client si la vente est validée
+            if ($data['statut'] === 'valide') {
+                // Récupérer le client_id et le montant de la vente
+                $stmt = $conn->prepare("SELECT client_id, montant FROM ventes WHERE id = ?");
+                $stmt->execute([$data['id']]);
+                $vente = $stmt->fetch();
+                if ($vente && $vente['client_id']) {
+                    // Exemple : 1 point par tranche de 10€ dépensés
+                    $points = floor($vente['montant'] / 10);
+                    if ($points > 0) {
+                        $stmt = $conn->prepare("UPDATE clients SET points_fidelite = points_fidelite + ? WHERE id = ?");
+                        $stmt->execute([$points, $vente['client_id']]);
+                    }
+                }
+            }
+
             echo json_encode([
                 'success' => true,
                 'message' => 'Commande validée avec succès'
