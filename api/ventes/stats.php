@@ -2,6 +2,32 @@
 // filepath: c:\MAMP\htdocs\DRIV-N-COOK\api\ventes\stats.php
 require_once '../../includes/db.php';
 require_once '../../includes/auth.php';
+session_start();
+header('Content-Type: application/json');
+
+$conn = Database::getInstance()->getConnection();
+$role = isset($_SESSION['role']) ? $_SESSION['role'] : null;
+
+if ($role === 'client') {
+    $clientId = $_SESSION['user_id'];
+
+    // Total dépensé
+    $stmt = $conn->prepare("SELECT COALESCE(SUM(montant), 0) as total FROM ventes WHERE client_id = ?");
+    $stmt->execute([$clientId]);
+    $totalGeneral = $stmt->fetch()['total'];
+
+    // Nombre de commandes
+    $stmt = $conn->prepare("SELECT COUNT(*) as nb_commandes FROM ventes WHERE client_id = ?");
+    $stmt->execute([$clientId]);
+    $nbCommandes = $stmt->fetch()['nb_commandes'];
+
+    echo json_encode([
+        'success' => true,
+        'total_general' => floatval($totalGeneral),
+        'nb_commandes' => intval($nbCommandes)
+    ]);
+    exit;
+}
 
 header('Content-Type: application/json');
 

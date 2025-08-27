@@ -51,11 +51,16 @@ require_role('client');
         // Charger les statistiques client
         async function loadClientStats() {
             try {
-                const response = await fetch('../api/stats/client.php');
-                const data = await response.json();
+                const response = await fetch('../api/ventes/stats.php');
+                const stats = await response.json();
 
-                document.getElementById('nb-commandes').textContent = data.nb_commandes || '0';
-                document.getElementById('nb-point').textContent = data.nb_point || '0';
+                document.getElementById('nb-commandes').textContent = stats.nb_commandes !== undefined
+                    ? stats.nb_commandes
+                    : '0';
+
+                document.getElementById('nb-point').textContent = stats.nb_commandes !== undefined
+                    ? stats.nb_commandes
+                    : '0';
 
             } catch (error) {
                 console.error('Erreur lors du chargement des statistiques:', error);

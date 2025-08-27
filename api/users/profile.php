@@ -29,26 +29,34 @@ switch ($method) {
 function handleGetProfile($userId, $isAdmin) {
     try {
         $conn = Database::getInstance()->getConnection();
-        
-        // Profil demandé (admin peut voir autres profils)
-        $targetUserId = $isAdmin && isset($_GET['user_id']) ? $_GET['user_id'] : $userId;
-        
-        $stmt = $conn->prepare("
-            SELECT id, nom, prenom, email, telephone, numero_permis, lieu_installation, 
-                   motivation,
-                   role, statut, date_inscription 
-            FROM users WHERE id = ?
-        ");
-        $stmt->execute([$targetUserId]);
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
-        
+
+        // Détection du rôle pour choisir la table
+        $role = isset($_SESSION['role']) ? $_SESSION['role'] : null;
+        if ($role === 'client') {
+            $stmt = $conn->prepare("
+                SELECT id, nom, prenom, email, telephone, date_inscription
+                FROM clients WHERE id = ?
+            ");
+            $stmt->execute([$userId]);
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        } else {
+            $targetUserId = $isAdmin && isset($_GET['user_id']) ? $_GET['user_id'] : $userId;
+            $stmt = $conn->prepare("
+                SELECT id, nom, prenom, email, telephone, numero_permis, lieu_installation, 
+                       motivation, role, statut, date_inscription 
+                FROM users WHERE id = ?
+            ");
+            $stmt->execute([$targetUserId]);
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        }
+
         if (!$user) {
             echo json_encode(['success' => false, 'message' => 'Utilisateur non trouvé']);
             return;
         }
-        
-        echo json_encode(['success' => true, 'user' => $user]);
-        
+
+        echo json_encode(['success' => true, 'profile' => $user]);
+
     } catch (Exception $e) {
         echo json_encode(['success' => false, 'message' => 'Erreur serveur : ' . $e->getMessage()]);
     }

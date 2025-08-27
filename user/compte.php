@@ -25,14 +25,13 @@ require_role('client');
         <main class="main-content client">
             <div class="topbar">
                 <h1 class="client">Mon Profil</h1>
-                <button id="edit-btn" class="btn-primary" onclick="toggleEditMode()">Modifier</button>
+                <button id="edit-btn" class="btn-primary" onclick="CompteManager.toggleEditMode()">Modifier</button>
             </div>
 
             <div id="alert-container"></div>
 
             <div class="section-card client">
                 <h2>Informations personnelles</h2>
-                
                 <!-- Mode consultation -->
                 <div id="view-mode">
                     <div class="profile-section">
@@ -56,11 +55,15 @@ require_role('client');
                             <label>Date d'inscription</label>
                             <div class="value" id="view-date">-</div>
                         </div>
+                        <div class="profile-field">
+                            <label>Points fidélité</label>
+                            <div class="value" id="view-points">-</div>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Mode édition -->
-                <div id="edit-mode" class="edit-mode">
+                <div id="edit-mode" class="edit-mode" style="display:none;">
                     <form id="profile-form">
                         <div class="profile-section">
                             <div class="profile-field">
@@ -83,7 +86,7 @@ require_role('client');
                         </div>
                         <div class="btn-group">
                             <button type="submit" class="btn-success">Sauvegarder</button>
-                            <button type="button" class="btn-secondary" onclick="cancelEdit()">Annuler</button>
+                            <button type="button" class="btn-secondary" onclick="CompteManager.cancelEdit()">Annuler</button>
                         </div>
                     </form>
                 </div>
@@ -109,124 +112,127 @@ require_role('client');
         </main>
     </div>
     
+    <script src="../js/admin/common.js"></script>
     <script>
-        let userProfile = null;
+    const CompteManager = {
+        userProfile: null,
 
-        // Charger les informations du client
-        async function loadClientProfile() {
-            try {
-                const response = await fetch('../api/users/profile.php');
-                const data = await response.json();
-                
-                if (data.success) {
-                    userProfile = data.profile;
-                    displayProfile(userProfile);
-                } else {
-                    showAlert('Erreur lors du chargement du profil : ' + data.message, 'error');
-                }
-            } catch (error) {
-                console.error('Erreur lors du chargement du profil:', error);
-                showAlert('Erreur réseau lors du chargement du profil', 'error');
+        showAlert(message, type) {
+            if (window.AdminCommon && AdminCommon.utils && AdminCommon.utils.showAlert) {
+                AdminCommon.utils.showAlert(message, type);
+            } else {
+                const alertContainer = document.getElementById('alert-container');
+                const alertClass = type === 'success' ? 'alert-success' : 'alert-error';
+                alertContainer.innerHTML = `<div class="alert ${alertClass}">${message}</div>`;
+                setTimeout(() => { alertContainer.innerHTML = ''; }, 5000);
             }
-        }
+        },
 
-        // Afficher le profil en mode consultation
-        function displayProfile(profile) {
+        displayProfile(profile) {
             document.getElementById('view-nom').textContent = profile.nom || '-';
             document.getElementById('view-prenom').textContent = profile.prenom || '-';
             document.getElementById('view-email').textContent = profile.email || '-';
             document.getElementById('view-telephone').textContent = profile.telephone || 'Non renseigné';
-            document.getElementById('view-date').textContent = profile.date_inscription ? 
-                new Date(profile.date_inscription).toLocaleDateString('fr-FR') : '-';
-        }
+            document.getElementById('view-date').textContent = profile.date_inscription
+                ? (window.AdminCommon && AdminCommon.utils && AdminCommon.utils.formatDate
+                    ? AdminCommon.utils.formatDate(profile.date_inscription)
+                    : new Date(profile.date_inscription).toLocaleDateString('fr-FR'))
+                : '-';
+            document.getElementById('view-points').textContent = profile.points_fidelite !== undefined
+                ? profile.points_fidelite
+                : (profile.points || '0');
+        },
 
-        // Basculer en mode édition
-        function toggleEditMode() {
+        toggleEditMode() {
             document.getElementById('view-mode').style.display = 'none';
             document.getElementById('edit-mode').style.display = 'block';
             document.getElementById('edit-btn').style.display = 'none';
-            
-            if (userProfile) {
-                document.getElementById('edit-nom').value = userProfile.nom || '';
-                document.getElementById('edit-prenom').value = userProfile.prenom || '';
-                document.getElementById('edit-email').value = userProfile.email || '';
-                document.getElementById('edit-telephone').value = userProfile.telephone || '';
+            if (this.userProfile) {
+                document.getElementById('edit-nom').value = this.userProfile.nom || '';
+                document.getElementById('edit-prenom').value = this.userProfile.prenom || '';
+                document.getElementById('edit-email').value = this.userProfile.email || '';
+                document.getElementById('edit-telephone').value = this.userProfile.telephone || '';
             }
-        }
+        },
 
-        // Annuler l'édition
-        function cancelEdit() {
+        cancelEdit() {
             document.getElementById('view-mode').style.display = 'block';
             document.getElementById('edit-mode').style.display = 'none';
             document.getElementById('edit-btn').style.display = 'block';
-        }
+        },
 
-        // Sauvegarder le profil
-        async function saveProfile(formData) {
+        async saveProfile(formData) {
             try {
                 const response = await fetch('../api/users/update_profile.php', {
                     method: 'PUT',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify(formData)
                 });
-                
                 const result = await response.json();
-                
                 if (result.success) {
-                    showAlert('Profil mis à jour avec succès !', 'success');
-                    userProfile = { ...userProfile, ...formData };
-                    displayProfile(userProfile);
-                    cancelEdit();
+                    this.showAlert('Profil mis à jour avec succès !', 'success');
+                    this.userProfile = { ...this.userProfile, ...formData };
+                    this.displayProfile(this.userProfile);
+                    this.cancelEdit();
                 } else {
-                    showAlert('Erreur lors de la mise à jour : ' + result.message, 'error');
+                    this.showAlert('Erreur lors de la mise à jour : ' + result.message, 'error');
                 }
             } catch (error) {
-                console.error('Erreur:', error);
-                showAlert('Erreur réseau lors de la sauvegarde', 'error');
+                this.showAlert('Erreur réseau lors de la sauvegarde', 'error');
             }
+        },
+
+        async loadProfile() {
+            try {
+                const response = await fetch('../api/users/profile.php');
+                const data = await response.json();
+                if (data.success) {
+                    this.userProfile = data.profile || data;
+                    this.displayProfile(this.userProfile);
+                } else {
+                    this.showAlert('Erreur lors du chargement du profil : ' + data.message, 'error');
+                }
+            } catch (error) {
+                this.showAlert('Erreur réseau lors du chargement du profil', 'error');
+            }
+        },
+
+        async loadStats() {
+            try {
+                const response = await fetch('../api/ventes/stats.php');
+                const stats = await response.json();
+                document.getElementById('stat-commandes').textContent = stats.nb_commandes !== undefined
+                    ? stats.nb_commandes : '0';
+                document.getElementById('stat-points').textContent = stats.nb_commandes !== undefined
+                    ? stats.nb_commandes : '0';
+                document.getElementById('stat-economie').textContent = stats.total_general !== undefined
+                    ? (window.AdminCommon && AdminCommon.utils && AdminCommon.utils.formatPrice
+                        ? AdminCommon.utils.formatPrice(stats.total_general)
+                        : parseFloat(stats.total_general).toFixed(2) + '€')
+                    : '0€';
+            } catch (error) {
+                document.getElementById('stat-commandes').textContent = '0';
+                document.getElementById('stat-points').textContent = '0';
+                document.getElementById('stat-economie').textContent = '0€';
+            }
+        },
+
+        init() {
+            this.loadProfile();
+            this.loadStats();
+            document.getElementById('profile-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const formData = {
+                    nom: document.getElementById('edit-nom').value,
+                    prenom: document.getElementById('edit-prenom').value,
+                    telephone: document.getElementById('edit-telephone').value
+                };
+                await this.saveProfile(formData);
+            });
         }
+    };
 
-        // Charger les statistiques
-        async function loadStats() {
-            document.getElementById('stat-commandes').textContent = '0';
-            document.getElementById('stat-points').textContent = '0';
-            document.getElementById('stat-economie').textContent = '0€';
-        }
-
-        // Afficher une alerte
-        function showAlert(message, type) {
-            const alertContainer = document.getElementById('alert-container');
-            const alertClass = type === 'success' ? 'alert-success' : 'alert-error';
-            
-            alertContainer.innerHTML = `
-                <div class="alert ${alertClass}">
-                    ${message}
-                </div>
-            `;
-            
-            setTimeout(() => {
-                alertContainer.innerHTML = '';
-            }, 5000);
-        }
-
-        // Gérer la soumission du formulaire
-        document.getElementById('profile-form').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const formData = {
-                nom: document.getElementById('edit-nom').value,
-                prenom: document.getElementById('edit-prenom').value,
-                telephone: document.getElementById('edit-telephone').value
-            };
-            
-            await saveProfile(formData);
-        });
-
-        // Initialisation
-        document.addEventListener('DOMContentLoaded', function() {
-            loadClientProfile();
-            loadStats();
-        });
+    document.addEventListener('DOMContentLoaded', () => CompteManager.init());
     </script>
 </body>
 </html>
