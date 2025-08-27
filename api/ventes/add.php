@@ -44,16 +44,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         $userId = $camion['user_id'];
 
+        $clientId = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : null;
+
         $stmt = $conn->prepare("
-            INSERT INTO ventes (user_id, camion_id, montant, type_paiement, date_vente, statut) 
-            VALUES (?, ?, ?, ?, NOW(), ?)
+            INSERT INTO ventes (user_id, camion_id, montant, type_paiement, date_vente, statut, client_id) 
+            VALUES (?, ?, ?, ?, NOW(), ?, ?)
         ");
         $stmt->execute([
             $userId,
             $camionId,
             $data['montant'],
             isset($data['type_paiement']) ? $data['type_paiement'] : 'especes',
-            isset($data['statut']) ? $data['statut'] : 'en_attente'
+            isset($data['statut']) ? $data['statut'] : 'en_attente',
+            $clientId
         ]);
         
         $venteId = $conn->lastInsertId();

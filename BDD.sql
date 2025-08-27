@@ -21,15 +21,12 @@ DROP TABLE IF EXISTS `produits`;
 DROP TABLE IF EXISTS `users`;
 DROP TABLE IF EXISTS `clients`;
 
--- Réactiver les vérifications de clés étrangères
-SET FOREIGN_KEY_CHECKS = 1;
-
 -- phpMyAdmin SQL Dump
 -- version 5.1.2
 -- https://www.phpmyadmin.net/
 --
 -- Hôte : localhost:8889
--- Généré le : mar. 05 août 2025 à 19:13
+-- Généré le : mer. 27 août 2025 à 15:05
 -- Version du serveur : 5.7.24
 -- Version de PHP : 8.3.1
 
@@ -64,15 +61,17 @@ CREATE TABLE `camions` (
   `emplacement` varchar(200) DEFAULT NULL,
   `menu` text,
   `jours` varchar(255) DEFAULT NULL,
-  `historique_entretiens` text
+  `historique_entretiens` text,
+  `latitude` decimal(10,8) DEFAULT NULL,
+  `longitude` decimal(11,8) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --
 -- Déchargement des données de la table `camions`
 --
 
-INSERT INTO `camions` (`id`, `user_id`, `nom_camion`, `immatriculation`, `etat`, `date_entretien`, `date_livraison`, `emplacement`, `menu`, `jours`, `historique_entretiens`) VALUES
-(1, 1, 'CACA braiser', 'DY-506-FU', 'en_service', NULL, '2025-08-19', 'bernay', 'pouller braiser', 'Lundi,Mercredi,Jeudi,Vendredi', NULL);
+INSERT INTO `camions` (`id`, `user_id`, `nom_camion`, `immatriculation`, `etat`, `date_entretien`, `date_livraison`, `emplacement`, `menu`, `jours`, `historique_entretiens`, `latitude`, `longitude`) VALUES
+(1, 1, 'Poulet.fr', 'DY-506-FU', 'en_service', NULL, '2025-08-19', 'Rue de morsan, Bernay', 'pouller braiser', 'Lundi,Mercredi,Jeudi,Vendredi', NULL, '49.08812560', '0.59467100');
 
 -- --------------------------------------------------------
 
@@ -127,7 +126,11 @@ CREATE TABLE `commandes` (
 --
 
 INSERT INTO `commandes` (`id`, `user_id`, `date_commande`, `total`, `entrepot_id`, `statut`, `date_livraison_prevue`, `commentaire_admin`, `validee_par`, `distance_km`, `temps_livraison_estime`, `urgence_livraison`) VALUES
-(1, 1, '2025-08-05 20:36:41', '54.90', 1, 'en_attente', NULL, NULL, NULL, NULL, NULL, 'normale');
+(1, 1, '2025-08-05 20:36:41', '54.90', 1, 'en_attente', NULL, NULL, NULL, NULL, NULL, 'normale'),
+(2, 1, '2025-08-18 08:40:00', '15.10', 2, 'en_attente', NULL, NULL, NULL, NULL, NULL, 'normale'),
+(3, 1, '2025-08-18 08:44:59', '15.10', 2, 'en_attente', NULL, NULL, NULL, NULL, NULL, 'normale'),
+(4, 1, '2025-08-18 08:45:57', '15.10', 2, 'en_attente', NULL, NULL, NULL, NULL, NULL, 'normale'),
+(5, 1, '2025-08-18 08:46:20', '15.10', 2, 'en_attente', NULL, NULL, NULL, NULL, NULL, 'normale');
 
 -- --------------------------------------------------------
 
@@ -152,7 +155,15 @@ INSERT INTO `commande_details` (`id`, `commande_id`, `produit_id`, `quantite`, `
 (1, 1, 3, 5, '11.00', '2.20'),
 (2, 1, 1, 7, '10.50', '1.50'),
 (3, 1, 2, 3, '11.40', '3.80'),
-(4, 1, 6, 11, '22.00', '2.00');
+(4, 1, 6, 11, '22.00', '2.00'),
+(5, 2, 1, 5, '7.50', '1.50'),
+(6, 2, 2, 2, '7.60', '3.80'),
+(7, 3, 1, 5, '7.50', '1.50'),
+(8, 3, 2, 2, '7.60', '3.80'),
+(9, 4, 1, 5, '7.50', '1.50'),
+(10, 4, 2, 2, '7.60', '3.80'),
+(11, 5, 1, 5, '7.50', '1.50'),
+(12, 5, 2, 2, '7.60', '3.80');
 
 -- --------------------------------------------------------
 
@@ -210,9 +221,10 @@ CREATE TABLE `entrepots` (
 --
 
 INSERT INTO `entrepots` (`id`, `nom`, `adresse`, `ville`, `code_postal`, `pays`, `telephone`, `email`, `responsable`, `date_creation`, `actif`, `latitude`, `longitude`) VALUES
-(1, 'Entrepôt Central Paris', '15 Rue de Rivoli', 'Paris', '75000', 'France', '01 42 53 12 34', 'paris@drivncook.com', 'Jean Dupont', '2025-08-05 18:01:12', 1, '48.85593080', '2.35764460'),
+(1, 'Test Modification', '123 Rue Test', 'Paris', '75001', 'France', '01 23 45 67 89', 'test@test.com', 'Test Responsable', '2025-08-05 18:01:12', 0, '48.85593080', '2.35764460'),
 (2, 'Entrepôt Lyon', '45 Avenue des Entreprises', 'Lyon', '69007', 'France', '04 78 92 15 67', 'lyon@drivncook.com', 'Marie Martin', '2025-08-05 18:01:12', 1, '45.76400000', '4.83570000'),
-(3, 'Entrepôt Marseille', '23 Boulevard Industrial', 'Marseille', '13008', 'France', '04 91 45 78 90', 'marseille@drivncook.com', 'Pierre Durand', '2025-08-05 18:01:12', 1, '43.29650000', '5.36980000');
+(3, 'Entrepôt Marseille', '23 Boulevard Industrial', 'Marseille', '13008', 'France', '04 91 45 78 90', 'marseille@drivncook.com', 'Pierre Durand', '2025-08-05 18:01:12', 1, '43.29650000', '5.36980000'),
+(5, 'Entrepôt Amiens', 'Rue vanmarcke', 'Amiens', '80000', 'France', '01 23 45 67 89', 'thomas2004.lejeune@gmail.com', 'michel blanc', '2025-08-08 12:01:37', 1, '49.89672290', '2.30075360');
 
 -- --------------------------------------------------------
 
@@ -233,6 +245,14 @@ CREATE TABLE `menus` (
   `date_modification` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
+--
+-- Déchargement des données de la table `menus`
+--
+
+INSERT INTO `menus` (`id`, `user_id`, `nom`, `description`, `prix`, `categorie`, `ingredients`, `allergenes`, `date_creation`, `date_modification`) VALUES
+(1, 1, 'Coé burger', 'c\'est vraiment ouf', '15.00', 'plat', '', '', '2025-08-08 09:10:41', '2025-08-18 08:53:02'),
+(2, 1, 'Coca', '', '2.00', 'boisson', '', '', '2025-08-18 08:55:46', '2025-08-18 08:55:46');
+
 -- --------------------------------------------------------
 
 --
@@ -246,6 +266,14 @@ CREATE TABLE `menu_produits` (
   `quantite_necessaire` decimal(10,3) NOT NULL DEFAULT '1.000',
   `unite` enum('kg','litres','unites') DEFAULT 'unites'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+--
+-- Déchargement des données de la table `menu_produits`
+--
+
+INSERT INTO `menu_produits` (`id`, `menu_id`, `produit_id`, `quantite_necessaire`, `unite`) VALUES
+(1, 1, 9, '1.000', 'unites'),
+(2, 2, 6, '1.000', 'unites');
 
 -- --------------------------------------------------------
 
@@ -339,7 +367,7 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `nom`, `prenom`, `email`, `mot_de_passe`, `telephone`, `lieu_installation`, `motivation`, `numero_permis`, `adresse`, `role`, `statut`, `date_inscription`) VALUES
-(1, 'Delphine', 'LEROUX', 'thomas.lejeune@gmail.com', '$2y$10$41GMU5e.iVaFZPjYtYBQ8eM37Xm2pw.1/8wx9jDkKsRFSqXFqvwpm', '0611571997', 'Paris, place de clichy', 'j adore le manger', '54121105257', NULL, 'franchise', 'valide', '2025-08-05 20:02:55');
+(1, 'Delphine', 'LEROUX', 'thomas.lejeune@gmail.com', '$2y$10$41GMU5e.iVaFZPjYtYBQ8eM37Xm2pw.1/8wx9jDkKsRFSqXFqvwpm', '0611571997', 'Rue de morsan, Bernay', 'j\'adore manger', '54121105258', NULL, 'franchise', 'valide', '2025-08-05 20:02:55');
 
 -- --------------------------------------------------------
 
@@ -354,15 +382,21 @@ CREATE TABLE `ventes` (
   `montant` decimal(10,2) NOT NULL,
   `type_paiement` enum('especes','carte','cheque','virement') DEFAULT 'especes',
   `date_vente` datetime DEFAULT CURRENT_TIMESTAMP,
-  `statut` enum('en_attente','valide') DEFAULT 'en_attente'
+  `statut` enum('en_attente','valide') DEFAULT 'en_attente',
+  `client_id` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --
 -- Déchargement des données de la table `ventes`
 --
 
-INSERT INTO `ventes` (`id`, `user_id`, `camion_id`, `montant`, `type_paiement`, `date_vente`) VALUES
-(1, 1, NULL, '1.00', 'especes', '2025-08-05 21:01:12');
+INSERT INTO `ventes` (`id`, `user_id`, `camion_id`, `montant`, `type_paiement`, `date_vente`, `statut`, `client_id`) VALUES
+(1, 1, NULL, '1.00', 'especes', '2025-08-05 21:01:12', 'en_attente', NULL),
+(2, 1, NULL, '15.00', 'especes', '2025-08-18 09:04:59', 'valide', NULL),
+(3, 1, 1, '15.00', 'especes', '2025-08-18 09:27:01', 'valide', NULL),
+(25, 1, 1, '17.00', 'especes', '2025-08-26 23:28:40', 'en_attente', NULL),
+(26, 1, 1, '17.00', 'especes', '2025-08-26 23:40:50', 'en_attente', NULL),
+(27, 1, 1, '15.00', 'especes', '2025-08-26 23:44:03', 'valide', 1);
 
 -- --------------------------------------------------------
 
@@ -384,7 +418,14 @@ CREATE TABLE `vente_details` (
 --
 
 INSERT INTO `vente_details` (`id`, `vente_id`, `produit_id`, `quantite`, `prix_unitaire`, `prix_total`) VALUES
-(1, 1, 7, 1, '1.00', '1.00');
+(1, 1, 7, 1, '1.00', '1.00'),
+(2, 2, 1, 1, '15.00', '15.00'),
+(3, 3, 1, 1, '15.00', '15.00'),
+(4, 25, 1, 1, '15.00', '15.00'),
+(5, 25, 2, 1, '2.00', '2.00'),
+(6, 26, 1, 1, '15.00', '15.00'),
+(7, 26, 2, 1, '2.00', '2.00'),
+(8, 27, 1, 1, '15.00', '15.00');
 
 --
 -- Index pour les tables déchargées
@@ -508,13 +549,13 @@ ALTER TABLE `clients`
 -- AUTO_INCREMENT pour la table `commandes`
 --
 ALTER TABLE `commandes`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT pour la table `commande_details`
 --
 ALTER TABLE `commande_details`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
 -- AUTO_INCREMENT pour la table `demandes_camion`
@@ -526,19 +567,19 @@ ALTER TABLE `demandes_camion`
 -- AUTO_INCREMENT pour la table `entrepots`
 --
 ALTER TABLE `entrepots`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT pour la table `menus`
 --
 ALTER TABLE `menus`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT pour la table `menu_produits`
 --
 ALTER TABLE `menu_produits`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT pour la table `produits`
@@ -562,13 +603,13 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT pour la table `ventes`
 --
 ALTER TABLE `ventes`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
 
 --
 -- AUTO_INCREMENT pour la table `vente_details`
 --
 ALTER TABLE `vente_details`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- Contraintes pour les tables déchargées
