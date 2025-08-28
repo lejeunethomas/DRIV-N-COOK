@@ -26,7 +26,7 @@ DROP TABLE IF EXISTS `clients`;
 -- https://www.phpmyadmin.net/
 --
 -- Hôte : localhost:8889
--- Généré le : mer. 27 août 2025 à 15:05
+-- Généré le : jeu. 28 août 2025 à 19:15
 -- Version du serveur : 5.7.24
 -- Version de PHP : 8.3.1
 
@@ -71,7 +71,9 @@ CREATE TABLE `camions` (
 --
 
 INSERT INTO `camions` (`id`, `user_id`, `nom_camion`, `immatriculation`, `etat`, `date_entretien`, `date_livraison`, `emplacement`, `menu`, `jours`, `historique_entretiens`, `latitude`, `longitude`) VALUES
-(1, 1, 'Poulet.fr', 'DY-506-FU', 'en_service', NULL, '2025-08-19', 'Rue de morsan, Bernay', 'pouller braiser', 'Lundi,Mercredi,Jeudi,Vendredi', NULL, '49.08812560', '0.59467100');
+(1, 1, 'Poulet.fr', 'DY-506-FU', 'en_service', NULL, '2025-08-19', 'Rue de morsan, Bernay', 'pouller braiser', 'Lundi,Mercredi,Jeudi,Vendredi', NULL, '49.08812560', '0.59467100'),
+(10, 10, 'Le Gourmet Vert', 'AB-123-CD', 'en_service', NULL, '2025-08-03', 'Place de la République, Paris', 'Burger veggie', 'Lundi,Mardi,Jeudi', NULL, '48.85700000', '2.35200000'),
+(11, 11, 'La Roulotte Lyonnaise', 'EF-456-GH', 'en_service', NULL, '2025-08-04', 'Place Bellecour, Lyon', 'Hot-dog lyonnais', 'Mardi,Jeudi,Samedi', NULL, '45.75700000', '4.83500000');
 
 -- --------------------------------------------------------
 
@@ -98,7 +100,9 @@ CREATE TABLE `clients` (
 
 INSERT INTO `clients` (`id`, `nom`, `prenom`, `email`, `telephone`, `created_at`, `mot_de_passe`, `points_fidelite`, `role`, `date_inscription`) VALUES
 (1, 'Admin', 'Système', 'admin@drivncook.com', NULL, '2025-08-05 17:43:47', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 0, 'admin', '2025-08-05 18:01:12'),
-(2, 'LEJEUNE', 'thomas', 'thomas2004.lejeune@gmail.com', '', '2025-08-05 17:43:47', '$2y$10$.xlGtNIjiheNJihJT9kkxe84Ss8rI5I7qRVFv7/uubCRFjOEP8tAC', 0, 'client', '2025-08-05 19:22:47');
+(2, 'LEJEUNE', 'thomas', 'thomas2004.lejeune@gmail.com', '0768082069', '2025-08-05 17:43:47', '$2y$10$.xlGtNIjiheNJihJT9kkxe84Ss8rI5I7qRVFv7/uubCRFjOEP8tAC', 0, 'client', '2025-08-05 19:22:47'),
+(10, 'Martin', 'Julie', 'julie.martin@email.com', '0612345678', '2025-08-28 19:10:26', '$2y$10$hash1', 12, 'client', '2025-08-01 10:00:00'),
+(11, 'Durand', 'Lucas', 'lucas.durand@email.com', '0623456789', '2025-08-28 19:10:26', '$2y$10$hash2', 8, 'client', '2025-08-02 11:00:00');
 
 -- --------------------------------------------------------
 
@@ -224,7 +228,9 @@ INSERT INTO `entrepots` (`id`, `nom`, `adresse`, `ville`, `code_postal`, `pays`,
 (1, 'Test Modification', '123 Rue Test', 'Paris', '75001', 'France', '01 23 45 67 89', 'test@test.com', 'Test Responsable', '2025-08-05 18:01:12', 0, '48.85593080', '2.35764460'),
 (2, 'Entrepôt Lyon', '45 Avenue des Entreprises', 'Lyon', '69007', 'France', '04 78 92 15 67', 'lyon@drivncook.com', 'Marie Martin', '2025-08-05 18:01:12', 1, '45.76400000', '4.83570000'),
 (3, 'Entrepôt Marseille', '23 Boulevard Industrial', 'Marseille', '13008', 'France', '04 91 45 78 90', 'marseille@drivncook.com', 'Pierre Durand', '2025-08-05 18:01:12', 1, '43.29650000', '5.36980000'),
-(5, 'Entrepôt Amiens', 'Rue vanmarcke', 'Amiens', '80000', 'France', '01 23 45 67 89', 'thomas2004.lejeune@gmail.com', 'michel blanc', '2025-08-08 12:01:37', 1, '49.89672290', '2.30075360');
+(5, 'Entrepôt Amiens', 'Rue vanmarcke', 'Amiens', '80000', 'France', '01 23 45 67 89', 'thomas2004.lejeune@gmail.com', 'michel blanc', '2025-08-08 12:01:37', 1, '49.89672290', '2.30075360'),
+(10, 'Entrepôt Paris', '10 rue de Paris', 'Paris', '75001', 'France', '0140000000', 'paris@entrepot.fr', 'Sophie Dupont', '2025-08-01 09:00:00', 1, '48.85660000', '2.35220000'),
+(11, 'Entrepôt Lyon', '20 avenue de Lyon', 'Lyon', '69000', 'France', '0478000000', 'lyon@entrepot.fr', 'Paul Bernard', '2025-08-01 09:30:00', 1, '45.76400000', '4.83570000');
 
 -- --------------------------------------------------------
 
@@ -251,7 +257,11 @@ CREATE TABLE `menus` (
 
 INSERT INTO `menus` (`id`, `user_id`, `nom`, `description`, `prix`, `categorie`, `ingredients`, `allergenes`, `date_creation`, `date_modification`) VALUES
 (1, 1, 'Coé burger', 'c\'est vraiment ouf', '15.00', 'plat', '', '', '2025-08-08 09:10:41', '2025-08-18 08:53:02'),
-(2, 1, 'Coca', '', '2.00', 'boisson', '', '', '2025-08-18 08:55:46', '2025-08-18 08:55:46');
+(2, 1, 'Coca', '', '2.00', 'boisson', '', '', '2025-08-18 08:55:46', '2025-08-18 08:55:46'),
+(10, 10, 'Burger Veggie', 'Burger végétarien gourmand', '8.50', 'plat', 'Pain, steak végétal, salade', '', '2025-08-01 10:00:00', '2025-08-01 10:00:00'),
+(11, 10, 'Frites', 'Frites maison croustillantes', '2.50', 'accompagnement', '', '', '2025-08-01 10:00:00', '2025-08-01 10:00:00'),
+(12, 11, 'Hot-dog Lyonnais', 'Hot-dog à la lyonnaise', '7.00', 'plat', '', '', '2025-08-01 10:00:00', '2025-08-01 10:00:00'),
+(13, 11, 'Soda Bio', 'Soda bio rafraîchissant', '2.00', 'boisson', '', '', '2025-08-01 10:00:00', '2025-08-01 10:00:00');
 
 -- --------------------------------------------------------
 
@@ -273,7 +283,11 @@ CREATE TABLE `menu_produits` (
 
 INSERT INTO `menu_produits` (`id`, `menu_id`, `produit_id`, `quantite_necessaire`, `unite`) VALUES
 (1, 1, 9, '1.000', 'unites'),
-(2, 2, 6, '1.000', 'unites');
+(2, 2, 6, '1.000', 'unites'),
+(10, 10, 20, '1.000', 'unites'),
+(11, 10, 21, '1.000', 'unites'),
+(12, 11, 23, '1.000', 'unites'),
+(13, 13, 22, '1.000', 'unites');
 
 -- --------------------------------------------------------
 
@@ -307,7 +321,11 @@ INSERT INTO `produits` (`id`, `nom`, `type`, `prix_unitaire`, `obligatoire`, `qu
 (9, 'Burger complet', 'préparé', '8.90', 0, 0, '0.00'),
 (10, 'Hot-dog artisanal', 'préparé', '6.50', 0, 0, '0.00'),
 (11, 'Salade César', 'préparé', '7.80', 0, 0, '0.00'),
-(12, 'Frites maison', 'préparé', '3.50', 0, 0, '0.00');
+(12, 'Frites maison', 'préparé', '3.50', 0, 0, '0.00'),
+(20, 'Pain burger', 'aliment', '1.00', 1, 10, '0.00'),
+(21, 'Steak végétal', 'aliment', '2.50', 1, 10, '10.00'),
+(22, 'Soda bio', 'boisson', '1.50', 1, 20, '5.00'),
+(23, 'Frites maison', 'aliment', '1.20', 1, 15, '0.00');
 
 -- --------------------------------------------------------
 
@@ -338,7 +356,15 @@ INSERT INTO `stocks` (`id`, `entrepot_id`, `produit_id`, `quantite`, `unite`, `s
 (6, 2, 2, '150.000', 'kg', '20.000', '2025-08-05 18:01:12'),
 (7, 3, 1, '250.000', 'kg', '50.000', '2025-08-05 18:01:12'),
 (8, 3, 6, '800.000', 'unites', '100.000', '2025-08-05 18:01:12'),
-(9, 2, 9, '500.000', 'unites', '50.000', '2025-08-05 18:49:55');
+(9, 2, 9, '500.000', 'unites', '50.000', '2025-08-05 18:49:55'),
+(10, 10, 20, '100.000', 'unites', '10.000', '2025-08-01 10:00:00'),
+(11, 10, 21, '80.000', 'unites', '10.000', '2025-08-01 10:00:00'),
+(12, 10, 22, '60.000', 'unites', '10.000', '2025-08-01 10:00:00'),
+(13, 10, 23, '90.000', 'unites', '10.000', '2025-08-01 10:00:00'),
+(14, 11, 20, '50.000', 'unites', '10.000', '2025-08-01 10:00:00'),
+(15, 11, 21, '40.000', 'unites', '10.000', '2025-08-01 10:00:00'),
+(16, 11, 22, '30.000', 'unites', '10.000', '2025-08-01 10:00:00'),
+(17, 11, 23, '70.000', 'unites', '10.000', '2025-08-01 10:00:00');
 
 -- --------------------------------------------------------
 
@@ -367,7 +393,9 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `nom`, `prenom`, `email`, `mot_de_passe`, `telephone`, `lieu_installation`, `motivation`, `numero_permis`, `adresse`, `role`, `statut`, `date_inscription`) VALUES
-(1, 'Delphine', 'LEROUX', 'thomas.lejeune@gmail.com', '$2y$10$41GMU5e.iVaFZPjYtYBQ8eM37Xm2pw.1/8wx9jDkKsRFSqXFqvwpm', '0611571997', 'Rue de morsan, Bernay', 'j\'adore manger', '54121105258', NULL, 'franchise', 'valide', '2025-08-05 20:02:55');
+(1, 'Legendre', 'Roger', 'thomas.lejeune@gmail.com', '$2y$10$41GMU5e.iVaFZPjYtYBQ8eM37Xm2pw.1/8wx9jDkKsRFSqXFqvwpm', '0611584526', 'Rue de morsan, Bernay', 'j\'adore manger', '', NULL, 'franchise', 'valide', '2025-08-05 20:02:55'),
+(10, 'Dupont', 'Sophie', 'sophie.dupont@food.fr', '$2y$10$hash3', '0654321876', 'Paris', NULL, NULL, NULL, 'franchise', 'valide', '2025-08-01 09:00:00'),
+(11, 'Bernard', 'Paul', 'paul.bernard@food.fr', '$2y$10$hash4', '0676543218', 'Lyon', NULL, NULL, NULL, 'franchise', 'valide', '2025-08-01 09:30:00');
 
 -- --------------------------------------------------------
 
@@ -396,7 +424,12 @@ INSERT INTO `ventes` (`id`, `user_id`, `camion_id`, `montant`, `type_paiement`, 
 (3, 1, 1, '15.00', 'especes', '2025-08-18 09:27:01', 'valide', NULL),
 (25, 1, 1, '17.00', 'especes', '2025-08-26 23:28:40', 'en_attente', NULL),
 (26, 1, 1, '17.00', 'especes', '2025-08-26 23:40:50', 'en_attente', NULL),
-(27, 1, 1, '15.00', 'especes', '2025-08-26 23:44:03', 'valide', 1);
+(27, 1, 1, '15.00', 'especes', '2025-08-26 23:44:03', 'valide', 2),
+(28, 1, 1, '17.00', 'especes', '2025-08-27 17:08:25', 'valide', 2),
+(100, 10, 10, '11.00', 'carte', '2025-08-10 12:00:00', 'valide', 10),
+(101, 10, 10, '8.50', 'especes', '2025-08-15 13:00:00', 'valide', 10),
+(102, 11, 11, '9.00', 'carte', '2025-08-12 12:30:00', 'valide', 11),
+(103, 11, 11, '7.00', 'especes', '2025-08-18 14:00:00', 'valide', 11);
 
 -- --------------------------------------------------------
 
@@ -410,22 +443,25 @@ CREATE TABLE `vente_details` (
   `produit_id` int(11) NOT NULL,
   `quantite` int(11) NOT NULL,
   `prix_unitaire` decimal(10,2) NOT NULL,
-  `prix_total` decimal(10,2) NOT NULL
+  `prix_total` decimal(10,2) NOT NULL,
+  `menu_id` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --
 -- Déchargement des données de la table `vente_details`
 --
 
-INSERT INTO `vente_details` (`id`, `vente_id`, `produit_id`, `quantite`, `prix_unitaire`, `prix_total`) VALUES
-(1, 1, 7, 1, '1.00', '1.00'),
-(2, 2, 1, 1, '15.00', '15.00'),
-(3, 3, 1, 1, '15.00', '15.00'),
-(4, 25, 1, 1, '15.00', '15.00'),
-(5, 25, 2, 1, '2.00', '2.00'),
-(6, 26, 1, 1, '15.00', '15.00'),
-(7, 26, 2, 1, '2.00', '2.00'),
-(8, 27, 1, 1, '15.00', '15.00');
+INSERT INTO `vente_details` (`id`, `vente_id`, `produit_id`, `quantite`, `prix_unitaire`, `prix_total`, `menu_id`) VALUES
+(1, 1, 7, 1, '1.00', '1.00', 7),
+(2, 2, 1, 1, '15.00', '15.00', 1),
+(3, 3, 1, 1, '15.00', '15.00', 1),
+(4, 25, 1, 1, '15.00', '15.00', 1),
+(5, 25, 2, 1, '2.00', '2.00', 2),
+(6, 26, 1, 1, '15.00', '15.00', 1),
+(7, 26, 2, 1, '2.00', '2.00', 2),
+(8, 27, 1, 1, '15.00', '15.00', 1),
+(9, 28, 1, 1, '15.00', '15.00', 1),
+(10, 28, 2, 1, '2.00', '2.00', 2);
 
 --
 -- Index pour les tables déchargées
@@ -537,13 +573,13 @@ ALTER TABLE `vente_details`
 -- AUTO_INCREMENT pour la table `camions`
 --
 ALTER TABLE `camions`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT pour la table `clients`
 --
 ALTER TABLE `clients`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT pour la table `commandes`
@@ -567,49 +603,49 @@ ALTER TABLE `demandes_camion`
 -- AUTO_INCREMENT pour la table `entrepots`
 --
 ALTER TABLE `entrepots`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT pour la table `menus`
 --
 ALTER TABLE `menus`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 
 --
 -- AUTO_INCREMENT pour la table `menu_produits`
 --
 ALTER TABLE `menu_produits`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 
 --
 -- AUTO_INCREMENT pour la table `produits`
 --
 ALTER TABLE `produits`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=24;
 
 --
 -- AUTO_INCREMENT pour la table `stocks`
 --
 ALTER TABLE `stocks`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
 
 --
 -- AUTO_INCREMENT pour la table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT pour la table `ventes`
 --
 ALTER TABLE `ventes`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=104;
 
 --
 -- AUTO_INCREMENT pour la table `vente_details`
 --
 ALTER TABLE `vente_details`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=104;
 
 --
 -- Contraintes pour les tables déchargées
