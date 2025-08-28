@@ -73,6 +73,11 @@ require_franchise_validated();
                     <tbody></tbody>
                 </table>
             </div>
+
+            <!-- Bouton d'exportation PDF -->
+            <button class="btn-primary" id="export-pdf-btn" style="margin-bottom:1.5rem;">
+                📄 Exporter le récapitulatif du mois en PDF
+            </button>
         </main>
     </div>
 
@@ -92,6 +97,10 @@ require_franchise_validated();
             window.produits = [];
         }
     });
+
+    document.getElementById('export-pdf-btn').onclick = function() {
+        window.open('../api/ventes/export_pdf.php', '_blank');
+    };
     </script>
     <script src="../js/vente.js"></script>
 </body>
