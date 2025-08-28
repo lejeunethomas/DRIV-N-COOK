@@ -59,7 +59,7 @@ a:hover {
 }
 
 .sidebar.client {
-  background: linear-gradient(135deg, #2196f3, #1976d2);
+  background: linear-gradient(135deg, #43a047, #2e7d32);
 }
 
 .sidebar h2 {
@@ -780,7 +780,7 @@ table tr:hover {
 }
 
 .section-card.client {
-  border-left: 4px solid #2196f3;
+  border-left: 4px solid #43a047;
 }
 
 /* Topbar pour les pages */
@@ -867,13 +867,13 @@ table tr:hover {
   padding: 1.5rem;
   text-align: center;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  border-left: 4px solid #ff5722;
+  border-left: 4px solid #43a047;
 }
 
 .stat-value {
   font-size: 2rem;
   font-weight: bold;
-  color: #ff5722;
+  color: #43a047;
 }
 
 .stat-label {
@@ -1319,7 +1319,7 @@ hr {
 ============================================================================= */
 
 .sidebar.client {
-    background: linear-gradient(135deg, #2196f3, #1976d2);
+    background: linear-gradient(135deg, #43a047, #2e7d32);
 }
 
 .sidebar.client h2 {
@@ -1341,18 +1341,18 @@ hr {
 }
 
 .main-content.client h1.client {
-    color: #1976d2;
-    border-bottom: 3px solid #2196f3;
+    color: #2e7d32;
+    border-bottom: 3px solid #43a047;
     padding-bottom: 1rem;
     margin-bottom: 2rem;
 }
 
 .section-card.client {
-    border-left: 4px solid #2196f3;
+    border-left: 4px solid #43a047;
 }
 
 .section-card.client h2 {
-    color: #1976d2;
+    color: #2e7d32;
 }
 
 .logout-btn.client {
