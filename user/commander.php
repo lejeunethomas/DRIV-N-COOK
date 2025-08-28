@@ -267,10 +267,11 @@ require_role('client');
                                 ${plat.description || 'Délicieux plat de notre chef'}
                             </p>
                             ${plat.ingredients ? `<small style="color: #999; font-style: italic;">Ingrédients: ${AdminCommon.utils.truncateText(plat.ingredients, 50)}</small>` : ''}
+                            ${plat.reduction_fidelite > 0 ? `<div class="preview-reduction" style="margin-top:0.5rem; color:#388e3c; font-weight:bold;">-${plat.reduction_fidelite}% fidélité</div>` : ''}
                         </div>
                         <div style="text-align: right;">
                             <div style="font-size: 1.3rem; font-weight: bold; color: #1976d2; margin-bottom: 1rem;">
-                                ${AdminCommon.utils.formatPrice ? AdminCommon.utils.formatPrice(plat.prix) : parseFloat(plat.prix).toFixed(2) + '€'}
+                                ${this.getPlatPrixAffiche(plat)}
                             </div>
                             <div style="display: flex; align-items: center; justify-content: center; gap: 0.75rem; background: #f8f9fa; padding: 0.5rem; border-radius: 6px;">
                                 <button type="button" onclick="ClientCommandeManager.updateQuantite(${plat.id}, -1)" 
@@ -285,24 +286,39 @@ require_role('client');
             `;
         },
 
+        getPlatPrixAffiche(plat) {
+            const prix = parseFloat(plat.prix);
+            if (plat.reduction_fidelite > 0) {
+                const prixReduit = prix * (1 - plat.reduction_fidelite / 100);
+                return `<span style="text-decoration:line-through;color:#888;font-size:1rem;">${prix.toFixed(2)}€</span> 
+                        <span style="color:#388e3c;font-weight:bold;">${prixReduit.toFixed(2)}€</span>`;
+            }
+            return `${prix.toFixed(2)}€`;
+        },
+
         updateQuantite(platId, delta) {
             const qtySpan = document.getElementById(`qty-${platId}`);
             const currentQty = parseInt(qtySpan.textContent) || 0;
             const newQty = Math.max(0, currentQty + delta);
             qtySpan.textContent = newQty;
             const existingIndex = this.data.currentCamion.panier.findIndex(item => item.id === platId);
+            const platInfo = this.data.currentCamion.menu.find(p => p.id === platId);
+            // Appliquer la réduction fidélité si présente
+            const prixReduit = platInfo.reduction_fidelite > 0
+                ? parseFloat(platInfo.prix) * (1 - platInfo.reduction_fidelite / 100)
+                : parseFloat(platInfo.prix);
             if (newQty > 0) {
-                const platInfo = this.data.currentCamion.menu.find(p => p.id === platId);
                 if (existingIndex >= 0) {
                     this.data.currentCamion.panier[existingIndex].quantite = newQty;
-                    this.data.currentCamion.panier[existingIndex].total = newQty * platInfo.prix;
+                    this.data.currentCamion.panier[existingIndex].total = newQty * prixReduit;
+                    this.data.currentCamion.panier[existingIndex].prix = prixReduit;
                 } else {
                     this.data.currentCamion.panier.push({
                         id: platId,
                         nom: platInfo.nom,
-                        prix: parseFloat(platInfo.prix),
+                        prix: prixReduit,
                         quantite: newQty,
-                        total: newQty * parseFloat(platInfo.prix)
+                        total: newQty * prixReduit
                     });
                 }
             } else if (existingIndex >= 0) {

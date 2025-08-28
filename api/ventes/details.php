@@ -33,9 +33,12 @@ try {
 
     // Récupérer les détails
     $stmt = $conn->prepare("
-        SELECT vd.*, p.nom
+        SELECT 
+            vd.*,
+            COALESCE(m.nom, p.nom) AS nom
         FROM vente_details vd
-        JOIN produits p ON vd.produit_id = p.id
+        LEFT JOIN menus m ON vd.menu_id = m.id
+        LEFT JOIN produits p ON vd.produit_id = p.id
         WHERE vd.vente_id = ?
     ");
     $stmt->execute([$venteId]);

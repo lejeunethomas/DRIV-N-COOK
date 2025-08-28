@@ -62,17 +62,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $venteId = $conn->lastInsertId();
         
         // Ajouter les détails de vente
-        foreach ($data['produits'] as $produit) {
+        foreach ($data['produits'] as $item) {
             $stmt = $conn->prepare("
-                INSERT INTO vente_details (vente_id, produit_id, quantite, prix_unitaire, prix_total) 
+                INSERT INTO vente_details (vente_id, menu_id, quantite, prix_unitaire, prix_total)
                 VALUES (?, ?, ?, ?, ?)
             ");
             $stmt->execute([
                 $venteId,
-                $produit['produit_id'],
-                $produit['quantite'],
-                $produit['prix_unitaire'],
-                $produit['prix_total']
+                $item['produit_id'],
+                $item['quantite'],
+                $item['prix_unitaire'],
+                $item['prix_total']
             ]);
         }
         

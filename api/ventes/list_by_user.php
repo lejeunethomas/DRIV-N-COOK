@@ -30,11 +30,11 @@ try {
             v.type_paiement,
             v.statut,
             c.nom_camion,
-            GROUP_CONCAT(CONCAT(p.nom, ' (x', vd.quantite, ')') SEPARATOR ', ') as produits_resume
+            GROUP_CONCAT(CONCAT(m.nom, ' (x', vd.quantite, ')') SEPARATOR ', ') as produits_resume
         FROM ventes v
         LEFT JOIN camions c ON v.camion_id = c.id
         LEFT JOIN vente_details vd ON v.id = vd.vente_id
-        LEFT JOIN produits p ON vd.produit_id = p.id
+        LEFT JOIN menus m ON vd.menu_id = m.id
         $whereClause
         GROUP BY v.id
         ORDER BY v.date_vente DESC

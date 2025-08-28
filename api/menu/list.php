@@ -22,6 +22,7 @@ try {
         $userId = $_SESSION['user_id'];
     }
 
+    // Récupérer tous les plats du menu
     $stmt = $conn->prepare("
         SELECT 
             id,
@@ -38,7 +39,20 @@ try {
         ORDER BY categorie, nom
     ");
     $stmt->execute([$userId]);
-    $menus = $stmt->fetchAll();
+    $menus = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    // Pour chaque plat, récupérer la réduction fidélité max de ses produits partenaires
+    foreach ($menus as &$plat) {
+        $stmt2 = $conn->prepare("
+            SELECT MAX(p.reduction_fidelite) as reduction_fidelite
+            FROM menu_produits mp
+            JOIN produits p ON mp.produit_id = p.id
+            WHERE mp.menu_id = ? AND p.obligatoire = 1
+        ");
+        $stmt2->execute([$plat['id']]);
+        $reduction = $stmt2->fetchColumn();
+        $plat['reduction_fidelite'] = $reduction ? floatval($reduction) : 0;
+    }
 
     echo json_encode($menus);
 
