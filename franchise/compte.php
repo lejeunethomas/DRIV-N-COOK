@@ -187,8 +187,10 @@ require_franchise_validated();
                     this.showAlert('Erreur lors du chargement du profil: ' + data.message, 'error');
                     return;
                 }
-                this.userProfile = data.user;
-                this.displayProfile(data.user);
+                // Correction ici :
+                const profile = data.profile || data.user || data;
+                this.userProfile = profile;
+                this.displayProfile(profile);
             } catch (error) {
                 this.showAlert('Erreur réseau lors du chargement du profil', 'error');
                 console.error('Erreur:', error);
