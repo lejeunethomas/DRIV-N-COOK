@@ -66,7 +66,9 @@ async function loadVentesAujourdhui() {
 
         const response = await fetch(endpoint);
         if (!response.ok) throw new Error('Erreur HTTP ' + response.status);
-        const ventes = await response.json();
+        let ventes = await response.json();
+        
+        ventes = ventes.filter(v => v.statut === 'valide');
         
         displayVentesTable(ventes);
         

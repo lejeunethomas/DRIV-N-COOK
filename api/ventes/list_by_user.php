@@ -22,6 +22,8 @@ try {
         exit;
     }
 
+    $whereClause .= " AND v.statut = 'valide'";
+
     $stmt = $conn->prepare("
         SELECT 
             v.id,

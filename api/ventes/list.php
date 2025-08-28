@@ -35,6 +35,8 @@ try {
         }
     }
 
+    $whereClause .= " AND v.statut = 'valide'";
+
     if ($_SESSION['role'] === 'admin') {
         // Admin voit toutes les ventes
         $stmt = $conn->query("

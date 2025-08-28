@@ -57,7 +57,7 @@ try {
 
 function getStatsByUser($conn, $userId) {
     // Total général
-    $stmt = $conn->prepare("SELECT COALESCE(SUM(montant), 0) as total FROM ventes WHERE user_id = ?");
+    $stmt = $conn->prepare("SELECT COALESCE(SUM(montant), 0) as total FROM ventes WHERE user_id = ? AND statut = 'valide'");
     $stmt->execute([$userId]);
     $totalGeneral = $stmt->fetch()['total'];
     
@@ -65,7 +65,7 @@ function getStatsByUser($conn, $userId) {
     $stmt = $conn->prepare("
         SELECT COALESCE(SUM(montant), 0) as total 
         FROM ventes 
-        WHERE user_id = ? AND DATE(date_vente) = CURDATE()
+        WHERE user_id = ? AND DATE(date_vente) = CURDATE() AND statut = 'valide'
     ");
     $stmt->execute([$userId]);
     $aujourdhui = $stmt->fetch()['total'];
@@ -74,7 +74,7 @@ function getStatsByUser($conn, $userId) {
     $stmt = $conn->prepare("
         SELECT COALESCE(SUM(montant), 0) as total 
         FROM ventes 
-        WHERE user_id = ? AND YEARWEEK(date_vente) = YEARWEEK(NOW())
+        WHERE user_id = ? AND YEARWEEK(date_vente) = YEARWEEK(NOW()) AND statut = 'valide'
     ");
     $stmt->execute([$userId]);
     $semaine = $stmt->fetch()['total'];
@@ -83,7 +83,7 @@ function getStatsByUser($conn, $userId) {
     $stmt = $conn->prepare("
         SELECT COALESCE(SUM(montant), 0) as total 
         FROM ventes 
-        WHERE user_id = ? AND MONTH(date_vente) = MONTH(NOW()) AND YEAR(date_vente) = YEAR(NOW())
+        WHERE user_id = ? AND MONTH(date_vente) = MONTH(NOW()) AND YEAR(date_vente) = YEAR(NOW()) AND statut = 'valide'
     ");
     $stmt->execute([$userId]);
     $mois = $stmt->fetch()['total'];
@@ -99,14 +99,14 @@ function getStatsByUser($conn, $userId) {
 
 function getGlobalStats($conn) {
     // Total général
-    $stmt = $conn->query("SELECT COALESCE(SUM(montant), 0) as total FROM ventes");
+    $stmt = $conn->query("SELECT COALESCE(SUM(montant), 0) as total FROM ventes WHERE statut = 'valide'");
     $totalGeneral = $stmt->fetch()['total'];
     
     // Aujourd'hui
     $stmt = $conn->query("
         SELECT COALESCE(SUM(montant), 0) as total 
         FROM ventes 
-        WHERE DATE(date_vente) = CURDATE()
+        WHERE DATE(date_vente) = CURDATE() AND statut = 'valide'
     ");
     $aujourdhui = $stmt->fetch()['total'];
     
@@ -114,7 +114,7 @@ function getGlobalStats($conn) {
     $stmt = $conn->query("
         SELECT COALESCE(SUM(montant), 0) as total 
         FROM ventes 
-        WHERE YEARWEEK(date_vente) = YEARWEEK(NOW())
+        WHERE YEARWEEK(date_vente) = YEARWEEK(NOW()) AND statut = 'valide'
     ");
     $semaine = $stmt->fetch()['total'];
     
@@ -122,7 +122,7 @@ function getGlobalStats($conn) {
     $stmt = $conn->query("
         SELECT COALESCE(SUM(montant), 0) as total 
         FROM ventes 
-        WHERE MONTH(date_vente) = MONTH(NOW()) AND YEAR(date_vente) = YEAR(NOW())
+        WHERE MONTH(date_vente) = MONTH(NOW()) AND YEAR(date_vente) = YEAR(NOW()) AND statut = 'valide'
     ");
     $mois = $stmt->fetch()['total'];
     
