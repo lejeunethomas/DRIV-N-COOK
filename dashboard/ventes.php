@@ -74,6 +74,14 @@ require_admin();
                         <option value="mois">Ce mois</option>
                     </select>
                 </div>
+                <div style="margin-bottom:1rem;">
+                    <label for="export-franchise">Franchisé :</label>
+                    <select id="export-franchise">
+                    </select>
+                    <button class="btn-primary" id="export-pdf-btn">
+                        📄 Exporter PDF (franchisé sélectionné)
+                    </button>
+                </div>
                 <div id="ventes-table-container"></div>
             </div>
 
@@ -393,6 +401,27 @@ require_admin();
     document.addEventListener('DOMContentLoaded', function() {
         VentesAdminManager.init();
     });
+
+    // Charger la liste des franchisés pour le select
+    async function loadFranchisesExport() {
+        const select = document.getElementById('export-franchise');
+        const res = await fetch('../api/users/get_all.php');
+        const franchises = await res.json();
+        select.innerHTML = '<option value="">Sélectionner un franchisé</option>';
+        franchises.forEach(fr => {
+            select.innerHTML += `<option value="${fr.id}">${fr.nom} ${fr.prenom}</option>`;
+        });
+    }
+    loadFranchisesExport();
+
+    document.getElementById('export-pdf-btn').onclick = function() {
+        const franchiseId = document.getElementById('export-franchise').value;
+        if (!franchiseId) {
+            alert('Sélectionnez un franchisé pour exporter le PDF.');
+            return;
+        }
+        window.open(`../api/ventes/export_pdf_admin.php?franchise_id=${franchiseId}&all=1`, '_blank');
+    };
     </script>
 </body>
 </html>
