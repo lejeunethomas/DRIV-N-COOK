@@ -39,7 +39,7 @@ try {
 
     if ($_SESSION['role'] === 'admin') {
         // Admin voit toutes les ventes
-        $stmt = $conn->query("
+        $stmt = $conn->prepare("
             SELECT v.*, u.nom as franchise_nom, u.prenom as franchise_prenom,
                    c.nom_camion, c.immatriculation,
                    COUNT(vd.id) as nb_produits
@@ -51,6 +51,7 @@ try {
             GROUP BY v.id
             ORDER BY v.date_vente DESC
         ");
+        $stmt->execute($params);
     } else {
         // Franchisé voit ses ventes
         $stmt = $conn->prepare("

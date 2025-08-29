@@ -132,7 +132,9 @@ require_admin();
                 const url = this.config.endpoints.ventes + (params.toString() ? '?' + params.toString() : '');
                 const response = await fetch(url);
                 if (!response.ok) throw new Error(`Erreur HTTP ${response.status}: ${response.statusText}`);
-                this.data.ventes = await response.json();
+                let ventes = await response.json();
+                if (!Array.isArray(ventes)) ventes = [];
+                this.data.ventes = ventes;
                 this.displayVentes();
             } catch (error) {
                 AdminCommon.utils.showAlert('Erreur lors du chargement des ventes: ' + error.message, 'error');
