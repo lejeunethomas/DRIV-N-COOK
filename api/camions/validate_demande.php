@@ -106,7 +106,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 function generateImmatriculation($conn) {
-    // Générer une immatriculation au format français moderne (ex: AB-123-CD)
+    // Générer une immatriculation au format français
     $lettres1 = chr(rand(65, 90)) . chr(rand(65, 90)); 
     $chiffres = str_pad(rand(1, 999), 3, '0', STR_PAD_LEFT); 
     $lettres2 = chr(rand(65, 90)) . chr(rand(65, 90));

@@ -13,7 +13,7 @@ try {
         $camions = $stmt->fetchAll();
         echo json_encode($camions);
     } else {
-        // Si franchisé, voir seulement ses camions
+        // Si franchisé, voir seulement son camion
         require_franchise_validated();
         $userId = $_SESSION['user_id'];
         

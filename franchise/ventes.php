@@ -26,7 +26,7 @@ require_franchise_validated();
         <main class="main-content franchise">
             <div id="alert-container"></div>
             <div class="section-card franchise">
-                <h2>💰 Mes ventes du jour</h2>
+                <h2>Mes ventes du jour</h2>
                 <p>Enregistrez vos ventes rapidement et suivez vos performances</p>
             </div>
 

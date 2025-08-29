@@ -22,7 +22,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
     try {
         $conn = Database::getInstance()->getConnection();
 
-        // Pour le client, ne filtre pas sur user_id
         $stmt = $conn->prepare("SELECT id, statut FROM ventes WHERE id = ?");
         $stmt->execute([$data['id']]);
         $vente = $stmt->fetch();
@@ -53,7 +52,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
                 $stmt->execute([$data['id']]);
                 $vente = $stmt->fetch();
                 if ($vente && $vente['client_id']) {
-                    // Exemple : 1 point par tranche de 10€ dépensés
                     $points = floor($vente['montant'] / 10);
                     if ($points > 0) {
                         $stmt = $conn->prepare("UPDATE clients SET points_fidelite = points_fidelite + ? WHERE id = ?");

@@ -141,46 +141,28 @@ function getStockStatusBadge(productStocks) {
 
 // FONCTIONS UTILITAIRES
 
-/**
- * Obtenir le nom d'un entrepôt par son ID
- */
 function getEntrepotName(id) {
     const entrepot = globalStockData.entrepots.find(e => e.id == id);
     return entrepot ? entrepot.nom : 'Inconnu';
 }
 
-/**
- * Obtenir le nom d'un produit par son ID
- */
 function getProduitName(id) {
     const produit = globalStockData.products.find(p => p.id == id);
     return produit ? produit.nom : 'Inconnu';
 }
 
-/**
- * Obtenir un produit par son ID
- */
 function getProduitById(id) {
     return globalStockData.products.find(p => p.id == id);
 }
 
-/**
- * Obtenir un entrepôt par son ID
- */
 function getEntrepotById(id) {
     return globalStockData.entrepots.find(e => e.id == id);
 }
 
-/**
- * Formater un prix
- */
 function formatPrice(price) {
     return parseFloat(price).toFixed(2) + '€';
 }
 
-/**
- * Formater une quantité avec unité
- */
 function formatQuantity(quantity, unit) {
     return `${parseFloat(quantity).toFixed(2)} ${unit}`;
 }
@@ -477,17 +459,11 @@ window.geocodeAllEntrepotsSilent = window.geocodeAllEntrepotsSilent || geocodeAl
 
 // FONCTIONS UTILITAIRES GÉNÉRALES
 
-/**
- * Fermer la modal active
- */
 function closeModal() {
     const modal = document.querySelector('.modal');
     if (modal) modal.remove();
 }
 
-/**
- * Afficher une alerte
- */
 function showAlert(message, type) {
     const alertContainer = document.getElementById('alert-container');
     if (!alertContainer) return;
@@ -510,9 +486,6 @@ function showAlert(message, type) {
     }, 5000);
 }
 
-/**
- * Démarrer le monitoring automatique
- */
 function startGlobalMonitoring() {
     setInterval(async () => {
         await loadStocks();
@@ -597,7 +570,7 @@ document.addEventListener('click', function(e) {
     }
 });
 
-// Export des fonctions pour utilisation dans d'autres scripts
+// Export des fonctions
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
         globalStockData,

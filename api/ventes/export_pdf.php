@@ -24,7 +24,7 @@ try {
     $stmt->execute([$userId]);
     $ventes = $stmt->fetchAll();
 
-    // Récupérer les détails pour chaque vente
+    // Détails pour chaque vente
     $ventesDetails = [];
     $totalGeneral = 0;
     foreach ($ventes as $vente) {

@@ -27,11 +27,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
         $userId = $_SESSION['user_id'];
         
         if ($isAdmin) {
-            // ✅ Admin peut supprimer n'importe quelle vente
             $stmt = $conn->prepare("SELECT id FROM ventes WHERE id = ?");
             $stmt->execute([$data['id']]);
         } else {
-            // ✅ Franchisé ne peut supprimer que ses ventes
             $stmt = $conn->prepare("SELECT id FROM ventes WHERE id = ? AND user_id = ?");
             $stmt->execute([$data['id'], $userId]);
         }

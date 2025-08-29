@@ -69,7 +69,7 @@ try {
         $_SESSION['role'] = $user['role'];
         $_SESSION['nom'] = $user['nom'];
         $_SESSION['statut'] = $user['statut'];
-        $_SESSION['table'] = 'users'; // Important pour distinguer
+        $_SESSION['table'] = 'users';
     
         $message = 'Connexion réussie';
         if ($user['statut'] === 'en_attente') {

@@ -1,8 +1,3 @@
-/**
- * DRIV'N'COOK - Gestion des menus franchisé
- * Script pour l'interface de gestion des plats
- */
-
 // Variables globales
 let menus = [];
 
@@ -18,9 +13,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // CHARGEMENT DES DONNÉES
-/**
- * Charger tous les plats du menu
- */
+
 async function loadMenus() {
     try {
         const response = await fetch('../api/menu/list.php');
@@ -32,9 +25,6 @@ async function loadMenus() {
     }
 }
 
-/**
- * Afficher les plats dans le tableau
- */
 function displayMenus() {
     const tbody = document.getElementById('menu-list');
     tbody.innerHTML = '';
@@ -97,15 +87,13 @@ function displayMenus() {
 }
 
 // MODAL D'AJOUT/MODIFICATION DE PLAT
-/**
- * Afficher le modal d'ajout de plat
- */
+
 function showAddPlatModal() {
     showPlatModal();
 }
 
 /**
- * Afficher le modal de plat (ajout ou modification)
+ * Afficher le modal de plat
  */
 function showPlatModal(plat = null) {
     const isEdit = plat !== null;
@@ -496,9 +484,7 @@ async function deletePlat(id) {
 }
 
 // FONCTIONS UTILITAIRES
-/**
- * Fermer la modal active
- */
+
 function closeModal() {
     const modals = document.querySelectorAll('.modal');
     modals.forEach(modal => modal.remove());

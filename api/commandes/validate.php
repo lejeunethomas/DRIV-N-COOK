@@ -65,7 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $data['commande_id']
             ));
             
-            // Réserver les stocks (optionnel - on peut aussi attendre la livraison)
+            // Réserver les stocks
             if (isset($data['reserver_stocks']) && $data['reserver_stocks']) {
                 foreach ($details as $detail) {
                     $stmt = $conn->prepare("

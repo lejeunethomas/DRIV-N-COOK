@@ -1,8 +1,3 @@
-/**
- * DRIV'N'COOK - Fonctions communes pour l'administration
- * Bibliothèque centralisée pour éviter la duplication de code
- */
-
 // VARIABLES GLOBALES PARTAGÉES
 
 window.AdminCommon = {
@@ -173,7 +168,7 @@ function createModal(config) {
     const {
         title,
         content,
-        size = 'normal', // normal, large, extra-large
+        size = 'normal',
         actions = [],
         closable = true,
         onOpen = null,

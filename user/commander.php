@@ -354,7 +354,6 @@ require_role('client');
                 AdminCommon.utils.showAlert('Veuillez sélectionner au moins un plat', 'error');
                 return;
             }
-            // Calcul du montant total
             const montant = this.data.currentCamion.panier.reduce((sum, item) => sum + item.total, 0);
 
             // Prépare le format attendu par l'API

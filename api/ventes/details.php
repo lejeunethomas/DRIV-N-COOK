@@ -15,7 +15,6 @@ try {
     $venteId = intval($_GET['id']);
     $role = isset($_SESSION['role']) ? $_SESSION['role'] : null;
 
-    // Pour le client, pas de filtre sur user_id
     if ($role === 'client') {
         $stmt = $conn->prepare("SELECT * FROM ventes WHERE id = ?");
         $stmt->execute([$venteId]);

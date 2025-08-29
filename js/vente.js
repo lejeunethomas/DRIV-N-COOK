@@ -1,8 +1,3 @@
-/**
- * DRIV'N'COOK - Gestion des ventes franchisé
- * Script pour l'interface de saisie des ventes
- */
-
 // Variables globales
 let ventesAujourdhui = [];
 let totalJournalier = 0;
@@ -285,9 +280,6 @@ function updateVenteResume() {
     totalElement.textContent = total.toFixed(2) + '€';
 }
 
-/**
- * Retirer un produit de la vente en cours
- */
 function retirerProduitVente(index) {
     if (index >= 0 && index < venteEnCours.length) {
         venteEnCours.splice(index, 1);
@@ -295,9 +287,6 @@ function retirerProduitVente(index) {
     }
 }
 
-/**
- * Finaliser la vente
- */
 async function finaliserVente() {
     if (venteEnCours.length === 0) {
         showAlert('Aucun produit dans la vente', 'error');
