@@ -61,6 +61,14 @@ require_admin();
                     <h3>Liste des ventes</h3>
                     <button class="add-btn" onclick="VentesAdminManager.showAddModal()">+ Enregistrer une vente</button>
                 </div>
+                <div style="margin-bottom:1rem;">
+                    <label for="export-franchise">Franchisé :</label>
+                    <select id="export-franchise">
+                    </select>
+                    <button class="btn-primary" id="export-pdf-btn">
+                        📄 Exporter PDF (franchisé sélectionné)
+                    </button>
+                </div>
                 <div class="filters" style="margin-bottom: 1rem; display: flex; gap: 1rem; align-items: center;">
                     <label for="filter-camion">Camion :</label>
                     <select id="filter-camion" onchange="VentesAdminManager.loadVentes()">
@@ -73,14 +81,6 @@ require_admin();
                         <option value="semaine">Cette semaine</option>
                         <option value="mois">Ce mois</option>
                     </select>
-                </div>
-                <div style="margin-bottom:1rem;">
-                    <label for="export-franchise">Franchisé :</label>
-                    <select id="export-franchise">
-                    </select>
-                    <button class="btn-primary" id="export-pdf-btn">
-                        📄 Exporter PDF (franchisé sélectionné)
-                    </button>
                 </div>
                 <div id="ventes-table-container"></div>
             </div>
