@@ -338,7 +338,7 @@ require_admin();
             },
 
             // ===== MODALS MANUELLES =====
-            showAddModal() {
+            async showAddModal() {
                 if (!this.data.franchises || this.data.franchises.length === 0) {
                     await this.loadFranchises();
                 }
