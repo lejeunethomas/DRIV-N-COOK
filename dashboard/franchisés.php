@@ -255,6 +255,11 @@ require_admin();
             const data = Object.fromEntries(new FormData(e.target));
             data.role = 'franchise';
             data.admin_create = true;
+            data.lieu = data.lieu_installation;
+            if (!data.motivation || !data.lieu) {
+                AdminCommon.utils.showAlert('Tous les champs sont obligatoires', 'error');
+                return;
+            }
             const success = await AdminCommon.utils.saveData(
                 this.config.endpoints.register,
                 data
