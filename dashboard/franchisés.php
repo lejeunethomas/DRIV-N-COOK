@@ -116,7 +116,7 @@ require_admin();
                 ],
                 add: [
                     { name: 'password', label: 'Mot de passe temporaire', type: 'password', required: true },
-                    { name: 'motivation', label: 'Motivation', type: 'textarea' }
+                    { name: 'motivation', label: 'Motivation', type: 'textarea', required: true }
                 ]
             }
         },
