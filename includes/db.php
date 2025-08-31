@@ -7,13 +7,12 @@ class Database {
     
     private function __construct() {
         $host = 'localhost';
-        $port = '8889';
         $dbname = 'drivncook';
-        $username = 'root';
-        $password = 'root';
-        
+        $username = 'drivnuser';
+        $password = 'motdepasse';
+
         try {
-            $dsn = "mysql:host={$host};port={$port};dbname={$dbname};charset=utf8mb4";
+            $dsn = "mysql:host={$host};port={$port};dbname={$dbname};charset=utf8";
             $this->connection = new PDO($dsn, $username, $password, [
                 PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
