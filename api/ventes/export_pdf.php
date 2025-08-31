@@ -87,8 +87,15 @@ try {
     $pdf->SetFont('Arial','B',13);
     $pdf->Cell(130,10,utf8_decode('TOTAL GENERAL'),1);
     $pdf->Cell(35,10,number_format($totalGeneral,2).' '.chr(128),1,0,'R');
+    $pdf->Ln(12);
 
-    $pdf->Output('D', "ventes_{$mois}/{$annee}.pdf");
+    // Calcul et affichage des 4% à reverser
+    $commission = $totalGeneral * 0.04;
+    $pdf->SetFont('Arial','B',12);
+    $pdf->Cell(130,10,utf8_decode("4% à verser à Driv'n Cook"),1);
+    $pdf->Cell(35,10,number_format($commission,2).' '.chr(128),1,0,'R');
+
+    $pdf->Output('D', "ventes_{$mois}_{$annee}.pdf");
     exit;
 
 } catch (Exception $e) {
