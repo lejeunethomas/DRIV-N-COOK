@@ -339,6 +339,9 @@ require_admin();
 
             // ===== MODALS MANUELLES =====
             showAddModal() {
+                if (!this.data.franchises || this.data.franchises.length === 0) {
+                    await this.loadFranchises();
+                }
                 this.createCamionModal('Ajouter un camion manuellement', null, this.handleAdd.bind(this));
             },
 
