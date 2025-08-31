@@ -738,7 +738,7 @@ require_admin();
                 return [
                     { value: '', text: 'Sélectionner un franchisé' },
                     ...this.data.franchises
-                        .filter(f => f.role === 'franchise' && f.statut === 'valide')
+                        .filter(f => f.statut === 'valide')
                         .map(f => ({
                             value: f.id,
                             text: `${f.nom || ''} ${f.prenom || ''} (${f.email || ''})`
