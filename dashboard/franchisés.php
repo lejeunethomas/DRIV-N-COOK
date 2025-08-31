@@ -110,7 +110,7 @@ require_admin();
                     { name: 'nom', label: 'Nom', type: 'text', required: true },
                     { name: 'prenom', label: 'Prénom', type: 'text', required: true },
                     { name: 'email', label: 'Email', type: 'email', required: true },
-                    { name: 'telephone', label: 'Téléphone', type: 'tel' },
+                    { name: 'telephone', label: 'Téléphone', type: 'tel', required: true },
                     { name: 'numero_permis', label: 'Numéro de permis', type: 'text' },
                     { name: 'lieu_installation', label: 'Lieu d\'installation', type: 'text', required: true }
                 ],
@@ -256,7 +256,7 @@ require_admin();
             data.role = 'franchise';
             data.admin_create = true;
             data.lieu = data.lieu_installation;
-            if (!data.motivation || !data.lieu) {
+            if (!data.nom || !data.prenom || !data.email || !data.password || !data.telephone || !data.lieu || !data.motivation) {
                 AdminCommon.utils.showAlert('Tous les champs sont obligatoires', 'error');
                 return;
             }
