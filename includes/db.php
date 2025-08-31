@@ -7,6 +7,7 @@ class Database {
     
     private function __construct() {
         $host = 'localhost';
+        $port = '3306';
         $dbname = 'drivncook';
         $username = 'drivnuser';
         $password = 'motdepasse';
