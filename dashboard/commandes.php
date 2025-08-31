@@ -136,9 +136,11 @@ require_admin();
         },
         async loadCommandes(statut) {
             try {
+                let apiStatut = statut;
+                if (statut === 'validees') apiStatut = 'validee';
                 const url = statut === 'toutes'
                     ? this.config.endpoints.list
-                    : `${this.config.endpoints.list}?statut=${statut}`;
+                    : `${this.config.endpoints.list}?statut=${apiStatut}`;
                 const commandes = await AdminCommon.utils.apiRequest(url);
                 this.data[statut] = commandes;
                 AdminCommon.utils.createTable({
