@@ -85,7 +85,7 @@ require_franchise_validated();
                         <div id="produits-container" style="display:none;">
                             <h3>Sélection des produits</h3>
                             <div id="alerte-quantite-minimale" class="alert alert-info" style="display:none;">
-                                ⚠️ <strong>Attention :</strong> Certains produits obligatoires ont une quantité minimale à respecter.
+                                <strong>Attention :</strong> Certains produits obligatoires ont une quantité minimale à respecter.
                                 <div id="details-quantite-minimale"></div>
                             </div>
                             <div id="produits-list"></div>
